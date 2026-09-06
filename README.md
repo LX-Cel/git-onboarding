@@ -4,6 +4,10 @@
 
 当前为 **Windows x64 私有试用版 0.1.0**。项目尚未授予开源许可证；成熟后再决定公开与许可证。
 
+![学习路径](docs/screenshots/home.png)
+
+![真实 Git 练习工作台](docs/screenshots/workbench.png)
+
 ## 使用
 
 1. 安装 `Git-Onboarding-0.1.0-Setup.exe`，打开 Git Onboarding。
@@ -49,6 +53,16 @@ npm run package
 ```
 
 生成 `release/Git-Onboarding-0.1.0-Setup.exe`。打包前会验证镜像 SHA256，镜像不写入 Git。安装包内含镜像，不要求用户安装构建工具。
+
+测试安装后的真实应用（包含空格的路径也支持）：
+
+```powershell
+$env:GIT_ONBOARDING_EXECUTABLE = '完整路径\Git Onboarding.exe'
+npm run test:ui
+Remove-Item Env:\GIT_ONBOARDING_EXECUTABLE
+```
+
+图标已包含在仓库中；如需重新生成，运行 `python scripts/make-icon.py`，该可选脚本需要 Pillow。
 
 ## 代码结构
 

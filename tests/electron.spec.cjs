@@ -9,13 +9,20 @@ test("Windows desktop: initialize, learn, edit, commit, reset confirmation and r
   const env = {
     ...process.env,
     GIT_ONBOARDING_DATA_DIR: path.resolve(
-      ".local/ui-data",
+      process.env.GIT_ONBOARDING_EXECUTABLE
+        ? ".local/installed user's data"
+        : ".local/ui-data",
       manifest.sha256.slice(0, 12),
     ),
   };
   delete env.ELECTRON_RUN_AS_NODE;
   const launch = () =>
-    electron.launch({ args: ["."], cwd: path.resolve("."), env });
+    electron.launch({
+      executablePath: process.env.GIT_ONBOARDING_EXECUTABLE,
+      args: process.env.GIT_ONBOARDING_EXECUTABLE ? [] : ["."],
+      cwd: path.resolve("."),
+      env,
+    });
   let app = await launch();
   let page = await app.firstWindow();
   const errors = [];
