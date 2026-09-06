@@ -1,0 +1,72 @@
+{
+  "name": "git-onboarding",
+  "version": "0.1.0",
+  "private": true,
+  "description": "在真实 Git 环境中练习，从第一次提交到团队协作与恢复。",
+  "author": "LX-Cel",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "start": "npm run build && electron .",
+    "test": "node --test tests/*.test.cjs",
+    "test:runtime": "node scripts/test-runtime.cjs",
+    "test:ui": "playwright test",
+    "runtime:build": "python scripts/prepare-runtime.py",
+    "package": "npm run build && node scripts/check-runtime.cjs && electron-builder --win nsis --x64",
+    "format": "prettier --write src desktop tests/*.cjs scripts/*.cjs *.cjs *.js *.json index.html docs/*.md README.md .github/workflows/*.yml",
+    "format:check": "prettier --check src desktop tests/*.cjs scripts/*.cjs *.cjs *.js *.json index.html docs/*.md README.md .github/workflows/*.yml"
+  },
+  "dependencies": {
+    "@xterm/addon-fit": "0.11.0",
+    "@xterm/xterm": "6.0.0",
+    "lucide-react": "1.41.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "electron": "44.2.0",
+    "electron-builder": "26.15.3",
+    "prettier": "3.9.6",
+    "vite": "8.2.2"
+  },
+  "build": {
+    "electronDist": "node_modules/electron/dist",
+    "appId": "dev.lxcel.git-onboarding",
+    "productName": "Git Onboarding",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "desktop/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/runtime.tar",
+        "to": "runtime.tar"
+      },
+      {
+        "from": "resources/runtime-manifest.json",
+        "to": "runtime-manifest.json"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "artifactName": "Git-Onboarding-${version}-Setup.${ext}",
+      "icon": "resources/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    },
+    "asar": true
+  }
+}

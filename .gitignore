@@ -1,0 +1,12 @@
+node_modules/
+dist/
+release/
+.local/
+resources/*.tar
+resources/*.tar.gz
+resources/alpine-releases.yaml
+test-results/
+playwright-report/
+*.log
+__pycache__/
+*.pyc

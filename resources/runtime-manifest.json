@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "version": "0.1.0",
+  "architecture": "x64",
+  "source": "alpine-minirootfs-3.24.1-x86_64.tar.gz",
+  "sourceSha256": "41f73e3cf5fa919b8aa5ca6b30dc48f0da2720776d7423e2a7748211456fe081",
+  "sha256": "c2f1c85bdff1674f10a3828da84b292bfe200d1c1b6171f554f736db5375b78f",
+  "git": "git version 2.54.0"
+}

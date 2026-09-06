@@ -1,0 +1,14 @@
+export PS1='\[\e[38;5;78m\]student\[\e[0m\]:\[\e[38;5;110m\]\w\[\e[0m\] $ '
+export HISTFILE=/home/student/.bash_history
+export HISTSIZE=2000
+export GIT_PAGER=less
+export EDITOR=nano
+shopt -s checkwinsize histappend
+__go_prompt() {
+  local exit_code=$?
+  printf '\033]133;D;%s\007' "$exit_code"
+  history -a
+}
+PROMPT_COMMAND=__go_prompt
+alias ll='ls -alF'
+printf '\033[38;5;78m真实 Git · 独立练习环境\033[0m\n修改只保留在练习环境中。Ctrl+C 中断命令，Ctrl+L 清屏。\n\n'
