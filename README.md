@@ -2,7 +2,7 @@
 
 一个面向 Git 新手的中文桌面练习应用。从第一次提交，到分支协作、冲突处理和误操作恢复，在真实 Git 仓库里练习。
 
-当前已发布 **Windows x64 私有试用版 0.1.0**；正在验证 0.1.1 修复版本。项目尚未授予开源许可证；成熟后再决定公开与许可证。
+当前为 **Windows x64 私有试用版 0.1.1**，见 [修复版下载与说明](https://github.com/LX-Cel/git-onboarding/releases/tag/v0.1.1)。项目尚未授予开源许可证；成熟后再决定公开与许可证。
 
 ![学习路径](docs/screenshots/home.png)
 
@@ -10,7 +10,7 @@
 
 ## 使用
 
-1. 安装 `Git-Onboarding-0.1.0-Setup.exe`，打开 Git Onboarding。
+1. 安装 `Git-Onboarding-0.1.1-Setup.exe`，打开 Git Onboarding。
 2. 点击「准备练习环境」。应用验证并导入内置的专用 Linux 镜像；不要求预装 Git 或 Docker。
 3. 若尚未安装 WSL，应用请求管理员授权安装系统组件，提示重启后继续。需要支持 WSL 2 的 Windows x64 和已启用的硬件虚拟化。
 4. 选择引导练习或直接挑战。文件保存、Git 暂存与 Git 提交是三个不同操作。
