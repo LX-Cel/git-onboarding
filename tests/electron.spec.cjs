@@ -60,6 +60,10 @@ test("Windows desktop: initialize, learn, edit, commit, reset confirmation and r
   await expect(editor).toHaveCSS("font-size", "16px");
   await expect(editor).toBeEditable();
   await expect(editor).toHaveValue(/学习从这里开始/);
+  await page.getByRole("button", { name: "检查练习结果", exact: true }).click();
+  await expect(page.getByRole("dialog")).toContainText("还差一步");
+  await expect(page.getByRole("dialog")).toContainText("README 修改已进入提交");
+  await page.getByRole("button", { name: "返回练习", exact: true }).click();
   await editor.fill("# Git 学习手册\n\n今天天气不错。今天晚餐吃了什么？\n");
   await page.getByRole("button", { name: "保存", exact: true }).click();
   await expect(
@@ -81,6 +85,20 @@ test("Windows desktop: initialize, learn, edit, commit, reset confirmation and r
   await expect(
     page.getByText("已完成！学习进度已保存。", { exact: false }),
   ).toBeVisible({ timeout: 20000 });
+  // A manual check must acknowledge the click, even after automatic completion.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await page
+      .getByRole("button", { name: "检查练习结果", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toContainText("本关已完成");
+    await expect(page.getByRole("dialog")).toContainText("2 / 2 条件通过");
+    await expect(
+      page.getByRole("dialog").getByRole("button", { name: "进入独立挑战" }),
+    ).toBeVisible();
+    if (attempt === 0)
+      await page.screenshot({ path: "test-results/check-result.png" });
+    await page.getByRole("button", { name: "关闭检查结果" }).click();
+  }
   await page.getByRole("button", { name: "提交图", exact: true }).click();
   await expect(page.locator(".commit-subject").first()).toHaveText(
     "UI integration commit",
@@ -93,6 +111,12 @@ test("Windows desktop: initialize, learn, edit, commit, reset confirmation and r
   );
   // Dirty editor changes require a deliberate decision before switching lessons.
   await editor.fill("尚未保存的内容");
+  await page.getByRole("button", { name: "检查练习结果", exact: true }).click();
+  await expect(page.getByRole("dialog")).toContainText("编辑器还有未保存内容");
+  await expect(
+    page.getByRole("dialog").getByRole("button", { name: "进入独立挑战" }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "返回练习", exact: true }).click();
   await page.getByRole("button", { name: "独立挑战", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "放弃尚未保存的编辑？" }),
@@ -157,6 +181,59 @@ test("Windows desktop: initialize, learn, edit, commit, reset confirmation and r
     Buffer.from(largeText.split(",")[1], "base64"),
   );
   await page.getByRole("combobox", { name: "显示比例" }).selectOption("1");
+  // Completed guided and challenge checks must both offer a working next step.
+  await page.getByRole("button", { name: "检查练习结果", exact: true }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "进入独立挑战", exact: true })
+    .click();
+  await expect(page.locator(".mode-switch button.active")).toHaveText(
+    "独立挑战",
+  );
+  await expect(page.getByRole("textbox", { name: "文件内容" })).toBeEditable();
+  await page.getByRole("button", { name: "重新开始", exact: true }).click();
+  await page.evaluate(() => {
+    window.testTerminalOutput = "";
+    window.gitLab.onData((data) => {
+      window.testTerminalOutput += new TextDecoder()
+        .decode(Uint8Array.from(atob(data), (c) => c.charCodeAt(0)))
+        .replace(/\x1b\[[0-9;]*m/g, "");
+    });
+  });
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "重新开始", exact: true })
+    .click();
+  await expect(page.getByRole("textbox", { name: "文件内容" })).toHaveValue(
+    /学习从这里开始/,
+  );
+  await page
+    .getByRole("textbox", { name: "文件内容" })
+    .fill("# Git 学习手册\n\n独立挑战记录。\n");
+  await page.getByRole("button", { name: "保存", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "保存", exact: true }),
+  ).toBeDisabled();
+  await page.locator(".xterm-helper-textarea").focus();
+  await expect
+    .poll(() => page.evaluate(() => window.testTerminalOutput))
+    .toContain("basics-challenge/workspace $ ");
+  await page.keyboard.type(
+    'git add README.md && git commit -m "challenge result test"',
+    { delay: 5 },
+  );
+  await page.keyboard.press("Enter");
+  await expect(
+    page.getByText("已完成！学习进度已保存。", { exact: false }),
+  ).toBeVisible({ timeout: 20000 });
+  await page.getByRole("button", { name: "检查练习结果", exact: true }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "下一关：和队友一起开发" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "和队友一起开发", exact: true }),
+  ).toBeVisible();
   expect(errors).toEqual([]);
   await app.close();
 });

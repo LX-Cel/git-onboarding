@@ -316,6 +316,7 @@ class Runtime {
       entered = false;
     const labPath = `/home/student/labs/${selection.lesson}-${selection.mode}/workspace`;
     proc.stdout.on("data", (chunk) => {
+      if (this.terminal !== proc) return;
       pending += chunk.toString();
       if (pending.length > 1048576) {
         proc.kill();
@@ -344,13 +345,16 @@ class Runtime {
       }
     });
     proc.stderr.on("data", (chunk) => {
+      if (this.terminal !== proc) return;
       const message = decode(chunk);
       // WSL emits an inherited localhost proxy warning; it is irrelevant inside the offline sandbox.
       if (!message.includes("localhost"))
         onData(Buffer.from(message).toString("base64"));
     });
     proc.stdin.on("error", () => {});
-    proc.on("error", (error) => onExit(error.message));
+    proc.on("error", (error) => {
+      if (this.terminal === proc) onExit(error.message);
+    });
     proc.on("close", () => {
       if (this.terminal === proc) {
         this.terminal = null;

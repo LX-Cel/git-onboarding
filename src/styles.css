@@ -1617,6 +1617,87 @@ svg {
   padding-left: 15px;
 }
 
+.check-dialog {
+  width: min(600px, calc(100vw - 40px));
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  border: 1px solid #d8dfe6;
+  border-radius: 16px;
+  padding: 32px;
+  color: #263247;
+  background: #fff;
+  box-shadow: 0 24px 90px #17233433;
+}
+.check-dialog::backdrop {
+  background: #14213066;
+}
+.check-dialog h2 {
+  font-size: 26px;
+  margin: 8px 0 12px;
+}
+.check-dialog p {
+  font-size: 16px;
+  line-height: 1.6;
+}
+.check-dialog .check-caption {
+  color: #596779;
+  font-size: 14px;
+}
+.check-result-list {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0;
+}
+.check-result-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 0;
+  border-top: 1px solid #e5eaf0;
+}
+.check-result-list svg {
+  margin-top: 3px;
+}
+.check-result-list .passed {
+  color: #20755e;
+}
+.check-result-list strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+.check-result-list p {
+  color: #596779;
+  margin-top: 6px;
+  font-size: 14px;
+}
+.check-dialog .check-evidence {
+  font-size: 14px;
+  color: #596779;
+}
+.check-unsaved {
+  margin-top: 16px;
+  padding: 12px;
+  background: #fff4df;
+  color: #755323;
+}
+.check-result-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-top: 28px;
+}
+.check-result-actions button {
+  padding: 12px 18px;
+  border-radius: 7px;
+}
+.check-wait {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 20px 0;
+}
+
 /* Reading-focused scale: Fluent UI roles, with larger Chinese lesson text. */
 .story,
 .step-body p,

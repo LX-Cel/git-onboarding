@@ -1,0 +1,12 @@
+[
+  {
+    "key": "B",
+    "prompt": "Edit this UI concept screenshot with exactly these corrections. Preserve the entire existing layout, all Chinese typography sizes, all colors and other text. In the LEFT Bash terminal remove the entire line-number column 1 through 16: a real Bash terminal must have NO editor-style line numbers. Keep the source editor on the RIGHT numbered. Shift the terminal text a little left to use the freed area. Make the primary blue button a perfectly flat solid blue, no mottled texture or glow. The mission must read '任务：修改 README.md，写下自己的学习记录并提交。' rather than asking for self-introduction. Replace the final repeated big success check icons with simple refined vector-like outline icons only if necessary, otherwise retain. Output the same full front-facing desktop screenshot, no crop, no redesign.",
+    "reference": "First generated draft B; original retained in local generation history"
+  },
+  {
+    "key": "C",
+    "prompt": "Edit this UI concept screenshot with only these precise corrections, preserving all typography, composition, readable Chinese, colors, editor, terminal, graph and next-action layout. Replace the four top navigation labels '课程', '练习', '参考手册', '命令速查' with exactly two navigation labels '学习路径' and '练习工作台', with 练习工作台 selected. This product has no reference library or command search. Replace the far-right '设置' with a small actual dropdown labeled '字号 100%'. The primary action button should be flat solid petrol blue with no mottled texture. Make backgrounds perfectly clean flat white and pale blue, removing mottled paper/cloud texture. In the code editor header, replace the blue saved indicator with a small explicitly labeled '保存' action and a muted '已保存' status, so the user has a visible file save action. No other changes; full image, no crop.",
+    "reference": "First generated draft C; original retained in local generation history"
+  }
+]

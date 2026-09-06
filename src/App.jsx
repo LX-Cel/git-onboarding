@@ -37,6 +37,7 @@ import {
 import lessons from "../runtime/lessons.json";
 import { layoutGraph } from "./graph.js";
 import { version } from "../package.json";
+import CheckResult from "./CheckResult.jsx";
 
 const api = window.gitLab;
 const colors = ["#19a887", "#6881e7", "#e8a64e", "#bf70d1", "#4aa5c9"];
@@ -163,7 +164,12 @@ function TerminalPane({ sessionKey, onChange, onResult }) {
       .connect()
       .then(() => {
         resize();
-        terminal.focus();
+        // Startup may finish after the learner has already focused the editor.
+        if (
+          document.activeElement === document.body ||
+          host.current?.contains(document.activeElement)
+        )
+          terminal.focus();
       })
       .catch((error) => {
         terminal.writeln(error.message);
@@ -226,6 +232,9 @@ function App() {
   );
   const [confirmation, setConfirmation] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [checkReport, setCheckReport] = useState(null);
+  const checkGeneration = useRef(0),
+    checkInFlight = useRef(false);
   const stateRef = useRef(null),
     refreshing = useRef(false),
     refreshTimer = useRef(null),
@@ -306,7 +315,13 @@ function App() {
   }, []);
 
   const refresh = useCallback(async () => {
-    if (!api || refreshing.current || switching.current) return;
+    if (
+      !api ||
+      refreshing.current ||
+      switching.current ||
+      checkInFlight.current
+    )
+      return;
     refreshing.current = true;
     const epoch = selectionEpoch.current;
     try {
@@ -335,6 +350,45 @@ function App() {
       refreshing.current = false;
     }
   }, [applyState]);
+
+  function closeCheck() {
+    checkGeneration.current += 1;
+    checkInFlight.current = false;
+    setCheckReport(null);
+  }
+  async function checkExercise() {
+    if (!api || switching.current || checkInFlight.current) return;
+    const generation = ++checkGeneration.current;
+    const epoch = selectionEpoch.current;
+    checkInFlight.current = true;
+    setCheckReport({ phase: "checking" });
+    try {
+      // A deliberate check is never dropped just because polling is in flight.
+      const snapshot = await api.state();
+      if (
+        generation !== checkGeneration.current ||
+        epoch !== selectionEpoch.current
+      )
+        return;
+      if (snapshot.error || !snapshot.checks.length)
+        throw new Error(snapshot.error || "未能读取完成条件，请重试。");
+      applyState(snapshot);
+      setCheckReport({
+        phase: "ready",
+        snapshot,
+        unsaved: dirtyRef.current,
+        checkedAt: new Date().toLocaleTimeString("zh-CN", { hour12: false }),
+      });
+    } catch (error) {
+      if (
+        generation === checkGeneration.current &&
+        epoch === selectionEpoch.current
+      )
+        setCheckReport({ phase: "error", error: error.message });
+    } finally {
+      if (generation === checkGeneration.current) checkInFlight.current = false;
+    }
+  }
 
   const scheduleRefresh = useCallback(() => {
     clearTimeout(refreshTimer.current);
@@ -962,7 +1016,11 @@ function App() {
                   </div>
                 </div>
                 <div className="task-footer">
-                  <button className="primary" disabled={busy} onClick={refresh}>
+                  <button
+                    className="primary"
+                    disabled={busy || checkReport?.phase === "checking"}
+                    onClick={checkExercise}
+                  >
                     {busy ? (
                       <LoaderCircle size={16} className="spin" />
                     ) : (
@@ -1203,6 +1261,34 @@ function App() {
           <span>让理解发生在每一次动手之后。</span>
         </footer>
       </div>
+      {checkReport && (
+        <CheckResult
+          report={checkReport}
+          onClose={closeCheck}
+          onRetry={checkExercise}
+          nextLabel={
+            mode === "guided"
+              ? "进入独立挑战"
+              : lessons[lessons.indexOf(lesson) + 1]
+                ? `下一关：${lessons[lessons.indexOf(lesson) + 1].title}`
+                : "返回学习路径"
+          }
+          onNext={() => {
+            closeCheck();
+            confirmDiscard(() => {
+              if (mode === "guided") begin(lesson, "challenge");
+              else {
+                const nextLesson = lessons[lessons.indexOf(lesson) + 1];
+                if (nextLesson) begin(nextLesson, "guided");
+                else {
+                  api?.disconnect();
+                  setView("home");
+                }
+              }
+            });
+          }}
+        />
+      )}
       {setup && (
         <div className="modal-backdrop">
           <section
