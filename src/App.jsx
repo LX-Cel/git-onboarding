@@ -4,16 +4,13 @@ import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
 import {
   ArrowRight,
-  ArrowLeft,
   BookOpen,
   Check,
   CheckCircle2,
   ChevronRight,
   Clock3,
-  Code2,
   Copy,
   FileText,
-  FolderGit2,
   GitBranch,
   GitCommitHorizontal,
   GraduationCap,
@@ -26,10 +23,10 @@ import {
   Save,
   ShieldCheck,
   Terminal,
+  Trash2,
   X,
   AlertCircle,
   Layers,
-  Sparkles,
   Monitor,
   Download,
   Circle,
@@ -40,7 +37,7 @@ import { version } from "../package.json";
 import CheckResult from "./CheckResult.jsx";
 
 const api = window.gitLab;
-const colors = ["#19a887", "#6881e7", "#e8a64e", "#bf70d1", "#4aa5c9"];
+const colors = ["#3469e8", "#8764b8", "#b66c16", "#18856b", "#497caa"];
 const labelMode = (mode) => (mode === "guided" ? "引导练习" : "独立挑战");
 
 function CommitGraph({ history = [] }) {
@@ -111,11 +108,11 @@ function TerminalPane({ sessionKey, onChange, onResult }) {
       lineHeight: 1.5,
       scrollback: 3000,
       theme: {
-        background: "#131d2c",
+        background: "#172338",
         foreground: "#dce6f3",
-        cursor: "#7de2bc",
+        cursor: "#93dfff",
         selectionBackground: "#365268",
-        black: "#131d2c",
+        black: "#172338",
         red: "#ff8891",
         brightRed: "#ffadb0",
         green: "#7de2bc",
@@ -189,10 +186,19 @@ function TerminalPane({ sessionKey, onChange, onResult }) {
     <section className="terminal-panel">
       <div className="terminal-bar">
         <span>
-          <Terminal size={15} /> Bash <i /> 真实 Git
+          <Terminal size={16} /> 终端 <i /> Bash
         </span>
         <div>
-          <span className="terminal-tip">Ctrl + L 清屏</span>
+          <button
+            title="清屏（Ctrl + L）"
+            onClick={() => {
+              term.current?.clear();
+              term.current?.focus();
+            }}
+          >
+            <Trash2 size={15} />
+            清屏
+          </button>
           <button
             title="重新连接终端"
             onClick={() => setReconnect((n) => n + 1)}
@@ -225,7 +231,9 @@ function App() {
   const [file, setFile] = useState("");
   const [content, setContent] = useState("");
   const [saved, setSaved] = useState("");
-  const [tab, setTab] = useState("state");
+  const [tab, setTab] = useState("task");
+  const [updatedAt, setUpdatedAt] = useState("");
+  const gutter = useRef(null);
   const [editorTab, setEditorTab] = useState("file");
   const [feedback, setFeedback] = useState(
     "每一次操作，都能看见 Git 状态的变化。",
@@ -287,7 +295,7 @@ function App() {
       );
     else if (lastExit.current !== 0)
       setFeedback(
-        `上一条命令未成功完成（退出码 ${lastExit.current}）。请先阅读终端错误。${next.stagedDiff ? "暂存区仍有待提交内容，可用 git diff --staged 检查。" : next.diff ? "修改仍在工作区，可用 git status 和 git diff 定位当前状态。" : "仓库状态没有待提交修改，可用 git status 确认。"}需要帮助时可展开左侧提示。`,
+        `上一条命令未成功完成（退出码 ${lastExit.current}）。请先阅读终端错误。${next.stagedDiff ? "暂存区仍有待提交内容，可用 git diff --staged 检查。" : next.diff ? "修改仍在工作区，可用 git status 和 git diff 定位当前状态。" : "仓库状态没有待提交修改，可用 git status 确认。"}需要帮助时可展开任务面板中的提示。`,
       );
     else if (next.complete)
       setFeedback(
@@ -311,6 +319,7 @@ function App() {
       setFeedback("工作区内容发生了变化。用 git diff 查看尚未暂存的修改。");
     stateRef.current = next;
     setState(next);
+    setUpdatedAt(new Date().toLocaleTimeString("zh-CN", { hour12: false }));
     if (next.complete) api?.progress().then(setProgress);
   }, []);
 
@@ -437,6 +446,8 @@ function App() {
       setMode(nextMode);
       setStep(0);
       setHint(0);
+      setTab("task");
+      setEditorTab("file");
       stateRef.current = null;
       applyState(next);
       const openingFile = next.files.includes(nextLesson.file)
@@ -516,21 +527,37 @@ function App() {
   const staged =
     state?.changes.filter((c) => c.index !== " " && c.index !== "?") || [];
 
+  const nextLesson = lessons[lessons.indexOf(lesson) + 1];
+  const nextLabel =
+    mode === "guided"
+      ? "进入独立挑战"
+      : nextLesson
+        ? `下一关：${nextLesson.title}`
+        : "返回学习路径";
+  function goNext() {
+    closeCheck();
+    confirmDiscard(() => {
+      if (mode === "guided") begin(lesson, "challenge");
+      else if (nextLesson) begin(nextLesson, "guided");
+      else home();
+    });
+  }
+
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${view === "lab" ? "lab-shell" : "home-shell"}`}>
       <aside className="sidebar">
-        <button className="brand" onClick={home}>
+        <button className="brand" onClick={home} disabled={busy}>
           <span className="brand-icon">
             <GitBranch size={24} />
           </span>
-          <span>
-            Git <b>Onboarding</b>
-          </span>
+          <span>Git Onboarding</span>
         </button>
         <div className="workspace-label">你的 Git 练习空间</div>
-        <nav>
+        <nav aria-label="主要导航">
           <button
             className={view === "home" ? "nav-item active" : "nav-item"}
+            aria-current={view === "home" ? "page" : undefined}
+            disabled={busy}
             onClick={home}
           >
             <LayoutDashboard size={18} />
@@ -538,6 +565,8 @@ function App() {
           </button>
           <button
             className={view === "lab" ? "nav-item active" : "nav-item"}
+            aria-current={view === "lab" ? "page" : undefined}
+            disabled={busy}
             onClick={() => confirmDiscard(() => begin())}
           >
             <Terminal size={18} />
@@ -551,8 +580,12 @@ function App() {
           {lessons.map((item) => (
             <button
               key={item.id}
+              disabled={busy}
               className={
                 view === "lab" && lesson.id === item.id ? "selected" : ""
+              }
+              aria-current={
+                view === "lab" && lesson.id === item.id ? "step" : undefined
               }
               onClick={() => confirmDiscard(() => begin(item, "guided"))}
             >
@@ -620,7 +653,6 @@ function App() {
             <span>
               <Monitor size={14} /> 本地运行
             </span>
-            <span className="avatar">G</span>
           </div>
         </header>
         {error && (
@@ -730,7 +762,7 @@ function App() {
                         cy="95"
                         r="7"
                         fill="#122837"
-                        stroke="#72ddb3"
+                        stroke="#78b4ff"
                         strokeWidth="3"
                       />
                     ))}
@@ -762,9 +794,9 @@ function App() {
                       width="50"
                       height="22"
                       rx="5"
-                      fill="#234d46"
+                      fill="#244773"
                     />
-                    <text x="329" y="129" fill="#8ce6c0" fontSize="11">
+                    <text x="329" y="129" fill="#bad7ff" fontSize="11">
                       main
                     </text>
                   </svg>
@@ -851,7 +883,7 @@ function App() {
             <div className="lab-heading">
               <div>
                 <div className="eyebrow">
-                  UNIT {lesson.number} / {lesson.level}
+                  练习 {lesson.number} · {lesson.level}
                 </div>
                 <h1>{lesson.title}</h1>
               </div>
@@ -861,6 +893,7 @@ function App() {
                     <button
                       key={m}
                       className={m === mode ? "active" : ""}
+                      aria-pressed={m === mode}
                       disabled={busy}
                       onClick={() =>
                         m !== mode && confirmDiscard(() => begin(lesson, m))
@@ -888,162 +921,6 @@ function App() {
               </div>
             </div>
             <div className="lab-layout">
-              <section className="task-panel">
-                <div className="panel-title">
-                  <BookOpen size={16} />
-                  <strong>本次任务</strong>
-                  <span>{labelMode(mode)}</span>
-                </div>
-                <div className="task-scroll">
-                  <p className="story">
-                    {lesson[mode === "guided" ? "story" : "challengeStory"]}
-                  </p>
-                  <div className="target-box">
-                    <span>
-                      {lesson.id === "basics"
-                        ? "本关目标 · 内容可以自由发挥"
-                        : "目标内容"}
-                    </span>
-                    <pre>{target}</pre>
-                  </div>
-                  {mode === "guided" ? (
-                    <div className="steps">
-                      {lesson.steps.map((item, index) => (
-                        <div
-                          key={item.title}
-                          className={`step ${index === step ? "current" : ""}`}
-                        >
-                          <button
-                            className="step-title"
-                            onClick={() => setStep(index)}
-                          >
-                            <span>{index + 1}</span>
-                            {item.title}
-                            <ChevronRight size={14} />
-                          </button>
-                          {index === step && (
-                            <div className="step-body">
-                              <p>{item.body}</p>
-                              <div className="command-example">
-                                <pre>{item.command}</pre>
-                                <button
-                                  aria-label="复制示例命令"
-                                  title="复制命令（不会自动执行）"
-                                  onClick={async () => {
-                                    await navigator.clipboard.writeText(
-                                      item.command,
-                                    );
-                                    setCopied(true);
-                                    setTimeout(() => setCopied(false), 1800);
-                                  }}
-                                >
-                                  {copied ? (
-                                    <Check size={13} />
-                                  ) : (
-                                    <Copy size={13} />
-                                  )}
-                                </button>
-                              </div>
-                              {index < lesson.steps.length - 1 && (
-                                <button
-                                  className="next-step"
-                                  onClick={() => setStep(index + 1)}
-                                >
-                                  阅读下一步
-                                  <ArrowRight size={13} />
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="challenge-note">
-                      <GraduationCap size={22} />
-                      <h3>这一次，你来决定步骤。</h3>
-                      <p>
-                        按目标完成操作，然后检查结果。需要帮助时可以逐级展开提示。
-                      </p>
-                    </div>
-                  )}
-                  <div className="hints">
-                    <button
-                      onClick={() => setHint((n) => Math.min(n + 1, 3))}
-                      disabled={hint === 3}
-                    >
-                      <Lightbulb size={15} />
-                      {hint === 0
-                        ? "卡住了？查看提示"
-                        : hint < 3
-                          ? "再给我一点提示"
-                          : "已展开全部提示"}
-                      <span>{hint}/3</span>
-                    </button>
-                    {lesson.hints.slice(0, hint).map((text, i) => (
-                      <div className="hint" key={text}>
-                        <b>{["思路", "相关命令", "完整示例"][i]}</b>
-                        <pre>{text}</pre>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="checks">
-                    <h4>
-                      完成标准{" "}
-                      <span>
-                        {state?.checks.filter((c) => c.done).length || 0}/
-                        {state?.checks.length || 0}
-                      </span>
-                    </h4>
-                    {state?.checks.map((c) => (
-                      <div key={c.label} className={c.done ? "done" : ""}>
-                        {c.done ? (
-                          <CheckCircle2 size={15} />
-                        ) : (
-                          <Circle size={15} />
-                        )}
-                        <span>
-                          {c.label}
-                          {c.detail && (
-                            <small className="check-detail">{c.detail}</small>
-                          )}
-                        </span>
-                      </div>
-                    ))}
-                    {state?.error && (
-                      <p className="check-error">{state.error}</p>
-                    )}
-                  </div>
-                </div>
-                <div className="task-footer">
-                  <button
-                    className="primary"
-                    disabled={busy || checkReport?.phase === "checking"}
-                    onClick={checkExercise}
-                  >
-                    {busy ? (
-                      <LoaderCircle size={16} className="spin" />
-                    ) : (
-                      <CheckCircle2 size={16} />
-                    )}
-                    检查练习结果
-                  </button>
-                  {state?.complete && (
-                    <div className="success-note">
-                      已完成！学习进度已保存。
-                      {mode === "guided" && (
-                        <button
-                          onClick={() =>
-                            confirmDiscard(() => begin(lesson, "challenge"))
-                          }
-                        >
-                          进入独立挑战 <ArrowRight size={12} />
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </section>
               <div className="workbench">
                 <div className="workbench-top">
                   <section className="editor-panel">
@@ -1087,13 +964,21 @@ function App() {
                               </option>
                             ))}
                           </select>
-                          <button disabled={!dirty || busy} onClick={save}>
-                            <Save size={13} />
+                          <button
+                            className="primary save-button"
+                            disabled={!dirty || busy}
+                            onClick={save}
+                          >
+                            <Save size={16} />
                             保存
                           </button>
                         </div>
                         <div className="code-editor">
-                          <div className="line-numbers" aria-hidden="true">
+                          <div
+                            className="line-numbers"
+                            aria-hidden="true"
+                            ref={gutter}
+                          >
                             {content.split("\n").map((_, i) => (
                               <div key={i}>{i + 1}</div>
                             ))}
@@ -1102,6 +987,12 @@ function App() {
                             aria-label="文件内容"
                             disabled={busy}
                             spellCheck="false"
+                            wrap="off"
+                            onScroll={(e) => {
+                              if (gutter.current)
+                                gutter.current.scrollTop =
+                                  e.currentTarget.scrollTop;
+                            }}
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
                             onKeyDown={(e) => {
@@ -1126,32 +1017,221 @@ function App() {
                       </div>
                     )}
                   </section>
-                  <section className="state-panel">
-                    <div className="panel-title">
-                      <button
-                        className={
-                          tab === "state" ? "text-tab active" : "text-tab"
-                        }
-                        onClick={() => setTab("state")}
-                      >
-                        <Layers size={14} />
-                        仓库状态
-                      </button>
-                      <button
-                        className={
-                          tab === "graph" ? "text-tab active" : "text-tab"
-                        }
-                        onClick={() => setTab("graph")}
-                      >
-                        <GitBranch size={14} />
-                        提交图
-                      </button>
+                </div>
+                <div
+                  className={`feedback-bar ${state?.conflicts.length ? "warning" : ""} ${state?.complete ? "complete" : ""}`}
+                >
+                  <Lightbulb size={17} />
+                  <span>{feedback}</span>
+                </div>
+                {state ? (
+                  <TerminalPane
+                    sessionKey={sessionKey}
+                    onChange={scheduleRefresh}
+                    onResult={(code) => {
+                      lastExit.current = code;
+                      scheduleRefresh();
+                    }}
+                  />
+                ) : (
+                  <div className="terminal-loading">
+                    练习仓库尚未就绪。请点击「重新开始」恢复场景。
+                  </div>
+                )}
+                <div className="workbench-footer">
+                  <span>
+                    <ShieldCheck size={13} />
+                    本练习在独立环境中运行，放心尝试
+                  </span>
+                  <span>仓库状态每 3 秒自动更新</span>
+                </div>
+              </div>
+              <aside className="task-panel" aria-label="练习详情">
+                <div className="inspector-tabs" aria-label="练习详情视图">
+                  {[
+                    ["task", "本次任务", BookOpen],
+                    ["state", "仓库状态", Layers],
+                    ["graph", "提交图", GitBranch],
+                  ].map(([value, label, Icon]) => (
+                    <button
+                      key={value}
+                      className={tab === value ? "active" : ""}
+                      aria-pressed={tab === value}
+                      onClick={() => setTab(value)}
+                    >
+                      <Icon size={15} />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className="task-scroll" hidden={tab !== "task"}>
+                  <h2 className="inspector-heading">本次任务</h2>
+                  <details
+                    className="task-context"
+                    open={mode === "guided"}
+                    key={`${lesson.id}-${mode}`}
+                  >
+                    <summary>任务背景</summary>
+                    <p className="story">
+                      {lesson[mode === "guided" ? "story" : "challengeStory"]}
+                    </p>
+                  </details>
+                  <div className="target-box">
+                    <span>
+                      {lesson.id === "basics"
+                        ? "本关目标 · 内容可以自由发挥"
+                        : "目标内容"}
+                    </span>
+                    <pre>{target}</pre>
+                  </div>
+                  {mode === "guided" ? (
+                    <details className="guided-details" open>
+                      <summary>
+                        操作引导 <span>{lesson.steps.length} 个步骤</span>
+                      </summary>
+                      <div className="steps">
+                        {lesson.steps.map((item, index) => (
+                          <div
+                            key={item.title}
+                            className={`step ${index === step ? "current" : ""}`}
+                          >
+                            <button
+                              className="step-title"
+                              onClick={() => setStep(index)}
+                            >
+                              <span>{index + 1}</span>
+                              {item.title}
+                              <ChevronRight size={14} />
+                            </button>
+                            {index === step && (
+                              <div className="step-body">
+                                <p>{item.body}</p>
+                                <div className="command-example">
+                                  <pre>{item.command}</pre>
+                                  <button
+                                    aria-label="复制示例命令"
+                                    title="复制命令（不会自动执行）"
+                                    onClick={async () => {
+                                      await navigator.clipboard.writeText(
+                                        item.command,
+                                      );
+                                      setCopied(true);
+                                      setTimeout(() => setCopied(false), 1800);
+                                    }}
+                                  >
+                                    {copied ? (
+                                      <Check size={13} />
+                                    ) : (
+                                      <Copy size={13} />
+                                    )}
+                                  </button>
+                                </div>
+                                {index < lesson.steps.length - 1 && (
+                                  <button
+                                    className="next-step"
+                                    onClick={() => setStep(index + 1)}
+                                  >
+                                    阅读下一步
+                                    <ArrowRight size={13} />
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  ) : null}
+                  <div className="hints">
+                    <button
+                      onClick={() => setHint((n) => Math.min(n + 1, 3))}
+                      disabled={hint === 3}
+                    >
+                      <Lightbulb size={15} />
+                      {hint === 0
+                        ? "卡住了？查看提示"
+                        : hint < 3
+                          ? "再给我一点提示"
+                          : "已展开全部提示"}
+                      <span>{hint}/3</span>
+                    </button>
+                    {lesson.hints.slice(0, hint).map((text, i) => (
+                      <div className="hint" key={text}>
+                        <b>{["思路", "相关命令", "完整示例"][i]}</b>
+                        <pre>{text}</pre>
+                      </div>
+                    ))}
+                  </div>
+                  <section className="checks" aria-label="当前检查结果">
+                    <h2 className="inspector-heading">检查结果</h2>
+                    <div
+                      className={`result-summary ${state?.complete ? "passed" : ""}`}
+                    >
+                      {state?.complete ? (
+                        <CheckCircle2 size={30} />
+                      ) : (
+                        <Circle size={28} />
+                      )}
+                      <div>
+                        <strong>
+                          {state?.complete ? "本关已完成" : "等待完成练习"}
+                        </strong>
+                        <small>
+                          {state?.checks.filter((c) => c.done).length || 0} /{" "}
+                          {state?.checks.length || 0} 条件通过
+                        </small>
+                      </div>
+                    </div>
+                    {state?.checks.map((c) => (
+                      <div key={c.label} className={c.done ? "done" : ""}>
+                        {c.done ? (
+                          <CheckCircle2 size={15} />
+                        ) : (
+                          <Circle size={15} />
+                        )}
+                        <span>
+                          {c.label}
+                          {c.detail && (
+                            <small className="check-detail">{c.detail}</small>
+                          )}
+                        </span>
+                      </div>
+                    ))}
+                    {state?.error && (
+                      <p className="check-error">{state.error}</p>
+                    )}
+                    {state && (
+                      <div className="inspector-evidence">
+                        <h3>仓库记录</h3>
+                        <p>
+                          <GitBranch size={15} />
+                          <code>
+                            {state.branch || "分离 HEAD"} · {state.head}
+                          </code>
+                        </p>
+                        <p>
+                          <Clock3 size={15} />
+                          最近更新 {updatedAt}
+                        </p>
+                      </div>
+                    )}
+                  </section>
+                </div>
+                {tab !== "task" && (
+                  <section
+                    className="state-panel"
+                    aria-label={tab === "state" ? "仓库状态详情" : "提交历史"}
+                  >
+                    <div className="state-toolbar">
+                      <span>
+                        {tab === "state" ? "实时仓库状态" : "真实提交历史"}
+                      </span>
                       <button
                         className="icon-button"
-                        title="刷新仓库状态"
+                        aria-label="刷新仓库状态"
                         onClick={refresh}
                       >
-                        <RefreshCw size={13} />
+                        <RefreshCw size={15} />
                       </button>
                     </div>
                     <div className="state-content">
@@ -1224,35 +1304,50 @@ function App() {
                       )}
                     </div>
                   </section>
-                </div>
-                <div
-                  className={`feedback-bar ${state?.conflicts.length ? "warning" : ""} ${state?.complete ? "complete" : ""}`}
-                >
-                  <Lightbulb size={17} />
-                  <span>{feedback}</span>
-                </div>
-                {state ? (
-                  <TerminalPane
-                    sessionKey={sessionKey}
-                    onChange={scheduleRefresh}
-                    onResult={(code) => {
-                      lastExit.current = code;
-                      scheduleRefresh();
-                    }}
-                  />
-                ) : (
-                  <div className="terminal-loading">
-                    练习仓库尚未就绪。请点击「重新开始」恢复场景。
-                  </div>
                 )}
-                <div className="workbench-footer">
-                  <span>
-                    <ShieldCheck size={13} />
-                    独立 Linux 环境 · 无宿主机文件挂载
-                  </span>
-                  <span>仓库状态每 3 秒自动更新</span>
+                <div className="task-footer">
+                  {dirty && (
+                    <p className="unsaved-note">
+                      编辑尚未保存，检查以仓库文件为准。
+                    </p>
+                  )}
+                  <div className="task-footer-actions">
+                    <button
+                      className={
+                        state?.complete && !dirty ? "secondary" : "primary"
+                      }
+                      disabled={
+                        busy || checkReport?.phase === "checking" || !state
+                      }
+                      onClick={checkExercise}
+                    >
+                      {checkReport?.phase === "checking" ? (
+                        <LoaderCircle size={16} className="spin" />
+                      ) : (
+                        <CheckCircle2 size={16} />
+                      )}
+                      检查练习结果
+                    </button>
+                    {state?.complete && !dirty && (
+                      <button
+                        className="primary next-lesson"
+                        disabled={busy}
+                        onClick={goNext}
+                        aria-label={nextLabel}
+                        title={nextLabel}
+                      >
+                        下一关 <ArrowRight size={16} />
+                      </button>
+                    )}
+                  </div>
+                  {state?.complete && (
+                    <div className="success-note">已完成！学习进度已保存。</div>
+                  )}
+                  {state?.complete && !dirty && (
+                    <div className="next-lesson-caption">{nextLabel}</div>
+                  )}
                 </div>
-              </div>
+              </aside>
             </div>
           </main>
         )}
@@ -1266,27 +1361,8 @@ function App() {
           report={checkReport}
           onClose={closeCheck}
           onRetry={checkExercise}
-          nextLabel={
-            mode === "guided"
-              ? "进入独立挑战"
-              : lessons[lessons.indexOf(lesson) + 1]
-                ? `下一关：${lessons[lessons.indexOf(lesson) + 1].title}`
-                : "返回学习路径"
-          }
-          onNext={() => {
-            closeCheck();
-            confirmDiscard(() => {
-              if (mode === "guided") begin(lesson, "challenge");
-              else {
-                const nextLesson = lessons[lessons.indexOf(lesson) + 1];
-                if (nextLesson) begin(nextLesson, "guided");
-                else {
-                  api?.disconnect();
-                  setView("home");
-                }
-              }
-            });
-          }}
+          nextLabel={nextLabel}
+          onNext={goNext}
         />
       )}
       {setup && (

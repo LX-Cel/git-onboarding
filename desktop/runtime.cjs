@@ -4,7 +4,7 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 const os = require("node:os");
 const { APPLY_COURSES } = require("./course-update.cjs");
-const COURSE_VERSION = require("../package.json").version;
+const COURSE_VERSION = require("../package.json").courseVersion;
 
 const VALID_LESSONS = new Set(["basics", "collab", "recovery"]);
 function validateSelection(value) {

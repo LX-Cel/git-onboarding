@@ -81,7 +81,7 @@ async function createWindow() {
     minWidth: 1080,
     minHeight: 720,
     title: "Git Onboarding",
-    backgroundColor: "#f5f6f8",
+    backgroundColor: "#f2f6fc",
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),

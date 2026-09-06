@@ -8,7 +8,7 @@ import tarfile
 
 ROOT = Path(__file__).resolve().parents[1]
 res = ROOT / 'resources'
-version = json.loads((ROOT / 'package.json').read_text(encoding='utf-8'))['version']
+version = json.loads((ROOT / 'package.json').read_text(encoding='utf-8'))['courseVersion']
 manifest = json.loads((res / 'runtime-manifest.json').read_text(encoding='utf-8'))
 image = res / 'runtime.tar'
 with image.open('rb') as stream:

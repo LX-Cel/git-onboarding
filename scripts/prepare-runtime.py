@@ -73,7 +73,7 @@ def main():
     if image.exists():
         image.unlink()
     run(['wsl.exe', '--export', name, image])
-    version = json.loads((ROOT / 'package.json').read_text(encoding='utf-8'))['version']
+    version = json.loads((ROOT / 'package.json').read_text(encoding='utf-8'))['courseVersion']
     manifest = {'schema': 1, 'version': version, 'architecture': 'x64', 'source': filename,
                 'sourceSha256': expected, 'sha256': hashlib.file_digest(image.open('rb'), 'sha256').hexdigest(),
                 'git': result['git']}

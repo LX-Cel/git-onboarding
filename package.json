@@ -1,6 +1,7 @@
 {
   "name": "git-onboarding",
-  "version": "0.1.1",
+  "version": "0.1.2",
+  "courseVersion": "0.1.1",
   "private": true,
   "description": "在真实 Git 环境中练习，从第一次提交到团队协作与恢复。",
   "author": "LX-Cel",

@@ -7,6 +7,32 @@ const {
   isWslMissing,
 } = require("../desktop/runtime.cjs");
 const { validScale } = require("../desktop/display.cjs");
+test(
+  "desktop-only upgrades reuse compatible courses but still reject old courses",
+  {
+    skip: process.platform !== "win32" || process.arch !== "x64",
+  },
+  async () => {
+    const runtime = new Runtime("unused", "unused");
+    runtime.owner = { distro: "test-owned-distro" };
+    runtime.loadOwner = async () => runtime.owner;
+    runtime.registered = async () => [runtime.owner.distro];
+    let courseVersion = "0.1.1";
+    runtime.call = async () => ({
+      uid: 1000,
+      courseVersion,
+      git: "test Git",
+      windowsMount: false,
+      interop: false,
+      initVisible: false,
+    });
+    assert.equal((await runtime.status()).ready, true);
+    courseVersion = "0.1.0";
+    const outdated = await runtime.status();
+    assert.equal(outdated.ready, false);
+    assert.equal(outdated.updateRequired, true);
+  },
+);
 test("display scaling is bounded and supports up to 200%", () => {
   for (const value of [1, 1.25, 1.5, 2]) assert.equal(validScale(value), value);
   for (const value of [0, -1, 99, "2", NaN])

@@ -46,9 +46,13 @@ test("Windows desktop: initialize, learn, edit, commit, reset confirmation and r
     await expect(page.getByRole("dialog")).toBeHidden({ timeout: 60000 });
     await page.getByRole("button", { name: "开始练习", exact: true }).click();
   }
+  // Resume may open any unfinished lesson in a reused test environment.
+  await expect(page.getByRole("textbox", { name: "文件内容" })).toBeEditable();
+  await page.locator(".unit-nav button").first().click();
   await expect(
     page.getByRole("heading", { name: "你的第一次提交", exact: true }),
   ).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "文件内容" })).toBeEditable();
   // Always construct a known scenario through the public UI and its reset confirmation.
   await page.getByRole("button", { name: "重新开始", exact: true }).click();
   await page
@@ -69,7 +73,9 @@ test("Windows desktop: initialize, learn, edit, commit, reset confirmation and r
   await expect(
     page.getByText("文件已保存到真实工作区。保存文件不会自动暂存或提交。"),
   ).toBeVisible();
+  await page.getByRole("button", { name: "仓库状态", exact: true }).click();
   await expect(page.locator(".state-zone").first()).toContainText("README.md");
+  await page.getByRole("button", { name: "本次任务", exact: true }).click();
   await page.screenshot({ path: "test-results/workbench.png", fullPage: true });
   await page.locator(".xterm-helper-textarea").focus();
   await page.keyboard.type("git definitely-not-a-command");
@@ -181,6 +187,44 @@ test("Windows desktop: initialize, learn, edit, commit, reset confirmation and r
     Buffer.from(largeText.split(",")[1], "base64"),
   );
   await page.getByRole("combobox", { name: "显示比例" }).selectOption("1");
+  // The Fluent inspector must reflow without covering the real editor or terminal.
+  for (const [width, height] of [
+    [1536, 1000],
+    [1280, 800],
+    [1080, 720],
+  ]) {
+    await app.evaluate(
+      ({ BrowserWindow }, size) => {
+        BrowserWindow.getAllWindows()[0].setSize(...size);
+      },
+      [width, height],
+    );
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const editor = document
+            .querySelector(".editor-panel")
+            .getBoundingClientRect();
+          const terminal = document
+            .querySelector(".terminal-panel")
+            .getBoundingClientRect();
+          const inspector = document
+            .querySelector(".task-panel")
+            .getBoundingClientRect();
+          return (
+            document.documentElement.scrollWidth <= innerWidth + 1 &&
+            terminal.width > 300 &&
+            terminal.height >= 230 &&
+            terminal.top >= editor.bottom &&
+            (inspector.left >= editor.right || inspector.top >= terminal.bottom)
+          );
+        }),
+      )
+      .toBe(true);
+  }
+  await app.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows()[0].setSize(1536, 1000),
+  );
   // Completed guided and challenge checks must both offer a working next step.
   await page.getByRole("button", { name: "检查练习结果", exact: true }).click();
   await page
@@ -226,9 +270,17 @@ test("Windows desktop: initialize, learn, edit, commit, reset confirmation and r
   await expect(
     page.getByText("已完成！学习进度已保存。", { exact: false }),
   ).toBeVisible({ timeout: 20000 });
+  await page.getByRole("button", { name: "本次任务", exact: true }).click();
+  await page.screenshot({
+    path: "test-results/fluent-challenge.png",
+    fullPage: true,
+  });
   await page.getByRole("button", { name: "检查练习结果", exact: true }).click();
+  await expect(page.getByRole("dialog")).toContainText("本关已完成");
+  await page.getByRole("button", { name: "关闭检查结果" }).click();
+  // The J design's inline next action must work as well as the modal action.
   await page
-    .getByRole("dialog")
+    .locator(".task-footer")
     .getByRole("button", { name: "下一关：和队友一起开发" })
     .click();
   await expect(

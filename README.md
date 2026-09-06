@@ -2,7 +2,7 @@
 
 一个面向 Git 新手的中文桌面练习应用。从第一次提交，到分支协作、冲突处理和误操作恢复，在真实 Git 仓库里练习。
 
-当前为 **Windows x64 私有试用版 0.1.1**，见 [修复版下载与说明](https://github.com/LX-Cel/git-onboarding/releases/tag/v0.1.1)。项目尚未授予开源许可证；成熟后再决定公开与许可证。
+当前代码为 **Windows x64 私有试用版 0.1.2**，采用选定的 J 版 Fluent 2 视觉方向。本地安装包为 `release/Git-Onboarding-0.1.2-Setup.exe`；已发布的 0.1.1 仍可在 [GitHub 下载](https://github.com/LX-Cel/git-onboarding/releases/tag/v0.1.1)。项目尚未授予开源许可证；成熟后再决定公开与许可证。
 
 ![学习路径](docs/screenshots/home.png)
 
@@ -10,13 +10,15 @@
 
 ## 使用
 
-1. 安装 `Git-Onboarding-0.1.1-Setup.exe`，打开 Git Onboarding。
+1. 安装 `Git-Onboarding-0.1.2-Setup.exe`，打开 Git Onboarding。
 2. 点击「准备练习环境」。应用验证并导入内置的专用 Linux 镜像；不要求预装 Git 或 Docker。
 3. 若尚未安装 WSL，应用请求管理员授权安装系统组件，提示重启后继续。需要支持 WSL 2 的 Windows x64 和已启用的硬件虚拟化。
 4. 选择引导练习或直接挑战。文件保存、Git 暂存与 Git 提交是三个不同操作。
 5. 进度自动保存在本机。练习仓库会保留；只有确认「重新开始」才重建当前场景。
 
 0.1.1 的入门判题允许自由编写 README 内容，不再要求照抄示例句子。正文、编辑器与终端默认 16px，右上角可选择并保存显示比例。旧环境升级时点击「保留练习并更新」，只替换课程程序，保留练习文件、提交历史和进度。
+
+0.1.2 将工作台改为浅色导航、上方编辑器、下方完整终端和右侧详情面板。右侧切换任务、仓库状态与提交图；手动检查显示本次仓库记录、完成条件和未保存提醒，通过后可以进入独立挑战或下一关。安装到原应用目录即可更新桌面程序；0.1.1 的练习镜像无需重新初始化。任务背景与操作引导可折叠，200% 显示比例时布局重排。
 
 练习环境在初始化完成后不连接外部网络。远端和队友都位于练习环境内，使用真实 Git 仓库；不需要 GitHub 账号。本项目源码的 GitHub 托管与练习远端是两件不同的事。
 
@@ -54,9 +56,11 @@ npm start
 npm run package
 ```
 
-生成 `release/Git-Onboarding-0.1.1-Setup.exe`。打包前会验证镜像 SHA256、课程版本及课程更新包与源文件的一致性，镜像不写入 Git。安装包内含镜像，不要求用户安装构建工具。
+生成 `release/Git-Onboarding-0.1.2-Setup.exe`。打包前会验证镜像 SHA256、课程版本及课程更新包与源文件的一致性，镜像不写入 Git。安装包内含镜像，不要求用户安装构建工具。
 
 仅修改课程代码时，可用 `npm run runtime:refresh` 更新已校验的本地镜像及课程更新包，无需重新下载 Linux 软件包。跨版本保留数据测试为 `npm run test:upgrade`，需要先将 v0.1.0 发布附件的 `runtime.tar` 放在 `.local/runtime-v0.1.0.tar`。
+
+桌面版本使用 `package.json.version`；课程兼容版本使用 `package.json.courseVersion`，并与 `runtime/engine.py` 的 `COURSE_VERSION` 保持一致。仅界面改版不提升课程版本，不重建用户练习。课程代码有变化时同步提升课程版本并刷新镜像，打包会检查版本、哈希和课程源文件一致性。
 
 测试安装后的真实应用（包含空格的路径也支持）：
 
