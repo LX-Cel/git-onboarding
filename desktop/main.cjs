@@ -3,6 +3,7 @@ const path = require("node:path");
 const fs = require("node:fs/promises");
 const { pathToFileURL } = require("node:url");
 const { Runtime, validateSelection } = require("./runtime.cjs");
+const { SCALES, validScale } = require("./display.cjs");
 
 if (process.env.GIT_ONBOARDING_DATA_DIR)
   app.setPath("userData", path.resolve(process.env.GIT_ONBOARDING_DATA_DIR));
@@ -11,6 +12,18 @@ if (!locked) app.quit();
 let window, runtime, selected;
 let queue = Promise.resolve();
 let progress = {};
+let displayScale = 1;
+async function setDisplayScale(value) {
+  displayScale = validScale(value);
+  window.webContents.setZoomFactor(displayScale);
+  window.webContents.send("display:changed", displayScale);
+  await fs.mkdir(app.getPath("userData"), { recursive: true });
+  await fs.writeFile(
+    path.join(app.getPath("userData"), "display.json"),
+    JSON.stringify({ scale: displayScale }),
+  );
+  return displayScale;
+}
 const entry = path.join(__dirname, "../dist/index.html");
 const trustedURL = pathToFileURL(entry).href;
 
@@ -80,6 +93,26 @@ async function createWindow() {
   });
   window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   window.webContents.on("will-navigate", (event) => event.preventDefault());
+  window.webContents.on("before-input-event", (event, input) => {
+    if (
+      input.type !== "keyDown" ||
+      !(input.control || input.meta) ||
+      !["+", "=", "-", "0"].includes(input.key)
+    )
+      return;
+    event.preventDefault();
+    const index = SCALES.indexOf(displayScale);
+    const next =
+      input.key === "0"
+        ? 1
+        : SCALES[
+            Math.max(
+              0,
+              Math.min(SCALES.length - 1, index + (input.key === "-" ? -1 : 1)),
+            )
+          ];
+    serial(() => setDisplayScale(next)).catch(() => {});
+  });
   window.webContents.on("will-prevent-unload", (event) => {
     const choice = dialog.showMessageBoxSync(window, {
       type: "question",
@@ -94,6 +127,7 @@ async function createWindow() {
   });
   window.on("closed", () => runtime.stopTerminal());
   await window.loadFile(entry);
+  window.webContents.setZoomFactor(displayScale);
 }
 if (locked)
   app.whenReady().then(async () => {
@@ -113,6 +147,18 @@ if (locked)
     } catch {
       progress = {};
     }
+    try {
+      displayScale = validScale(
+        JSON.parse(
+          await fs.readFile(
+            path.join(app.getPath("userData"), "display.json"),
+            "utf8",
+          ),
+        ).scale,
+      );
+    } catch {
+      displayScale = 1;
+    }
     session.defaultSession.setPermissionRequestHandler(
       (_webContents, _permission, callback) => callback(false),
     );
@@ -122,6 +168,8 @@ if (locked)
       runtime.initialize((log) => window.webContents.send("runtime:log", log)),
     );
     handle("progress:read", () => progress);
+    handle("display:read", () => displayScale);
+    handle("display:set", (value) => setDisplayScale(value));
     handle("lesson:begin", async (value) => {
       const next = validateSelection(value);
       runtime.stopTerminal();

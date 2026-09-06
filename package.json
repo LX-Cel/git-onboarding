@@ -1,6 +1,6 @@
 {
   "name": "git-onboarding",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "在真实 Git 环境中练习，从第一次提交到团队协作与恢复。",
   "author": "LX-Cel",
@@ -13,8 +13,10 @@
     "start": "npm run build && electron .",
     "test": "node --test tests/*.test.cjs",
     "test:runtime": "node scripts/test-runtime.cjs",
+    "test:upgrade": "node scripts/test-upgrade.cjs",
     "test:ui": "playwright test",
     "runtime:build": "python scripts/prepare-runtime.py",
+    "runtime:refresh": "python scripts/refresh-courses.py",
     "package": "npm run build && node scripts/check-runtime.cjs && electron-builder --win nsis --x64",
     "format": "prettier --write src desktop tests/*.cjs scripts/*.cjs *.cjs *.js *.json index.html docs/*.md README.md .github/workflows/*.yml",
     "format:check": "prettier --check src desktop tests/*.cjs scripts/*.cjs *.cjs *.js *.json index.html docs/*.md README.md .github/workflows/*.yml"
@@ -54,6 +56,10 @@
       {
         "from": "resources/runtime-manifest.json",
         "to": "runtime-manifest.json"
+      },
+      {
+        "from": "resources/course-update.json",
+        "to": "course-update.json"
       }
     ],
     "win": {

@@ -1,6 +1,43 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { decode, validateSelection } = require("../desktop/runtime.cjs");
+const {
+  Runtime,
+  decode,
+  validateSelection,
+  isWslMissing,
+} = require("../desktop/runtime.cjs");
+const { validScale } = require("../desktop/display.cjs");
+test("display scaling is bounded and supports up to 200%", () => {
+  for (const value of [1, 1.25, 1.5, 2]) assert.equal(validScale(value), value);
+  for (const value of [0, -1, 99, "2", NaN])
+    assert.throws(() => validScale(value));
+});
+test("WSL timeouts and service failures never trigger component installation", async () => {
+  for (const message of [
+    "操作超时",
+    "WSL service unavailable",
+    "Access denied",
+  ]) {
+    const failure = new Error(message);
+    assert.equal(isWslMissing(failure), false);
+    if (process.platform === "win32" && process.arch === "x64") {
+      const runtime = new Runtime("unused", "unused");
+      runtime.registered = async () => {
+        throw failure;
+      };
+      await assert.rejects(runtime.initialize(), (error) => error === failure);
+      assert.equal(runtime.initializing, false);
+    }
+  }
+  assert.equal(
+    isWslMissing({ code: "ENOENT", message: "missing executable" }),
+    true,
+  );
+  assert.equal(
+    isWslMissing(new Error("Wsl/WSL_E_WSL_OPTIONAL_COMPONENT_REQUIRED")),
+    true,
+  );
+});
 
 test("selection rejects unknown lessons, modes and traversal", () => {
   for (const value of [

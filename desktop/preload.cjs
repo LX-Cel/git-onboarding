@@ -6,6 +6,9 @@ const subscribe = (channel, callback) => {
   return () => ipcRenderer.removeListener(channel, listener);
 };
 contextBridge.exposeInMainWorld("gitLab", {
+  display: () => invoke("display:read"),
+  setDisplay: (value) => invoke("display:set", value),
+  onDisplay: (callback) => subscribe("display:changed", callback),
   status: () => invoke("runtime:status"),
   initialize: () => invoke("runtime:initialize"),
   begin: (value) => invoke("lesson:begin", value),

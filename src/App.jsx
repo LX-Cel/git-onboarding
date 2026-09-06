@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import lessons from "../runtime/lessons.json";
 import { layoutGraph } from "./graph.js";
+import { version } from "../package.json";
 
 const api = window.gitLab;
 const colors = ["#19a887", "#6881e7", "#e8a64e", "#bf70d1", "#4aa5c9"];
@@ -104,9 +105,9 @@ function TerminalPane({ sessionKey, onChange, onResult }) {
     const terminal = new XTerminal({
       cursorBlink: true,
       cursorStyle: "bar",
-      fontSize: 13,
-      fontFamily: "Cascadia Code, Consolas, monospace",
-      lineHeight: 1.35,
+      fontSize: 16,
+      fontFamily: 'Cascadia Code, Consolas, "Microsoft YaHei", monospace',
+      lineHeight: 1.5,
       scrollback: 3000,
       theme: {
         background: "#131d2c",
@@ -114,6 +115,8 @@ function TerminalPane({ sessionKey, onChange, onResult }) {
         cursor: "#7de2bc",
         selectionBackground: "#365268",
         black: "#131d2c",
+        red: "#ff8891",
+        brightRed: "#ffadb0",
         green: "#7de2bc",
         brightGreen: "#a7efce",
         blue: "#82aaff",
@@ -199,6 +202,7 @@ function TerminalPane({ sessionKey, onChange, onResult }) {
 }
 
 function App() {
+  const [displayScale, setDisplayScale] = useState(1);
   const [view, setView] = useState("home");
   const [runtime, setRuntime] = useState(null);
   const [progress, setProgress] = useState({});
@@ -257,7 +261,13 @@ function App() {
       .then(setRuntime)
       .catch((e) => setError(e.message));
     api.progress().then(setProgress);
-    return api.onSetup(setSetupLog);
+    api.display().then(setDisplayScale);
+    const offSetup = api.onSetup(setSetupLog);
+    const offDisplay = api.onDisplay(setDisplayScale);
+    return () => {
+      offSetup();
+      offDisplay();
+    };
   }, []);
 
   const applyState = useCallback((next) => {
@@ -520,7 +530,7 @@ function App() {
               className={runtime?.ready ? "status-dot ready" : "status-dot"}
             />
             {runtime?.ready ? "本地练习环境已就绪" : "等待环境初始化"}
-            <span>v0.1</span>
+            <span>v{version}</span>
           </div>
         </div>
       </aside>
@@ -532,6 +542,27 @@ function App() {
             <strong>{view === "home" ? "学习路径" : lesson.title}</strong>
           </div>
           <div className="topbar-right">
+            <label className="display-scale">
+              字号
+              <select
+                aria-label="显示比例"
+                value={displayScale}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (api)
+                    api
+                      .setDisplay(value)
+                      .then(setDisplayScale)
+                      .catch((e) => setError(e.message));
+                }}
+              >
+                {[1, 1.25, 1.5, 2].map((scale) => (
+                  <option key={scale} value={scale}>
+                    {scale * 100}%
+                  </option>
+                ))}
+              </select>
+            </label>
             <span>
               <Monitor size={14} /> 本地运行
             </span>
@@ -599,7 +630,11 @@ function App() {
                   ) : (
                     <Play size={16} fill="currentColor" />
                   )}
-                  {runtime?.ready ? "开始练习" : "准备练习环境"}
+                  {runtime?.ready
+                    ? "开始练习"
+                    : runtime?.updateRequired
+                      ? "更新练习环境"
+                      : "准备练习环境"}
                   <ArrowRight size={17} />
                 </button>
                 <div className="hero-foot">
@@ -810,7 +845,11 @@ function App() {
                     {lesson[mode === "guided" ? "story" : "challengeStory"]}
                   </p>
                   <div className="target-box">
-                    <span>目标内容</span>
+                    <span>
+                      {lesson.id === "basics"
+                        ? "本关目标 · 内容可以自由发挥"
+                        : "目标内容"}
+                    </span>
                     <pre>{target}</pre>
                   </div>
                   {mode === "guided" ? (
@@ -909,7 +948,12 @@ function App() {
                         ) : (
                           <Circle size={15} />
                         )}
-                        <span>{c.label}</span>
+                        <span>
+                          {c.label}
+                          {c.detail && (
+                            <small className="check-detail">{c.detail}</small>
+                          )}
+                        </span>
                       </div>
                     ))}
                     {state?.error && (
@@ -1179,8 +1223,16 @@ function App() {
               <Terminal size={28} />
             </div>
             <div className="eyebrow">FIRST-TIME SETUP</div>
-            <h2 id="setup-title">准备你的 Git 练习空间</h2>
-            <p>只需初始化一次，之后打开应用就能继续练习。</p>
+            <h2 id="setup-title">
+              {runtime?.updateRequired
+                ? "更新课程，保留你的练习"
+                : "准备你的 Git 练习空间"}
+            </h2>
+            <p>
+              {runtime?.updateRequired
+                ? runtime.message
+                : "只需初始化一次，之后打开应用就能继续练习。"}
+            </p>
             <div className="setup-items">
               <div>
                 <CheckCircle2 size={19} />
@@ -1209,6 +1261,11 @@ function App() {
                 {setupLog}
               </div>
             )}
+            {error && (
+              <div className="setup-log setup-error" role="alert">
+                {error}
+              </div>
+            )}
             {runtime?.preview && (
               <div className="setup-log">
                 这是浏览器界面预览。真实终端与初始化功能需要通过 Windows
@@ -1229,7 +1286,9 @@ function App() {
                 ? "正在初始化…"
                 : runtime?.restartRequired
                   ? "重启后继续检查"
-                  : "初始化练习环境"}
+                  : runtime?.updateRequired
+                    ? "保留练习并更新"
+                    : "初始化练习环境"}
             </button>
             <small className="setup-foot">
               练习终端以普通用户运行。首次安装系统组件可能需要联网。

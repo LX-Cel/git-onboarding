@@ -73,12 +73,14 @@ def main():
     if image.exists():
         image.unlink()
     run(['wsl.exe', '--export', name, image])
-    manifest = {'schema': 1, 'version': '0.1.0', 'architecture': 'x64', 'source': filename,
+    version = json.loads((ROOT / 'package.json').read_text(encoding='utf-8'))['version']
+    manifest = {'schema': 1, 'version': version, 'architecture': 'x64', 'source': filename,
                 'sourceSha256': expected, 'sha256': hashlib.file_digest(image.open('rb'), 'sha256').hexdigest(),
                 'git': result['git']}
     (RES / 'runtime-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     # Only the UUID distribution imported by this invocation is removed, after successful export.
     run(['wsl.exe', '--unregister', name])
+    run([__import__('sys').executable, ROOT / 'scripts/refresh-courses.py'])
     print('Runtime ready:', image, flush=True)
 
 if __name__ == '__main__':

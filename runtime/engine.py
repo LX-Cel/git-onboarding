@@ -8,6 +8,7 @@ import subprocess
 import sys
 
 ROOT = Path('/home/student/labs')
+COURSE_VERSION = '0.1.1'
 LESSONS = json.loads(Path(__file__).with_name('lessons.json').read_text())
 IDS = {lesson['id'] for lesson in LESSONS}
 SAFE_ENV = {**os.environ, 'GIT_TERMINAL_PROMPT': '0', 'GIT_CONFIG_NOSYSTEM': '1',
@@ -144,9 +145,16 @@ def assess(repo, base, lesson, mode):
     clean = not status
     target = spec['target' if mode == 'guided' else 'challengeTarget']
     if lesson == 'basics':
-        head_ok = target in text_at(repo, 'HEAD', 'README.md')
-        changed = git(repo, 'rev-parse', 'HEAD') != record['initial']
-        checks = [('目标句子已进入提交', head_ok and changed), ('工作区与暂存区干净', clean)]
+        original = text_at(repo, record['initial'], 'README.md').strip()
+        committed = text_at(repo, 'HEAD', 'README.md').strip()
+        changed = bool(committed) and committed != original and ancestor(repo, record['initial'], 'HEAD')
+        return [
+            {'label': 'README 修改已进入提交', 'done': changed,
+             'detail': '已在提交中找到你的 README 修改，内容不必照抄示例。' if changed else
+                       '请修改 README.md 的正文并保存，再暂存、提交。只修改提交说明或创建空提交不算完成。'},
+            {'label': '工作区与暂存区干净', 'done': clean,
+             'detail': '没有尚未提交的文件修改。' if clean else '还有文件修改未提交，运行 git status 查看它们位于工作区还是暂存区。'}
+        ]
     elif lesson == 'collab':
         feature = git(repo, 'rev-parse', '--verify', 'refs/heads/feature/welcome', check=False)
         main = git(repo, 'rev-parse', '--verify', 'refs/heads/main', check=False)
@@ -222,7 +230,7 @@ def dispatch(request):
     action = request.get('action')
     lesson, mode = request.get('lesson'), request.get('mode', 'guided')
     if action == 'probe':
-        return {'uid': os.getuid(), 'git': subprocess.check_output(['git', '--version'], text=True).strip(),
+        return {'courseVersion': COURSE_VERSION, 'uid': os.getuid(), 'git': subprocess.check_output(['git', '--version'], text=True).strip(),
                 'windowsMount': Path('/mnt/c').exists(), 'interop': bool(os.environ.get('WSL_INTEROP')),
                 'initVisible': Path('/init').exists()}
     base, repo = location(lesson, mode)

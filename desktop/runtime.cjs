@@ -3,6 +3,8 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const os = require("node:os");
+const { APPLY_COURSES } = require("./course-update.cjs");
+const COURSE_VERSION = require("../package.json").version;
 
 const VALID_LESSONS = new Set(["basics", "collab", "recovery"]);
 function validateSelection(value) {
@@ -20,6 +22,12 @@ function decode(buffer) {
     ? buffer.toString("utf16le").replace(/^\uFEFF/, "")
     : buffer.toString("utf8");
 }
+function isWslMissing(error) {
+  return (
+    error.code === "ENOENT" ||
+    /WSL_E_WSL_OPTIONAL_COMPONENT_REQUIRED|0x8007019e/i.test(error.message)
+  );
+}
 function run(file, args, { input, timeout = 30000, onOutput } = {}) {
   return new Promise((resolve, reject) => {
     const proc = spawn(file, args, {
@@ -32,6 +40,7 @@ function run(file, args, { input, timeout = 30000, onOutput } = {}) {
       failure;
     const timer = setTimeout(() => {
       failure = new Error("操作超时，请重试或重新检查练习环境");
+      failure.code = "ETIMEDOUT";
       proc.kill();
     }, timeout);
     const collect = (target) => (data) => {
@@ -121,6 +130,16 @@ class Runtime {
         ) {
           throw new Error("练习环境隔离检查未通过，已禁止启动终端");
         }
+        if (probe.courseVersion !== COURSE_VERSION) {
+          return {
+            ready: false,
+            supported: true,
+            wsl: true,
+            updateRequired: true,
+            message:
+              "课程判定有更新。更新只替换课程程序，保留现有提交、文件和学习进度。",
+          };
+        }
         return {
           ready: true,
           supported: true,
@@ -138,8 +157,11 @@ class Runtime {
       return {
         ready: false,
         supported: true,
-        wsl: false,
-        message: error.message,
+        wsl: !isWslMissing(error),
+        message:
+          error.code === "ETIMEDOUT"
+            ? "WSL 未及时响应。请先保存其他 Linux 工作，再检查 WSL 状态后重试。"
+            : error.message,
       };
     }
   }
@@ -151,7 +173,9 @@ class Runtime {
         throw new Error("首版仅支持 Windows x64");
       try {
         await this.registered();
-      } catch {
+      } catch (error) {
+        // A hung or broken WSL service is not evidence that WSL is absent.
+        if (!isWslMissing(error)) throw error;
         onOutput("正在请求管理员权限以安装 WSL。完成后可能需要重启电脑。");
         const script = `Start-Process -FilePath '${this.wsl.replaceAll("'", "''")}' -ArgumentList '--install','--no-distribution' -Verb RunAs -Wait -WindowStyle Hidden`;
         await run(
@@ -210,6 +234,32 @@ class Runtime {
             "2",
           ],
           { timeout: 300000, onOutput },
+        );
+      }
+      const beforeUpdate = await this.call({ action: "probe" });
+      if (beforeUpdate.courseVersion !== COURSE_VERSION) {
+        this.stopTerminal();
+        onOutput("正在更新课程判定；现有练习仓库和学习进度会保留…");
+        const payload = await fs.readFile(
+          path.join(this.resources, "course-update.json"),
+          "utf8",
+        );
+        if (JSON.parse(payload).version !== COURSE_VERSION)
+          throw new Error("课程更新版本不匹配");
+        await run(
+          this.wsl,
+          [
+            "-d",
+            this.owner.distro,
+            "-u",
+            "root",
+            "--exec",
+            "/usr/bin/python3",
+            "-I",
+            "-c",
+            APPLY_COURSES,
+          ],
+          { input: payload },
         );
       }
       const result = await this.status();
@@ -339,4 +389,4 @@ class Runtime {
     }
   }
 }
-module.exports = { Runtime, run, decode, validateSelection };
+module.exports = { Runtime, run, decode, validateSelection, isWslMissing };

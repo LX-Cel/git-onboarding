@@ -29,13 +29,20 @@ for mode in ['guided', 'challenge']:
         item = next(l for l in engine.LESSONS if l['id'] == lesson)
         target = item['target' if mode == 'guided' else 'challengeTarget']
         if lesson == 'basics':
-            engine.write_file(repo, 'README.md', '# 练习手册\n\n' + target + '\n')
+            command(repo, 'commit', '--allow-empty', '-m', '今天完成了第一次 Git 提交。')
+            expect(not engine.snapshot(lesson, mode)['complete'], 'empty commit or matching message must not pass')
+            (repo / 'unrelated.txt').write_text('unrelated change\n')
+            command(repo, 'add', 'unrelated.txt')
+            command(repo, 'commit', '-m', 'unrelated file')
+            expect(not engine.snapshot(lesson, mode)['complete'], 'unrelated file commit must not pass')
+            engine.write_file(repo, 'README.md', '# Git 学习手册\n\n今天天气不错。\n\n今天晚餐吃了什么？\n')
             expect(not engine.snapshot(lesson, mode)['complete'], 'saving alone must not pass')
             state = engine.snapshot(lesson, mode)
             expect(any(c['worktree'] == 'M' and c['index'] == ' ' for c in state['changes']), 'unstaged status columns')
             command(repo, 'add', 'README.md')
             expect(not engine.snapshot(lesson, mode)['complete'], 'staging alone must not pass')
             command(repo, 'commit', '-m', '独立选择的提交说明')
+            expect(engine.snapshot(lesson, mode)['complete'], 'custom wording shown in user screenshot must pass')
         elif lesson == 'collab':
             command(repo, 'switch', '-c', 'feature/welcome')
             engine.write_file(repo, 'release.txt', target + '\n')

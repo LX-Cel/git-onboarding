@@ -2,7 +2,7 @@
 
 一个面向 Git 新手的中文桌面练习应用。从第一次提交，到分支协作、冲突处理和误操作恢复，在真实 Git 仓库里练习。
 
-当前为 **Windows x64 私有试用版 0.1.0**。项目尚未授予开源许可证；成熟后再决定公开与许可证。
+当前已发布 **Windows x64 私有试用版 0.1.0**；正在验证 0.1.1 修复版本。项目尚未授予开源许可证；成熟后再决定公开与许可证。
 
 ![学习路径](docs/screenshots/home.png)
 
@@ -15,6 +15,8 @@
 3. 若尚未安装 WSL，应用请求管理员授权安装系统组件，提示重启后继续。需要支持 WSL 2 的 Windows x64 和已启用的硬件虚拟化。
 4. 选择引导练习或直接挑战。文件保存、Git 暂存与 Git 提交是三个不同操作。
 5. 进度自动保存在本机。练习仓库会保留；只有确认「重新开始」才重建当前场景。
+
+0.1.1 的入门判题允许自由编写 README 内容，不再要求照抄示例句子。正文、编辑器与终端默认 16px，右上角可选择并保存显示比例。旧环境升级时点击「保留练习并更新」，只替换课程程序，保留练习文件、提交历史和进度。
 
 练习环境在初始化完成后不连接外部网络。远端和队友都位于练习环境内，使用真实 Git 仓库；不需要 GitHub 账号。本项目源码的 GitHub 托管与练习远端是两件不同的事。
 
@@ -52,7 +54,9 @@ npm start
 npm run package
 ```
 
-生成 `release/Git-Onboarding-0.1.0-Setup.exe`。打包前会验证镜像 SHA256，镜像不写入 Git。安装包内含镜像，不要求用户安装构建工具。
+生成 `release/Git-Onboarding-0.1.1-Setup.exe`。打包前会验证镜像 SHA256、课程版本及课程更新包与源文件的一致性，镜像不写入 Git。安装包内含镜像，不要求用户安装构建工具。
+
+仅修改课程代码时，可用 `npm run runtime:refresh` 更新已校验的本地镜像及课程更新包，无需重新下载 Linux 软件包。跨版本保留数据测试为 `npm run test:upgrade`，需要先将 v0.1.0 发布附件的 `runtime.tar` 放在 `.local/runtime-v0.1.0.tar`。
 
 测试安装后的真实应用（包含空格的路径也支持）：
 
@@ -76,7 +80,7 @@ docs/                产品边界、技术选型、隔离边界、验收记录
 resources/           镜像清单与未纳入 Git 的 runtime.tar
 ```
 
-详情见 [产品与架构](docs/architecture.md)、[隔离边界](docs/isolation.md)、[验收记录](docs/validation.md)。
+详情见 [产品与架构](docs/architecture.md)、[隔离边界](docs/isolation.md)、[字体尺度与依据](docs/typography.md)、[验收记录](docs/validation.md)。
 
 ## 数据与卸载
 

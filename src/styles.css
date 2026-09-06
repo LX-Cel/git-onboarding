@@ -1,11 +1,13 @@
 :root {
-  font-family:
-    Inter, "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  --text-body: 16px;
+  --text-control: 14px;
+  --text-caption: 12px;
+  font-family: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
   color: #263247;
   background: #f5f6f8;
   font-synthesis: none;
   font-weight: 400;
-  font-size: 14px;
+  font-size: 16px;
   -webkit-font-smoothing: antialiased;
 }
 * {
@@ -84,7 +86,7 @@ svg {
 .brand {
   padding: 0 0 0 4px;
   color: #f5f8fb;
-  font-size: 15px;
+  font-size: 16px;
   gap: 10px;
   justify-content: flex-start;
   white-space: nowrap;
@@ -95,12 +97,12 @@ svg {
   flex-direction: column;
   align-items: flex-start;
   line-height: 1.15;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 650;
 }
 .brand b {
   font-weight: 450;
-  font-size: 13px;
+  font-size: 14px;
   letter-spacing: 0.3px;
   margin-top: 4px;
 }
@@ -115,7 +117,7 @@ svg {
   place-items: center;
 }
 .workspace-label {
-  font-size: 11px;
+  font-size: 14px;
   margin: 24px 12px 24px;
   color: #7e8d9d;
   letter-spacing: 1.5px;
@@ -131,7 +133,7 @@ svg {
   padding: 13px 15px;
   border-radius: 7px;
   text-align: left;
-  font-size: 13px;
+  font-size: 14px;
 }
 .nav-item:hover {
   background: #1d2d3e;
@@ -143,13 +145,13 @@ svg {
 .nav-label {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 14px;
   letter-spacing: 1px;
   color: #77889c;
   margin: 35px 13px 12px;
 }
 .nav-label span {
-  font: 10px Consolas;
+  font: 12px Consolas;
   color: #8d9caf;
   background: #263344;
   border-radius: 4px;
@@ -166,7 +168,7 @@ svg {
   justify-content: flex-start;
   border-radius: 8px;
   text-align: left;
-  font-size: 12px;
+  font-size: 14px;
 }
 .unit-nav button:hover,
 .unit-nav button.selected {
@@ -175,7 +177,7 @@ svg {
 }
 .unit-number {
   font-family: Consolas;
-  font-size: 11px;
+  font-size: 14px;
   border: 1px solid #3a485b;
   border-radius: 50%;
   width: 25px;
@@ -190,7 +192,7 @@ svg {
 }
 .unit-nav small {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   color: #788da1;
   margin-top: 6px;
 }
@@ -203,7 +205,7 @@ svg {
   padding: 14px 10px;
   display: flex;
   gap: 9px;
-  font-size: 11px;
+  font-size: 14px;
   color: #bac9d6;
 }
 .safe-note svg {
@@ -211,14 +213,14 @@ svg {
 }
 .safe-note small {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   color: #7b8fa2;
   margin-top: 6px;
 }
 .local-status {
   display: flex;
   align-items: center;
-  font-size: 9px;
+  font-size: 12px;
   gap: 6px;
   height: 55px;
 }
@@ -253,7 +255,7 @@ svg {
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: 14px;
 }
 .topbar > div {
   display: flex;
@@ -261,16 +263,16 @@ svg {
   gap: 14px;
 }
 .breadcrumb {
-  color: #84909c;
+  color: #596779;
 }
 .topbar strong {
   font-weight: 500;
 }
 .topbar svg {
-  color: #9ba5af;
+  color: #596779;
 }
 .topbar-right > span:first-child {
-  color: #8b97a2;
+  color: #596779;
   display: flex;
   align-items: center;
   gap: 7px;
@@ -282,8 +284,8 @@ svg {
   width: 29px;
   height: 29px;
   background: #eaf1ec;
-  color: #497664;
-  font-size: 12px;
+  color: #365f4b;
+  font-size: 14px;
   font-weight: 700;
 }
 .home-view {
@@ -299,22 +301,22 @@ svg {
   margin-bottom: 28px;
 }
 .eyebrow {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 650;
   letter-spacing: 2px;
-  color: #739084;
+  color: #596779;
   margin-bottom: 12px;
 }
 .page-heading h1 {
-  font-size: 29px;
+  font-size: 32px;
   letter-spacing: -1px;
   font-weight: 650;
   margin-bottom: 11px;
   color: #243247;
 }
 .page-heading p {
-  color: #86929f;
-  font-size: 12px;
+  color: #596779;
+  font-size: 14px;
 }
 .progress-pill {
   display: flex;
@@ -324,14 +326,14 @@ svg {
   padding: 12px 16px;
   border: 1px solid #e4e9ec;
   border-radius: 9px;
-  font-size: 11px;
-  color: #8793a1;
+  font-size: 14px;
+  color: #596779;
 }
 .progress-pill svg {
-  color: #3d9b80;
+  color: #365f4b;
 }
 .progress-pill b {
-  font-size: 14px;
+  font-size: 16px;
   color: #385749;
   margin-right: 6px;
 }
@@ -356,11 +358,11 @@ svg {
   align-items: center;
   gap: 7px;
   background: #dceae2;
-  color: #4f826d;
+  color: #365f4b;
   border: 1px solid #d2e2d7;
   padding: 5px 9px;
   border-radius: 5px;
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 1px;
 }
 .hero-badge span {
@@ -370,7 +372,7 @@ svg {
   border-radius: 50%;
 }
 .hero-copy h2 {
-  font-size: 31px;
+  font-size: 34px;
   font-weight: 650;
   line-height: 1.5;
   letter-spacing: -0.5px;
@@ -378,17 +380,17 @@ svg {
   margin: 14px 0 10px;
 }
 .hero-copy p {
-  color: #748b81;
-  font-size: 12px;
+  color: #596779;
+  font-size: 14px;
   line-height: 1.9;
 }
 .primary {
-  background: #28896e;
+  background: #20755e;
   color: white;
   font-weight: 550;
   border-radius: 7px;
   padding: 11px 18px;
-  font-size: 12px;
+  font-size: 14px;
   box-shadow: 0 2px 3px #1e5e4810;
 }
 .primary:hover:not(:disabled) {
@@ -400,11 +402,11 @@ svg {
   justify-content: space-between;
 }
 .hero-foot {
-  font-size: 10px;
+  font-size: 12px;
   display: flex;
   gap: 5px;
   align-items: center;
-  color: #91a198;
+  color: #596779;
   margin-top: 13px;
 }
 .hero-visual {
@@ -454,7 +456,7 @@ svg {
   background: #7aad95;
 }
 .mock-top span {
-  font: 9px Consolas;
+  font: 12px Consolas;
   color: #79909d;
   position: absolute;
   left: 50%;
@@ -467,7 +469,7 @@ svg {
 .mock-command {
   padding: 22px 22px 3px;
   font:
-    12px/1.8 Consolas,
+    14px/1.8 Consolas,
     monospace;
   color: #e0e8e9;
 }
@@ -479,13 +481,13 @@ svg {
   display: block;
   color: #83caa6;
   font-weight: 400;
-  font-size: 11px;
+  font-size: 14px;
   margin-top: 5px;
 }
 .mock-command small {
   display: block;
   color: #7d94a1;
-  font-size: 10px;
+  font-size: 12px;
 }
 .mock-window > svg {
   width: 100%;
@@ -502,16 +504,16 @@ svg {
   background: #fff;
   border-radius: 9px;
   box-shadow: 0 8px 24px #2e514017;
-  color: #41846d;
-  font-size: 12px;
+  color: #365f4b;
+  font-size: 14px;
   font-weight: 600;
   transform: rotate(1deg);
 }
 .float-badge small {
   display: block;
-  color: #92a09b;
+  color: #596779;
   font-weight: 400;
-  font-size: 10px;
+  font-size: 12px;
   margin-top: 5px;
 }
 .section-heading {
@@ -521,18 +523,18 @@ svg {
   margin: 31px 0 17px;
 }
 .section-heading h2 {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 650;
 }
 .section-heading h2 span {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 400;
-  color: #9aa2ac;
+  color: #596779;
   margin-left: 13px;
 }
 .subtle {
-  font-size: 10px;
-  color: #99a4ae;
+  font-size: 12px;
+  color: #596779;
 }
 .course-grid {
   display: grid;
@@ -564,40 +566,40 @@ svg {
   height: 45px;
   border-radius: 11px;
   background: #eaf4ee;
-  color: #4b9577;
+  color: #365f4b;
 }
 .course-icon svg {
   margin: 10px;
 }
 .course-1 .course-icon {
   background: #eef0fb;
-  color: #7a82ba;
+  color: #58617d;
 }
 .course-2 .course-icon {
   background: #fbf2e8;
-  color: #ba9261;
+  color: #76552f;
 }
 .course-top > span {
-  font: 10px Consolas;
-  color: #a5aeb7;
+  font: 12px Consolas;
+  color: #596779;
   letter-spacing: 1px;
 }
 .course-level {
-  font-size: 10px;
-  color: #96a0ab;
+  font-size: 12px;
+  color: #596779;
   display: flex;
   align-items: center;
   gap: 6px;
   margin-bottom: 10px;
 }
 .course-card h3 {
-  font-size: 18px;
+  font-size: 20px;
   letter-spacing: -0.4px;
   font-weight: 600;
 }
 .course-card p {
-  font-size: 11px;
-  color: #97a0aa;
+  font-size: 14px;
+  color: #596779;
   margin-top: 10px;
   line-height: 1.8;
 }
@@ -608,11 +610,11 @@ svg {
   margin: 19px 0 24px;
 }
 .concepts span {
-  font-size: 10px;
+  font-size: 12px;
   background: #f4f6f8;
   border-radius: 4px;
   padding: 5px 7px;
-  color: #87919e;
+  color: #596779;
 }
 .course-actions {
   display: flex;
@@ -622,13 +624,13 @@ svg {
   gap: 4px;
 }
 .course-actions button:first-child {
-  color: #3b8068;
-  font-size: 11px;
+  color: #365f4b;
+  font-size: 14px;
   gap: 16px;
 }
 .course-actions button:last-child {
-  font-size: 10px;
-  color: #96a0ac;
+  font-size: 12px;
+  color: #596779;
   gap: 3px;
 }
 .learning-note {
@@ -640,31 +642,31 @@ svg {
   border: 1px solid #e8e8de;
   border-radius: 9px;
   background: #f8f7f0;
-  color: #a69e73;
+  color: #76552f;
 }
 .learning-note strong {
-  color: #7e806c;
-  font-size: 11px;
+  color: #596779;
+  font-size: 14px;
   font-weight: 550;
 }
 .learning-note p {
-  font-size: 10px;
-  color: #a3a395;
+  font-size: 12px;
+  color: #596779;
   line-height: 1.7;
   margin-top: 5px;
 }
 .learning-note > span {
-  font-size: 10px;
+  font-size: 12px;
   margin-left: auto;
   white-space: nowrap;
 }
 .page-footer {
   margin-top: auto;
   padding: 14px 42px 22px;
-  font-size: 9px;
+  font-size: 12px;
   display: flex;
   justify-content: space-between;
-  color: #aeb6bf;
+  color: #596779;
   letter-spacing: 0.3px;
 }
 .lab-view {
@@ -681,10 +683,10 @@ svg {
 }
 .lab-heading .eyebrow {
   margin-bottom: 8px;
-  font-size: 9px;
+  font-size: 12px;
 }
 .lab-heading h1 {
-  font-size: 23px;
+  font-size: 26px;
   font-weight: 620;
 }
 .lab-actions {
@@ -701,22 +703,22 @@ svg {
 }
 .mode-switch button {
   padding: 8px 14px;
-  font-size: 11px;
-  color: #869691;
+  font-size: 14px;
+  color: #596779;
   border-radius: 5px;
 }
 .mode-switch button.active {
   background: white;
   box-shadow: 0 1px 4px #23372912;
-  color: #397a63;
+  color: #365f4b;
 }
 .secondary {
   background: white;
   border: 1px solid #dfe5ea;
   padding: 9px 13px;
   border-radius: 6px;
-  font-size: 11px;
-  color: #778594;
+  font-size: 14px;
+  color: #596779;
 }
 .secondary:hover {
   background: #f9fbfc;
@@ -750,20 +752,20 @@ svg {
   gap: 8px;
   border-bottom: 1px solid #e9edf1;
   padding: 0 16px;
-  font-size: 11px;
+  font-size: 14px;
   flex-shrink: 0;
-  color: #6e7c8d;
+  color: #596779;
 }
 .panel-title strong {
-  font-size: 12px;
+  font-size: 14px;
   color: #536579;
   font-weight: 600;
 }
 .panel-title > span:last-child {
   margin-left: auto;
-  font-size: 9px;
+  font-size: 12px;
   background: #f0f5f3;
-  color: #769182;
+  color: #596779;
   padding: 4px 6px;
   border-radius: 4px;
 }
@@ -775,9 +777,9 @@ svg {
   scrollbar-color: #d6dfe4 transparent;
 }
 .story {
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.9;
-  color: #84909e;
+  color: #596779;
 }
 .target-box {
   background: #f3f7f5;
@@ -787,14 +789,14 @@ svg {
   margin: 14px 0 18px;
 }
 .target-box > span {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 600;
-  color: #648977;
+  color: #596779;
   letter-spacing: 1px;
 }
 .target-box pre {
-  font-size: 11px;
-  color: #557263;
+  font-size: 14px;
+  color: #596779;
   line-height: 1.7;
   margin: 7px 0 0;
 }
@@ -807,8 +809,8 @@ svg {
   width: 100%;
   justify-content: flex-start;
   text-align: left;
-  font-size: 11px;
-  color: #82909d;
+  font-size: 14px;
+  color: #596779;
   gap: 9px;
 }
 .step-title > span {
@@ -818,14 +820,14 @@ svg {
   place-items: center;
   border: 1px solid #dde3e7;
   border-radius: 50%;
-  font-size: 10px;
+  font-size: 12px;
   flex-shrink: 0;
 }
 .step-title > svg {
   margin-left: auto;
 }
 .step.current .step-title {
-  color: #3d826a;
+  color: #365f4b;
   font-weight: 600;
 }
 .step.current .step-title > span {
@@ -840,9 +842,9 @@ svg {
   padding: 0 0 15px 30px;
 }
 .step-body p {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.9;
-  color: #85919e;
+  color: #596779;
 }
 .command-example {
   background: #f3f5f7;
@@ -853,10 +855,10 @@ svg {
   position: relative;
 }
 .command-example pre {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.75;
   margin: 0;
-  color: #697d8d;
+  color: #596779;
   padding-right: 11px;
 }
 .command-example button {
@@ -864,11 +866,11 @@ svg {
   right: 3px;
   top: 6px;
   padding: 3px;
-  color: #9aa5ae;
+  color: #596779;
 }
 .next-step {
-  font-size: 10px;
-  color: #479379;
+  font-size: 12px;
+  color: #365f4b;
   margin-top: 11px;
   padding: 0;
 }
@@ -878,8 +880,8 @@ svg {
 .hints > button {
   width: 100%;
   justify-content: flex-start;
-  font-size: 10px;
-  color: #a68a53;
+  font-size: 12px;
+  color: #76552f;
   padding: 11px 10px;
   background: #fcf8ef;
   border: 1px solid #f0e7d4;
@@ -887,8 +889,8 @@ svg {
 }
 .hints > button span {
   margin-left: auto;
-  color: #b8a784;
-  font-size: 9px;
+  color: #76552f;
+  font-size: 12px;
 }
 .hint {
   background: #fcfaf5;
@@ -897,29 +899,29 @@ svg {
   border-radius: 5px;
 }
 .hint b {
-  font-size: 9px;
-  color: #a18b61;
+  font-size: 12px;
+  color: #76552f;
 }
 .hint pre {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.9;
-  color: #958b75;
+  color: #596779;
   margin-bottom: 0;
 }
 .checks h4 {
-  font-size: 10px;
-  color: #687a8b;
+  font-size: 12px;
+  color: #596779;
   display: flex;
   justify-content: space-between;
   margin: 18px 0 12px;
 }
 .checks h4 span {
   font-weight: 400;
-  color: #9eabb5;
+  color: #596779;
 }
 .checks > div {
-  font-size: 10px;
-  color: #9aa5b0;
+  font-size: 12px;
+  color: #596779;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -927,17 +929,17 @@ svg {
   line-height: 1.6;
 }
 .checks > div svg {
-  color: #cad3db;
+  color: #596779;
 }
 .checks > div.done {
-  color: #5b987c;
+  color: #365f4b;
 }
 .checks > div.done svg {
-  color: #4ba77e;
+  color: #365f4b;
 }
 .check-error {
-  color: #bf765e;
-  font-size: 10px;
+  color: #76552f;
+  font-size: 12px;
   line-height: 1.6;
 }
 .task-footer {
@@ -949,15 +951,15 @@ svg {
   width: 100%;
 }
 .success-note {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.7;
-  color: #399974;
+  color: #365f4b;
   margin-top: 11px;
   text-align: center;
 }
 .success-note button {
-  color: #318267;
-  font-size: 10px;
+  color: #365f4b;
+  font-size: 12px;
   margin-top: 5px;
 }
 .workbench {
@@ -984,18 +986,18 @@ svg {
   height: 44px;
   border-bottom: 2px solid transparent;
   gap: 5px;
-  font-size: 10px;
+  font-size: 12px;
   margin-right: 8px;
   white-space: nowrap;
 }
 .panel-title .text-tab.active {
   border-bottom-color: #51a384;
-  color: #44876e;
+  color: #365f4b;
 }
 .panel-title .save-status {
   background: transparent !important;
   color: #9eaaaf !important;
-  font-size: 8px !important;
+  font-size: 12px !important;
   padding: 0 !important;
 }
 .file-toolbar {
@@ -1011,14 +1013,14 @@ svg {
 .file-toolbar select {
   border: 0;
   background: transparent;
-  font: 11px Consolas;
-  color: #718394;
+  font: 14px Consolas;
+  color: #596779;
   max-width: 75%;
   outline: none;
 }
 .file-toolbar button {
-  font-size: 10px;
-  color: #44876e;
+  font-size: 12px;
+  color: #365f4b;
   gap: 5px;
   padding: 4px 6px;
 }
@@ -1034,8 +1036,8 @@ svg {
   width: 37px;
   flex-shrink: 0;
   text-align: right;
-  color: #c1c8ce;
-  font: 11px/22px Consolas;
+  color: #596779;
+  font: 14px/22px Consolas;
   padding-right: 9px;
   user-select: none;
   overflow: hidden;
@@ -1046,7 +1048,7 @@ svg {
   border: 0;
   outline: 0;
   font:
-    12px/22px "Cascadia Code",
+    14px/22px "Cascadia Code",
     Consolas,
     "Microsoft YaHei",
     monospace;
@@ -1063,8 +1065,8 @@ svg {
 }
 .editor-footer {
   padding: 8px 12px;
-  font-size: 8px;
-  color: #a8b0ba;
+  font-size: 12px;
+  color: #596779;
   display: flex;
   justify-content: space-between;
   border-top: 1px solid #eff2f4;
@@ -1083,16 +1085,16 @@ svg {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 11px;
-  color: #699880;
+  font-size: 14px;
+  color: #365f4b;
   margin-bottom: 12px;
 }
 .branch-summary b {
   font-weight: 500;
 }
 .branch-summary code {
-  font-size: 9px;
-  color: #a6b0ba;
+  font-size: 12px;
+  color: #596779;
   margin-left: auto;
 }
 .state-zone {
@@ -1104,7 +1106,7 @@ svg {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 10px;
+  font-size: 12px;
 }
 .zone-dot {
   width: 6px;
@@ -1120,17 +1122,17 @@ svg {
 }
 .state-zone strong {
   font-weight: 500;
-  color: #607486;
+  color: #58617d;
 }
 .state-zone > div > span:last-child,
 .state-zone > div > code {
-  font-size: 9px;
-  color: #a4aeb8;
+  font-size: 12px;
+  color: #596779;
   margin-left: auto;
 }
 .state-zone p {
-  font-size: 10px;
-  color: #84949f;
+  font-size: 12px;
+  color: #596779;
   margin-top: 7px;
   overflow-wrap: anywhere;
   display: flex;
@@ -1138,39 +1140,39 @@ svg {
   gap: 7px;
 }
 .state-zone p code {
-  font-size: 9px;
+  font-size: 12px;
   background: #f6f0e5;
-  color: #b19868;
+  color: #76552f;
   border-radius: 3px;
   padding: 1px 4px;
 }
 .state-zone p.muted {
-  font-size: 9px;
-  color: #b1bac2;
+  font-size: 12px;
+  color: #596779;
 }
 .commit-zone p {
-  font-size: 10px;
-  color: #8c9c95;
+  font-size: 12px;
+  color: #596779;
 }
 .flow-arrow {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 24px;
-  color: #b2bdc5;
+  color: #596779;
   padding-left: 11px;
 }
 .flow-arrow span {
-  font: 9px Consolas;
+  font: 12px Consolas;
   margin-left: 5px;
-  color: #a1aeb7;
+  color: #596779;
 }
 .feedback-bar {
   background: #edf5f1;
   border: 1px solid #dceae2;
   border-radius: 6px;
   padding: 11px 13px;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.7;
-  color: #6c927f;
+  color: #596779;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1179,12 +1181,12 @@ svg {
 .feedback-bar.warning {
   background: #fff5e7;
   border-color: #f3e2c8;
-  color: #ae8754;
+  color: #76552f;
 }
 .feedback-bar.complete {
   background: #e4f5eb;
   border-color: #b9e0ca;
-  color: #348c60;
+  color: #365f4b;
 }
 .terminal-panel {
   background: #131d2c;
@@ -1206,7 +1208,7 @@ svg {
   align-items: center;
   justify-content: space-between;
   color: #aebbc9;
-  font-size: 10px;
+  font-size: 12px;
   flex-shrink: 0;
 }
 .terminal-bar > span,
@@ -1226,12 +1228,12 @@ svg {
 }
 .terminal-tip {
   color: #61768b;
-  font-size: 9px;
+  font-size: 12px;
 }
 .terminal-bar button {
   color: #8c9bad;
   padding: 5px;
-  font-size: 10px;
+  font-size: 12px;
 }
 .terminal-host {
   flex: 1;
@@ -1246,8 +1248,8 @@ svg {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #a5afb9;
-  font-size: 8px;
+  color: #596779;
+  font-size: 12px;
   gap: 8px;
 }
 .workbench-footer > span:first-child {
@@ -1273,8 +1275,8 @@ svg {
   min-width: 0;
 }
 .commit-subject {
-  font-size: 10px;
-  color: #748393;
+  font-size: 12px;
+  color: #596779;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1288,12 +1290,12 @@ svg {
   min-width: 0;
 }
 .commit-detail code {
-  font-size: 9px;
-  color: #a4afb9;
+  font-size: 12px;
+  color: #596779;
 }
 .ref-label {
-  font-size: 8px;
-  color: #5e997f;
+  font-size: 12px;
+  color: #365f4b;
   background: #edf5ef;
   padding: 2px 4px;
   border-radius: 3px;
@@ -1302,8 +1304,8 @@ svg {
   text-overflow: ellipsis;
 }
 .empty {
-  font-size: 11px;
-  color: #a5afbb;
+  font-size: 14px;
+  color: #596779;
   padding: 25px;
 }
 .diff-view {
@@ -1312,31 +1314,31 @@ svg {
   flex: 1;
 }
 .diff-view h5 {
-  font-size: 10px;
-  color: #81948b;
+  font-size: 12px;
+  color: #596779;
   margin: 6px 0 10px;
 }
 .diff-view pre {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.8;
-  color: #7b8f7f;
+  color: #596779;
 }
 .challenge-note {
   text-align: center;
   padding: 23px 5px 14px;
-  color: #8b9c96;
+  color: #596779;
 }
 .challenge-note svg {
-  color: #61a285;
+  color: #365f4b;
 }
 .challenge-note h3 {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 550;
   margin: 13px 0 9px;
 }
 .challenge-note p {
-  font-size: 10px;
-  color: #9da8a4;
+  font-size: 12px;
+  color: #596779;
   line-height: 1.9;
 }
 .error-banner {
@@ -1346,10 +1348,10 @@ svg {
   gap: 9px;
   background: #fff0ec;
   border: 1px solid #efd9d0;
-  color: #b67963;
+  color: #76552f;
   border-radius: 6px;
   padding: 11px 13px;
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.7;
   overflow-wrap: anywhere;
 }
@@ -1386,8 +1388,8 @@ svg {
   margin-bottom: 16px;
 }
 .modal p {
-  font-size: 12px;
-  color: #87929c;
+  font-size: 14px;
+  color: #596779;
   line-height: 1.9;
 }
 .modal-actions {
@@ -1401,14 +1403,14 @@ svg {
   border-radius: 6px;
   background: #b87863;
   color: #fff;
-  font-size: 11px;
+  font-size: 14px;
 }
 .modal-close {
   position: absolute;
   right: 16px;
   top: 16px;
   padding: 4px;
-  color: #abb4bb;
+  color: #596779;
 }
 .setup-modal {
   width: 510px;
@@ -1418,18 +1420,18 @@ svg {
   width: 60px;
   height: 60px;
   background: #e8f3ed;
-  color: #4b9978;
+  color: #365f4b;
   border-radius: 15px;
   display: grid;
   place-items: center;
   margin-bottom: 23px;
 }
 .setup-modal .eyebrow {
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 1.6px;
 }
 .setup-modal h2 {
-  font-size: 23px;
+  font-size: 26px;
   margin-bottom: 10px;
 }
 .setup-items {
@@ -1442,13 +1444,13 @@ svg {
   display: flex;
   align-items: center;
   gap: 13px;
-  color: #699781;
-  font-size: 12px;
+  color: #365f4b;
+  font-size: 14px;
 }
 .setup-items small {
   display: block;
-  color: #a0aaa6;
-  font-size: 10px;
+  color: #596779;
+  font-size: 12px;
   margin-top: 6px;
 }
 .setup-modal > .primary {
@@ -1458,19 +1460,19 @@ svg {
 }
 .setup-foot {
   display: block;
-  color: #a9b1ad;
-  font-size: 9px;
+  color: #596779;
+  font-size: 12px;
   text-align: center;
   margin-top: 13px;
   line-height: 1.8;
 }
 .setup-log {
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.8;
   background: #f4f7f6;
   padding: 11px 13px;
   border-radius: 6px;
-  color: #7e9589;
+  color: #596779;
   margin-bottom: 10px;
   max-height: 140px;
   overflow: auto;
@@ -1486,7 +1488,7 @@ svg {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  font-size: 12px;
+  font-size: 14px;
 }
 .spin {
   animation: spin 1s linear infinite;
@@ -1505,7 +1507,7 @@ svg {
     padding: 35px 44px;
   }
   .hero-copy h2 {
-    font-size: 36px;
+    font-size: 38px;
   }
   .course-card {
     padding: 25px 26px 0;
@@ -1538,13 +1540,13 @@ svg {
     padding: 26px;
   }
   .hero-copy h2 {
-    font-size: 28px;
+    font-size: 30px;
   }
   .course-card {
     padding: 17px 17px 0;
   }
   .course-card h3 {
-    font-size: 16px;
+    font-size: 18px;
   }
   .lab-view {
     padding: 22px 20px 10px;
@@ -1558,7 +1560,7 @@ svg {
     gap: 4px;
   }
   .panel-title .text-tab {
-    font-size: 9px;
+    font-size: 12px;
     margin-right: 4px;
   }
   .workbench-top {
@@ -1566,7 +1568,7 @@ svg {
     grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr);
   }
   .reset-button {
-    font-size: 10px;
+    font-size: 12px;
     padding: 9px;
   }
   .mode-switch button {
@@ -1589,28 +1591,319 @@ svg {
 /* Keep task instructions readable at standard Windows display scaling. */
 .story,
 .step-body p {
-  font-size: 12px;
+  font-size: 14px;
 }
 .step-title {
-  font-size: 12px;
+  font-size: 14px;
 }
 .command-example pre,
 .checks > div,
 .hint pre {
-  font-size: 11px;
+  font-size: 14px;
 }
 .target-box pre {
-  font-size: 12px;
+  font-size: 14px;
 }
 .state-zone p {
-  font-size: 11px;
+  font-size: 14px;
 }
 .panel-title .text-tab {
-  font-size: 11px;
+  font-size: 14px;
 }
 .feedback-bar {
-  font-size: 11px;
+  font-size: 14px;
 }
 .step-body {
   padding-left: 15px;
+}
+
+/* Reading-focused scale: Fluent UI roles, with larger Chinese lesson text. */
+.story,
+.step-body p,
+.target-box pre,
+.challenge-note p,
+.diff-view pre,
+.setup-modal > p {
+  font-size: var(--text-body);
+  line-height: 1.65;
+  color: #344454;
+}
+.command-example pre,
+.hint pre {
+  font-size: var(--text-control);
+  line-height: 1.65;
+  color: #46566a;
+}
+.step-title,
+.checks > div,
+.panel-title .text-tab,
+.task-footer > .primary {
+  font-size: var(--text-control);
+}
+.check-detail {
+  display: block;
+  font-size: var(--text-caption);
+  line-height: 1.6;
+  margin-top: 5px;
+  color: #596779;
+}
+.checks > div {
+  align-items: flex-start;
+  line-height: 1.5;
+}
+.checks > div > svg {
+  margin-top: 3px;
+}
+.checks > div.done {
+  color: #28624a;
+}
+.checks > div.done svg {
+  color: #287551;
+}
+.code-editor textarea {
+  font-size: 16px;
+  line-height: 24px;
+  color: #273a4b;
+}
+.line-numbers {
+  font-size: 14px;
+  line-height: 24px;
+  color: #626e7b;
+  width: 42px;
+}
+.story,
+.step-body p,
+.target-box pre,
+.hint pre {
+  overflow-wrap: anywhere;
+}
+.sidebar {
+  width: 244px;
+}
+.main-shell {
+  margin-left: 244px;
+  width: calc(100% - 244px);
+}
+.lab-layout {
+  grid-template-columns: 340px minmax(0, 1fr);
+}
+.step-body {
+  padding-left: 0;
+}
+.step-title {
+  padding: 15px 0;
+}
+.task-scroll {
+  padding: 20px;
+}
+.panel-title {
+  min-height: 48px;
+  height: auto;
+}
+.panel-title .text-tab {
+  min-height: 48px;
+  height: auto;
+  padding: 10px 0;
+}
+.file-toolbar {
+  height: 42px;
+}
+.workbench-top {
+  min-height: 355px;
+  max-height: 420px;
+}
+.terminal-panel {
+  min-height: 285px;
+}
+.terminal-bar {
+  height: 42px;
+  color: #ccd6e2;
+}
+.terminal-tip {
+  color: #acbbce;
+}
+.display-scale {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #46566a;
+}
+.display-scale select {
+  font-size: 14px;
+  color: #344454;
+  background: #fff;
+  border: 1px solid #bec9d2;
+  border-radius: 5px;
+  padding: 5px 7px;
+}
+.setup-error {
+  background: #fff0e9;
+  color: #903e2c;
+}
+.step-title > span {
+  width: 26px;
+  height: 26px;
+}
+.hints > button {
+  font-size: 14px;
+  padding: 12px;
+  flex-wrap: wrap;
+}
+.primary {
+  background: #20755e;
+}
+.ref-label {
+  color: #326148;
+}
+.page-footer {
+  font-size: 12px;
+  color: #596779;
+}
+.topbar strong {
+  color: #344454;
+}
+@media (max-width: 1350px) {
+  .lab-layout {
+    grid-template-columns: 310px minmax(0, 1fr);
+  }
+  .workbench-top {
+    grid-template-columns: 1fr;
+    max-height: none;
+    flex: none;
+  }
+  .editor-panel {
+    min-height: 310px;
+  }
+  .state-panel {
+    min-height: 340px;
+  }
+  .task-panel {
+    max-height: none;
+    height: fit-content;
+    min-height: 0;
+  }
+  .lab-heading {
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .lab-actions {
+    flex-wrap: wrap;
+  }
+  .course-grid {
+    gap: 14px;
+  }
+  .concepts {
+    min-height: 58px;
+    align-content: start;
+  }
+  .course-actions {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+}
+@media (max-width: 980px) {
+  .app-shell {
+    display: block;
+  }
+  .sidebar {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 24px;
+  }
+  .sidebar nav {
+    flex-direction: row;
+  }
+  .workspace-label,
+  .nav-label,
+  .unit-nav,
+  .sidebar-bottom {
+    display: none;
+  }
+  .main-shell {
+    margin-left: 0;
+    width: 100%;
+  }
+  .topbar {
+    padding: 12px 20px;
+    height: auto;
+    min-height: 65px;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+  .topbar-right > span:first-of-type {
+    display: none;
+  }
+  .home-view {
+    padding: 26px 20px;
+  }
+  .page-heading {
+    align-items: flex-start;
+    gap: 20px;
+    flex-direction: column;
+  }
+  .hero-visual {
+    display: none;
+  }
+  .hero-copy {
+    width: 100%;
+  }
+  .hero-card {
+    padding: 25px;
+    min-height: 0;
+  }
+  .course-grid {
+    grid-template-columns: 1fr;
+  }
+  .course-card {
+    padding: 24px 24px 0;
+  }
+  .section-heading {
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .section-heading h2 span {
+    display: block;
+    margin: 8px 0 0;
+  }
+  .lab-layout {
+    grid-template-columns: 1fr;
+  }
+  .lab-view {
+    padding: 24px 18px 12px;
+  }
+  .task-panel {
+    max-height: none;
+    min-height: 0;
+  }
+  .task-scroll {
+    overflow: visible;
+  }
+  .terminal-panel {
+    height: 330px;
+    flex: none;
+  }
+  .workbench-footer {
+    flex-wrap: wrap;
+    font-size: 12px;
+  }
+  .page-footer {
+    padding: 20px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .modal-backdrop {
+    padding: 15px;
+    overflow: auto;
+  }
+  .modal {
+    max-height: calc(100vh - 30px);
+    overflow: auto;
+  }
 }
