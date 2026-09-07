@@ -2,7 +2,7 @@
 
 一个面向 Git 新手的中文桌面练习应用。从第一次提交，到分支协作、冲突处理和误操作恢复，在真实 Git 仓库里练习。
 
-当前代码为 **Windows x64 私有试用版 0.1.2**，采用选定的 J 版 Fluent 2 视觉方向。本地安装包为 `release/Git-Onboarding-0.1.2-Setup.exe`；已发布的 0.1.1 仍可在 [GitHub 下载](https://github.com/LX-Cel/git-onboarding/releases/tag/v0.1.1)。项目尚未授予开源许可证；成熟后再决定公开与许可证。
+当前发布为 **Windows x64 私有试用版 0.1.2**，采用选定的 J 版 Fluent 2 视觉方向。在 [GitHub Release 下载](https://github.com/LX-Cel/git-onboarding/releases/tag/v0.1.2)安装包 `Git-Onboarding-0.1.2-Setup.exe` 和 SHA256 校验文件；本地构建产物位于 `release/`。项目尚未授予开源许可证；成熟后再决定公开与许可证。
 
 ![学习路径](docs/screenshots/home.png)
 
