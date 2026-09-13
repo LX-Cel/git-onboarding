@@ -23,7 +23,8 @@
     "runtime:refresh": "python scripts/refresh-courses.py",
     "package": "npm run build && node scripts/check-runtime.cjs && electron-builder --win nsis --x64",
     "format": "prettier --write src desktop tests/*.cjs scripts/*.cjs *.cjs *.js *.json index.html docs/*.md README.md .github/workflows/*.yml",
-    "format:check": "prettier --check src desktop tests/*.cjs scripts/*.cjs *.cjs *.js *.json index.html docs/*.md README.md .github/workflows/*.yml"
+    "format:check": "prettier --check src desktop tests/*.cjs scripts/*.cjs *.cjs *.js *.json index.html docs/*.md README.md .github/workflows/*.yml",
+    "test:hosting": "node scripts/test-advanced.cjs --hosting"
   },
   "dependencies": {
     "@xterm/addon-fit": "0.11.0",

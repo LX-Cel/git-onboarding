@@ -40,7 +40,7 @@ def rejected(call, message):
 with tempfile.TemporaryDirectory(prefix='advanced-scenarios-') as directory:
     e.ROOT = Path(directory) / 'labs'
     for mode in ['guided', 'challenge']:
-        for lesson in sorted(e.advanced.IDS):
+        for lesson in sorted(e.advanced.IDS - e.advanced.hosting.IDS | {'fork-pr'}):
             initial = e.initialize(lesson, mode, True)
             expect(initial['checks'] and not initial['complete'] and not initial['error'], f'{lesson} starts incomplete with valid checks')
             base, repo = e.location(lesson, mode)

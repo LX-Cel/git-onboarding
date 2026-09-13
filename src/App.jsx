@@ -345,6 +345,20 @@ function App() {
     if (next.complete) api?.progress().then(setProgress);
   }, []);
 
+  const syncEditor = useCallback(async (next, epoch) => {
+    const name = fileRef.current;
+    if (!name || dirtyRef.current || !next.files.includes(name)) return;
+    const result = await api.read(name);
+    if (
+      epoch === selectionEpoch.current &&
+      !dirtyRef.current &&
+      fileRef.current === name
+    ) {
+      setContent(result.content);
+      setSaved(result.content);
+    }
+  }, []);
+
   const refresh = useCallback(async () => {
     if (
       !api ||
@@ -359,28 +373,13 @@ function App() {
       const next = await api.state();
       if (epoch !== selectionEpoch.current) return;
       applyState(next);
-      if (
-        fileRef.current &&
-        !dirtyRef.current &&
-        next.files.includes(fileRef.current)
-      ) {
-        const name = fileRef.current;
-        const result = await api.read(name);
-        if (
-          epoch === selectionEpoch.current &&
-          !dirtyRef.current &&
-          fileRef.current === name
-        ) {
-          setContent(result.content);
-          setSaved(result.content);
-        }
-      }
+      await syncEditor(next, epoch);
     } catch (e) {
       setError(e.message);
     } finally {
       refreshing.current = false;
     }
-  }, [applyState]);
+  }, [applyState, syncEditor]);
 
   function closeCheck() {
     checkGeneration.current += 1;
@@ -404,6 +403,12 @@ function App() {
       if (snapshot.error || !snapshot.checks.length)
         throw new Error(snapshot.error || "未能读取完成条件，请重试。");
       applyState(snapshot);
+      await syncEditor(snapshot, epoch);
+      if (
+        generation !== checkGeneration.current ||
+        epoch !== selectionEpoch.current
+      )
+        return;
       setCheckReport({
         phase: "ready",
         snapshot,

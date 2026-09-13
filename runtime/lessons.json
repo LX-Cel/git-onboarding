@@ -1557,5 +1557,235 @@
       "先 bundle create --all，再 bundle verify。",
       "从 ../transfer.bundle 克隆到 ../verification，检查实际提交和文件内容。"
     ]
+  },
+  {
+    "id": "pr-conflict",
+    "number": "34",
+    "title": "解决评审期间的上游冲突",
+    "subtitle": "PR 通过评审后，上游也会继续前进",
+    "category": "团队协作",
+    "level": "进阶",
+    "minutes": 35,
+    "concepts": [
+      "双远端",
+      "PR 评审",
+      "必需检查",
+      "合并策略"
+    ],
+    "file": "feature.txt",
+    "story": "创建 PR 后，模拟维护者修改同一个文件，解决与上游的真实冲突。重新评审、检查、合并并同步 main，同时保留 team-review.txt。",
+    "challengeStory": "独立处理同类贡献任务。功能目标改为 released，测试仍为 tests=pass。创建 PR 后，模拟维护者修改同一个文件，解决与上游的真实冲突。重新评审、检查、合并并同步 main，同时保留 team-review.txt。",
+    "target": "feature.txt 为 ready；tests.txt 为 tests=pass。创建 PR 后，模拟维护者修改同一个文件，解决与上游的真实冲突。重新评审、检查、合并并同步 main，同时保留 team-review.txt。",
+    "challengeTarget": "feature.txt 为 released；tests.txt 为 tests=pass。创建 PR 后，模拟维护者修改同一个文件，解决与上游的真实冲突。重新评审、检查、合并并同步 main，同时保留 team-review.txt。",
+    "steps": [
+      {
+        "title": "Fork 并配置双远端",
+        "body": "在托管面板 Fork，再让本地 main 跟上 upstream/main，从它创建 feature/welcome。origin 是个人仓库，upstream 是贡献目标。",
+        "command": "git remote add origin ../origin.git\ngit remote add upstream ../upstream.git\ngit fetch upstream\ngit merge --ff-only upstream/main\ngit switch -c feature/welcome"
+      },
+      {
+        "title": "提交功能和测试",
+        "body": "分别提交功能与测试，观察两次提交在不同合并方式下的去向。把功能分支推送到个人 origin，然后在托管面板创建 PR。",
+        "command": "printf 'ready\\n' > feature.txt\ngit add feature.txt\ngit commit -m '实现功能'\nprintf 'tests=pass\\n' > tests.txt\ngit add tests.txt\ngit commit -m '补充测试'\ngit push -u origin feature/welcome"
+      },
+      {
+        "title": "触发上游更新",
+        "body": "先请求评审并运行必需检查，观察通过状态。点击「模拟上游更新」后再次检查：旧评审和检查失效，合并树存在冲突。",
+        "command": "git fetch upstream\ngit log --oneline --graph --all"
+      },
+      {
+        "title": "解决冲突并更新同一 PR",
+        "body": "rebase 会停在真实冲突处。查看 status 和 diff，把 feature.txt 修正为目标内容并暂存，然后 continue。若需要撤销本次尝试，可 git rebase --abort。保留队友新增的 team-review.txt。推送时用租约保护你的远端分支。",
+        "command": "git rebase upstream/main\n# 发生冲突后，先检查文件再修正\nprintf 'ready\\n' > feature.txt\ngit add feature.txt\ngit rebase --continue\ngit push --force-with-lease origin feature/welcome"
+      },
+      {
+        "title": "重新评审与检查",
+        "body": "在托管面板重新请求评审，运行必需检查。两项均针对最新源提交与上游基线通过后，以 Merge 方式合并。",
+        "command": "git status"
+      },
+      {
+        "title": "同步两条主线并比较历史",
+        "body": "PR 合并后更新本地与个人 main。查看图形历史与来源分支差异，来源分支在 squash/rebase 合并后可能不再是 main 的祖先，不要仅凭 branch -d 被拒绝判断合并失败。",
+        "command": "git switch main\ngit fetch upstream\ngit merge --ff-only upstream/main\ngit push origin main\ngit log --oneline --graph --all\ngit diff main feature/welcome"
+      }
+    ],
+    "hints": [
+      "先确认 origin 与 upstream 指向正确仓库；PR 读取的是推送后的分支，不是未提交或未推送的本地内容。",
+      "评审和检查绑定具体提交与上游基线。修改或上游变化后要重新检查；冲突必须在本地 Git 中处理。",
+      "引导模式的 feature.txt 内容为 ready，独立挑战为 released；tests.txt 均为 tests=pass。创建两个提交后推送，按本关要求处理上游事件并选择合并方式，最后 fetch upstream、切到 main、merge --ff-only upstream/main、push origin main。"
+    ],
+    "commands": [
+      "fetch",
+      "rebase",
+      "rebase --abort",
+      "rebase --continue",
+      "push --force-with-lease"
+    ]
+  },
+  {
+    "id": "pr-squash",
+    "number": "35",
+    "title": "把整个 PR 汇总为一个提交",
+    "subtitle": "保留开发过程，让主线按功能阅读",
+    "category": "团队协作",
+    "level": "进阶",
+    "minutes": 25,
+    "concepts": [
+      "双远端",
+      "PR 评审",
+      "必需检查",
+      "合并策略"
+    ],
+    "file": "feature.txt",
+    "story": "创建至少两个功能提交，通过评审与必需检查，使用 Squash 合并。上游只新增一个普通提交，功能与测试都要保留。最后同步两条 main。",
+    "challengeStory": "独立处理同类贡献任务。功能目标改为 released，测试仍为 tests=pass。创建至少两个功能提交，通过评审与必需检查，使用 Squash 合并。上游只新增一个普通提交，功能与测试都要保留。最后同步两条 main。",
+    "target": "feature.txt 为 ready；tests.txt 为 tests=pass。创建至少两个功能提交，通过评审与必需检查，使用 Squash 合并。上游只新增一个普通提交，功能与测试都要保留。最后同步两条 main。",
+    "challengeTarget": "feature.txt 为 released；tests.txt 为 tests=pass。创建至少两个功能提交，通过评审与必需检查，使用 Squash 合并。上游只新增一个普通提交，功能与测试都要保留。最后同步两条 main。",
+    "steps": [
+      {
+        "title": "Fork 并配置双远端",
+        "body": "在托管面板 Fork，再让本地 main 跟上 upstream/main，从它创建 feature/welcome。origin 是个人仓库，upstream 是贡献目标。",
+        "command": "git remote add origin ../origin.git\ngit remote add upstream ../upstream.git\ngit fetch upstream\ngit merge --ff-only upstream/main\ngit switch -c feature/welcome"
+      },
+      {
+        "title": "提交功能和测试",
+        "body": "分别提交功能与测试，观察两次提交在不同合并方式下的去向。把功能分支推送到个人 origin，然后在托管面板创建 PR。",
+        "command": "printf 'ready\\n' > feature.txt\ngit add feature.txt\ngit commit -m '实现功能'\nprintf 'tests=pass\\n' > tests.txt\ngit add tests.txt\ngit commit -m '补充测试'\ngit push -u origin feature/welcome"
+      },
+      {
+        "title": "选择 Squash 合并",
+        "body": "请求评审并运行必需检查。合并方式选择 Squash，再合并 PR。主线获得一个汇总提交，个人功能分支仍保留原来的多个提交。",
+        "command": "git log --oneline upstream/main..feature/welcome"
+      },
+      {
+        "title": "同步两条主线并比较历史",
+        "body": "PR 合并后更新本地与个人 main。查看图形历史与来源分支差异，来源分支在 squash/rebase 合并后可能不再是 main 的祖先，不要仅凭 branch -d 被拒绝判断合并失败。",
+        "command": "git switch main\ngit fetch upstream\ngit merge --ff-only upstream/main\ngit push origin main\ngit log --oneline --graph --all\ngit diff main feature/welcome"
+      }
+    ],
+    "hints": [
+      "先确认 origin 与 upstream 指向正确仓库；PR 读取的是推送后的分支，不是未提交或未推送的本地内容。",
+      "评审和检查绑定具体提交与上游基线。修改或上游变化后要重新检查；冲突必须在本地 Git 中处理。",
+      "引导模式的 feature.txt 内容为 ready，独立挑战为 released；tests.txt 均为 tests=pass。创建两个提交后推送，按本关要求处理上游事件并选择合并方式，最后 fetch upstream、切到 main、merge --ff-only upstream/main、push origin main。"
+    ],
+    "commands": [
+      "merge --squash",
+      "log",
+      "diff",
+      "fetch",
+      "push"
+    ]
+  },
+  {
+    "id": "pr-rebase",
+    "number": "36",
+    "title": "把 PR 逐条重放到主线",
+    "subtitle": "保留提交粒度，让主线保持线性",
+    "category": "团队协作",
+    "level": "进阶",
+    "minutes": 25,
+    "concepts": [
+      "双远端",
+      "PR 评审",
+      "必需检查",
+      "合并策略"
+    ],
+    "file": "feature.txt",
+    "story": "创建至少两个功能提交，通过评审与必需检查，使用 Rebase 合并。上游逐条保留改动且没有 merge 提交，再同步两条 main。",
+    "challengeStory": "独立处理同类贡献任务。功能目标改为 released，测试仍为 tests=pass。创建至少两个功能提交，通过评审与必需检查，使用 Rebase 合并。上游逐条保留改动且没有 merge 提交，再同步两条 main。",
+    "target": "feature.txt 为 ready；tests.txt 为 tests=pass。创建至少两个功能提交，通过评审与必需检查，使用 Rebase 合并。上游逐条保留改动且没有 merge 提交，再同步两条 main。",
+    "challengeTarget": "feature.txt 为 released；tests.txt 为 tests=pass。创建至少两个功能提交，通过评审与必需检查，使用 Rebase 合并。上游逐条保留改动且没有 merge 提交，再同步两条 main。",
+    "steps": [
+      {
+        "title": "Fork 并配置双远端",
+        "body": "在托管面板 Fork，再让本地 main 跟上 upstream/main，从它创建 feature/welcome。origin 是个人仓库，upstream 是贡献目标。",
+        "command": "git remote add origin ../origin.git\ngit remote add upstream ../upstream.git\ngit fetch upstream\ngit merge --ff-only upstream/main\ngit switch -c feature/welcome"
+      },
+      {
+        "title": "提交功能和测试",
+        "body": "分别提交功能与测试，观察两次提交在不同合并方式下的去向。把功能分支推送到个人 origin，然后在托管面板创建 PR。",
+        "command": "printf 'ready\\n' > feature.txt\ngit add feature.txt\ngit commit -m '实现功能'\nprintf 'tests=pass\\n' > tests.txt\ngit add tests.txt\ngit commit -m '补充测试'\ngit push -u origin feature/welcome"
+      },
+      {
+        "title": "选择 Rebase 合并",
+        "body": "请求评审并运行必需检查。选择 Rebase 合并，再合并 PR。托管端在上游逐条重放来源提交并快进主线，来源分支不被改写。比较两侧历史与内容；不要依赖原来的提交 ID 判断是否已合并。",
+        "command": "git log --oneline upstream/main..feature/welcome"
+      },
+      {
+        "title": "同步两条主线并比较历史",
+        "body": "PR 合并后更新本地与个人 main。查看图形历史与来源分支差异，来源分支在 squash/rebase 合并后可能不再是 main 的祖先，不要仅凭 branch -d 被拒绝判断合并失败。",
+        "command": "git switch main\ngit fetch upstream\ngit merge --ff-only upstream/main\ngit push origin main\ngit log --oneline --graph --all\ngit diff main feature/welcome"
+      }
+    ],
+    "hints": [
+      "先确认 origin 与 upstream 指向正确仓库；PR 读取的是推送后的分支，不是未提交或未推送的本地内容。",
+      "评审和检查绑定具体提交与上游基线。修改或上游变化后要重新检查；冲突必须在本地 Git 中处理。",
+      "引导模式的 feature.txt 内容为 ready，独立挑战为 released；tests.txt 均为 tests=pass。创建两个提交后推送，按本关要求处理上游事件并选择合并方式，最后 fetch upstream、切到 main、merge --ff-only upstream/main、push origin main。"
+    ],
+    "commands": [
+      "rebase",
+      "merge --ff-only",
+      "log",
+      "fetch",
+      "push"
+    ]
+  },
+  {
+    "id": "branch-protection",
+    "number": "37",
+    "title": "通过检查后合入受保护主线",
+    "subtitle": "评审通过，不代表现在就可以合并",
+    "category": "团队协作",
+    "level": "进阶",
+    "minutes": 25,
+    "concepts": [
+      "双远端",
+      "PR 评审",
+      "必需检查",
+      "合并策略"
+    ],
+    "file": "feature.txt",
+    "story": "通过功能分支 PR 合入受保护的 upstream/main。保留分支保护规则，通过评审与必需检查，以 Merge 方式合并并同步两条 main。",
+    "challengeStory": "独立处理同类贡献任务。功能目标改为 released，测试仍为 tests=pass。通过功能分支 PR 合入受保护的 upstream/main。保留分支保护规则，通过评审与必需检查，以 Merge 方式合并并同步两条 main。",
+    "target": "feature.txt 为 ready；tests.txt 为 tests=pass。通过功能分支 PR 合入受保护的 upstream/main。保留分支保护规则，通过评审与必需检查，以 Merge 方式合并并同步两条 main。",
+    "challengeTarget": "feature.txt 为 released；tests.txt 为 tests=pass。通过功能分支 PR 合入受保护的 upstream/main。保留分支保护规则，通过评审与必需检查，以 Merge 方式合并并同步两条 main。",
+    "steps": [
+      {
+        "title": "Fork 并配置双远端",
+        "body": "在托管面板 Fork，再让本地 main 跟上 upstream/main，从它创建 feature/welcome。origin 是个人仓库，upstream 是贡献目标。",
+        "command": "git remote add origin ../origin.git\ngit remote add upstream ../upstream.git\ngit fetch upstream\ngit merge --ff-only upstream/main\ngit switch -c feature/welcome"
+      },
+      {
+        "title": "提交功能和测试",
+        "body": "分别提交功能与测试，观察两次提交在不同合并方式下的去向。把功能分支推送到个人 origin，然后在托管面板创建 PR。",
+        "command": "printf 'ready\\n' > feature.txt\ngit add feature.txt\ngit commit -m '实现功能'\nprintf 'tests=pass\\n' > tests.txt\ngit add tests.txt\ngit commit -m '补充测试'\ngit push -u origin feature/welcome"
+      },
+      {
+        "title": "验证直接推送被拒绝",
+        "body": "本关 upstream/main 使用真实 pre-receive 钩子拒绝终端直接推送。尝试把功能分支推到主线会被拒绝；改走 PR。规则是离线教学模拟，不是 GitHub 的安全实现。",
+        "command": "git push upstream feature/welcome:main"
+      },
+      {
+        "title": "分别完成评审与必需检查",
+        "body": "创建 PR 后请求评审，观察即使评审通过也不能立即合并。运行必需检查后才能以 Merge 方式合并。如果你再次推送任何改动，评审和检查都会过期，必须重新运行。",
+        "command": "git log --oneline --graph --all"
+      },
+      {
+        "title": "同步两条主线并比较历史",
+        "body": "PR 合并后更新本地与个人 main。查看图形历史与来源分支差异，来源分支在 squash/rebase 合并后可能不再是 main 的祖先，不要仅凭 branch -d 被拒绝判断合并失败。",
+        "command": "git switch main\ngit fetch upstream\ngit merge --ff-only upstream/main\ngit push origin main\ngit log --oneline --graph --all\ngit diff main feature/welcome"
+      }
+    ],
+    "hints": [
+      "先确认 origin 与 upstream 指向正确仓库；PR 读取的是推送后的分支，不是未提交或未推送的本地内容。",
+      "评审和检查绑定具体提交与上游基线。修改或上游变化后要重新检查；冲突必须在本地 Git 中处理。",
+      "引导模式的 feature.txt 内容为 ready，独立挑战为 released；tests.txt 均为 tests=pass。创建两个提交后推送，按本关要求处理上游事件并选择合并方式，最后 fetch upstream、切到 main、merge --ff-only upstream/main、push origin main。"
+    ],
+    "commands": [
+      "push",
+      "hooks",
+      "branch protection",
+      "required checks"
+    ]
   }
 ]

@@ -1,8 +1,8 @@
 """Advanced scenarios and the offline code-host exercise, backed by real Git."""
-import json
+import hosting
 
 IDS = {'rebase', 'rebase-conflict', 'interactive-rebase', 'cherry-pick',
-       'cherry-pick-conflict', 'stash', 'reflog', 'fork-pr'}
+       'cherry-pick-conflict', 'stash', 'reflog'} | hosting.IDS
 
 
 def setup(e, repo, base, lesson, mode, record):
@@ -48,18 +48,8 @@ def setup(e, repo, base, lesson, mode, record):
         (repo / 'feature.txt').write_text(value + '\n')
         record['lost'] = e.commit(repo, '需要找回的工作')
         g('reset', '--hard', record['initial'])
-    elif lesson == 'fork-pr':
-        upstream = base / 'upstream.git'
-        e.git(base, 'init', '--bare', '-b', 'main', str(upstream))
-        g('push', str(upstream), 'main')
-        # The learner configures both remotes. The code-host button creates the fork.
-        teammate = base / 'maintainer'
-        e.git(base, 'clone', str(upstream), str(teammate))
-        e.config(teammate)
-        (teammate / 'upstream.txt').write_text('team-update\n')
-        record['upstream'] = e.commit(teammate, '维护者更新主线')
-        e.git(teammate, 'push', 'origin', 'main')
-        record['hosting'] = {'forked': False, 'pr': None}
+    elif lesson in hosting.IDS:
+        hosting.setup(e, repo, base, lesson, mode, record)
 
 
 def assess(e, repo, base, lesson, mode, record):
@@ -100,23 +90,8 @@ def assess(e, repo, base, lesson, mode, record):
             ('切换至找回的工作且内容完整', g('branch', '--show-current') == 'recovered' and tip == record['lost'] and at('HEAD', 'feature.txt') == value),
             ('main 保持原位置', g('rev-parse', 'main') == record['initial']),
         ]
-    elif lesson == 'fork-pr':
-        hosting = record['hosting']
-        pr = hosting.get('pr') or {}
-        upstream = base / 'upstream.git'
-        origin = base / 'origin.git'
-        upstream_tip = e.git(upstream, 'rev-parse', 'main')
-        origin_tip = e.git(origin, 'rev-parse', 'main', check=False) if origin.exists() else ''
-        def remote_is(name, path):
-            from pathlib import Path
-            raw = g('remote', 'get-url', name)
-            return bool(raw) and (repo / Path(raw)).resolve() == path.resolve()
-        checks = [
-            ('个人 origin 与上游 upstream 指向不同仓库', hosting['forked'] and remote_is('origin', origin) and remote_is('upstream', upstream)),
-            ('功能分支的 PR 已通过评审并合并到上游', pr.get('status') == 'merged' and pr.get('review') == 'approved' and e.text_at(upstream, 'main', 'feature.txt') == value and e.text_at(upstream, 'main', 'tests.txt') == 'tests=pass'),
-            ('保留上游原有提交', e.ancestor(upstream, record['upstream'], 'main')),
-            ('个人与本地主线已同步合并结果', pr.get('status') == 'merged' and origin_tip == upstream_tip and g('rev-parse', 'main') == upstream_tip and g('branch', '--show-current') == 'main'),
-        ]
+    elif lesson in hosting.IDS:
+        checks = hosting.assess(e, repo, base, record)
     if lesson != 'stash':
         checks.append(('工作区与暂存区干净', not g('status', '--porcelain')))
     checks.append(('没有遗留进行中的 Git 操作', not operation(e, repo)))
@@ -135,78 +110,8 @@ def operation(e, repo):
 
 
 def hosting_view(e, repo, base, record):
-    if 'hosting' not in record:
-        return None
-    view = json.loads(json.dumps(record['hosting']))
-    view['origin'] = str(base / 'origin.git')
-    view['upstream'] = str(base / 'upstream.git')
-    pr = view.get('pr')
-    if pr:
-        origin = base / 'origin.git'
-        head = e.git(origin, 'rev-parse', '--verify', 'refs/heads/' + pr['branch'], check=False)
-        pr['currentHead'] = head
-        pr['staleReview'] = head != pr.get('reviewedHead')
-        pr['diff'] = e.git(origin, 'diff', '--no-ext-diff', '--no-textconv', f'{record["upstream"]}...{head}', check=False)[:16000] if head else ''
-    return view
+    return hosting.view(e, repo, base, record)
 
 
 def host_action(e, repo, base, record, request):
-    """All writes remain under the selected, validated exercise directory."""
-    if record['lesson'] != 'fork-pr':
-        raise ValueError('本课程没有托管平台操作')
-    hosting = record['hosting']
-    origin, upstream = base / 'origin.git', base / 'upstream.git'
-    action = request.get('operation')
-    if action == 'fork':
-        if not hosting['forked']:
-            e.git(base, 'clone', '--bare', str(upstream), str(origin))
-            hosting['forked'] = True
-    elif action == 'create':
-        if not hosting['forked']:
-            raise ValueError('请先 Fork 上游仓库')
-        if hosting.get('pr'):
-            raise ValueError('本练习已有 PR，请向同一功能分支追加提交')
-        branch, title = request.get('branch', ''), request.get('title', '')
-        if not isinstance(branch, str) or not branch.startswith('feature/') or len(branch) > 120:
-            raise ValueError('请选择已推送的 feature/ 功能分支')
-        e.git(origin, 'check-ref-format', 'refs/heads/' + branch)
-        if not isinstance(title, str) or not title.strip() or len(title) > 160:
-            raise ValueError('请填写 1–160 字的 PR 标题')
-        head = e.git(origin, 'rev-parse', '--verify', 'refs/heads/' + branch)
-        if not e.ancestor(origin, record['upstream'], head):
-            raise ValueError('功能分支尚未整合 upstream/main，请先 fetch 并 rebase 或 merge')
-        if not e.git(origin, 'diff', '--name-only', record['upstream'], head):
-            raise ValueError('功能分支没有可提交的改动；请先提交并推送到 origin')
-        hosting['pr'] = {'number': 1, 'title': title.strip(), 'branch': branch, 'base': 'main',
-                         'status': 'open', 'review': 'pending', 'createdHead': head,
-                         'reviewedHead': None, 'message': 'PR 已创建。请请求评审。'}
-    elif action in {'review', 'merge'}:
-        pr = hosting.get('pr')
-        if not pr or pr['status'] != 'open':
-            raise ValueError('请先创建尚未合并的 PR')
-        head = e.git(origin, 'rev-parse', '--verify', 'refs/heads/' + pr['branch'])
-        if action == 'review':
-            approved = (e.text_at(origin, head, 'feature.txt') == record['value'] and
-                        e.text_at(origin, head, 'tests.txt') == 'tests=pass')
-            pr.update(review='approved' if approved else 'changes_requested', reviewedHead=head,
-                      message='评审通过，可以合并。' if approved else f'请求修改：feature.txt 应为 {record["value"]}，并新增 tests.txt 内容 tests=pass。修改后推送同一分支，再请求评审。')
-        else:
-            if pr['review'] != 'approved' or pr['reviewedHead'] != head:
-                raise ValueError('当前提交尚未通过评审；追加或重写提交后需要重新评审')
-            maintainer = base / 'maintainer'
-            e.git(maintainer, 'fetch', 'origin')
-            e.git(maintainer, 'merge', '--ff-only', 'origin/main')
-            e.git(maintainer, 'fetch', str(origin), 'refs/heads/' + pr['branch'])
-            result = e.git(maintainer, 'merge-tree', '--write-tree', 'HEAD', 'FETCH_HEAD', check=False)
-            # A conflicted merge-tree reports paths after the tree id. Never leave a maintainer merge in progress.
-            if len(result.splitlines()) != 1:
-                raise ValueError('PR 与上游有冲突，请在本地同步并解决后重新推送、评审')
-            e.git(maintainer, 'merge', '--no-ff', 'FETCH_HEAD', '-m', 'Merge PR #1: ' + pr['title'])
-            e.git(maintainer, 'push', 'origin', 'main')
-            pr.update(status='merged', mergedHead=e.git(maintainer, 'rev-parse', 'HEAD'),
-                      message='已合并到 upstream/main。回到终端同步本地 main，并推送 origin/main。')
-    else:
-        raise ValueError('未知托管操作')
-    temporary = base / 'scenario.json.tmp'
-    temporary.write_text(json.dumps(record, ensure_ascii=False))
-    temporary.replace(base / 'scenario.json')
+    return hosting.action(e, repo, base, record, request)

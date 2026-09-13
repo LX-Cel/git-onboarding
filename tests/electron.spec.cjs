@@ -34,6 +34,130 @@ async function terminalCommand(page, command) {
   expect(status.code, status.output).toBe(0);
 }
 
+for (const [title, strategy, conflict] of [
+  ["通过检查后合入受保护主线", "merge", false],
+  ["把整个 PR 汇总为一个提交", "squash", false],
+  ["把 PR 逐条重放到主线", "rebase", false],
+  ["解决评审期间的上游冲突", "merge", true],
+]) {
+  test(`PR integration: ${title}`, async () => {
+    const env = {
+      ...process.env,
+      GIT_ONBOARDING_DATA_DIR: path.resolve(
+        process.env.GIT_ONBOARDING_TEST_DATA_DIR ||
+          ".local/ui-after-wsl-restart",
+      ),
+    };
+    delete env.ELECTRON_RUN_AS_NODE;
+    const app = await electron.launch({
+      executablePath: process.env.GIT_ONBOARDING_EXECUTABLE,
+      args: process.env.GIT_ONBOARDING_EXECUTABLE ? [] : ["."],
+      cwd: path.resolve("."),
+      env,
+    });
+    try {
+      const page = await app.firstWindow();
+      const errors = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+      await expect(page.locator(".local-status")).toContainText(
+        "本地练习环境已就绪",
+      );
+      await page.getByRole("combobox", { name: "显示比例" }).selectOption("1");
+      await page.getByRole("searchbox", { name: "查找练习" }).fill(title);
+      await page
+        .locator(".course-card")
+        .filter({ hasText: title })
+        .getByRole("button")
+        .first()
+        .click();
+      await expect(
+        page.getByRole("textbox", { name: "文件内容" }),
+      ).toBeEditable();
+      await page.getByRole("button", { name: "重新开始", exact: true }).click();
+      await page
+        .getByRole("dialog")
+        .getByRole("button", { name: "重新开始", exact: true })
+        .click();
+      await page.getByRole("button", { name: "托管练习", exact: true }).click();
+      await page.getByRole("button", { name: "Fork 上游仓库" }).click();
+      await expect(
+        page.getByRole("textbox", { name: "PR 标题" }),
+      ).toBeVisible();
+      await terminalCommand(
+        page,
+        "git remote add origin ../origin.git && git remote add upstream ../upstream.git && git fetch upstream && git merge --ff-only upstream/main && git switch -c feature/welcome",
+      );
+      await terminalCommand(
+        page,
+        'printf "ready\\n" > feature.txt && git add feature.txt && git commit -m feature && printf "tests=pass\\n" > tests.txt && git add tests.txt && git commit -m tests && git push -u origin feature/welcome',
+      );
+      await page.getByRole("textbox", { name: "PR 标题" }).fill(title);
+      await page.getByRole("button", { name: "创建 PR", exact: true }).click();
+      await page.getByRole("button", { name: "请求评审" }).click();
+      await expect(page.locator(".hosting-status")).toContainText("评审通过");
+      await expect(
+        page.getByRole("button", { name: "合并 PR", exact: true }),
+      ).toBeDisabled();
+      await page.getByRole("button", { name: "运行必需检查" }).click();
+      await expect(
+        page.getByRole("status", { name: "必需检查结果" }),
+      ).toContainText("必需检查 · 通过");
+      if (conflict) {
+        await page.getByRole("button", { name: "模拟上游更新" }).click();
+        await expect(
+          page.getByRole("status", { name: "必需检查结果" }),
+        ).toContainText("检查已过期");
+        await page.getByRole("button", { name: "运行必需检查" }).click();
+        await expect(
+          page.getByRole("status", { name: "必需检查结果" }),
+        ).toContainText("冲突");
+        await expect(
+          page.getByRole("button", { name: "合并 PR", exact: true }),
+        ).toBeDisabled();
+        await terminalCommand(
+          page,
+          'git fetch upstream && (git rebase upstream/main || test "$(git diff --name-only --diff-filter=U)" = feature.txt)',
+        );
+        await terminalCommand(
+          page,
+          'printf "ready\\n" > feature.txt && git add feature.txt && GIT_EDITOR=true git rebase --continue && git push --force-with-lease origin feature/welcome',
+        );
+        await page.getByRole("button", { name: "请求评审" }).click();
+        await page.getByRole("button", { name: "运行必需检查" }).click();
+        await expect(
+          page.getByRole("status", { name: "必需检查结果" }),
+        ).toContainText("必需检查 · 通过");
+      }
+      await page
+        .getByRole("combobox", { name: "合并方式" })
+        .selectOption(strategy);
+      await page.getByRole("button", { name: "合并 PR", exact: true }).click();
+      await expect(page.locator(".hosting-status")).toContainText("已合并");
+      await terminalCommand(
+        page,
+        "git switch main && git fetch upstream && git merge --ff-only upstream/main && git push origin main",
+      );
+      await page
+        .getByRole("button", { name: "检查练习结果", exact: true })
+        .click();
+      await expect(page.getByRole("dialog")).toContainText("本关已完成");
+      await expect(page.getByRole("textbox", { name: "文件内容" })).toHaveValue(
+        "ready\n",
+      );
+      await page
+        .getByRole("dialog")
+        .getByRole("button", { name: "关闭检查结果" })
+        .click();
+      await page.screenshot({
+        path: `test-results/pr-${conflict ? "conflict" : strategy}.png`,
+      });
+      expect(errors).toEqual([]);
+    } finally {
+      await app.close();
+    }
+  });
+}
+
 test("submodule initialization and parent gitlink update through desktop", async () => {
   const env = {
     ...process.env,

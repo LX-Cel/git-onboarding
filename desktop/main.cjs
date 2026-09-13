@@ -189,7 +189,9 @@ if (locked)
       if (
         !selected ||
         !value ||
-        !["fork", "create", "review", "merge"].includes(value.operation)
+        !["fork", "create", "review", "check", "advance", "merge"].includes(
+          value.operation,
+        )
       )
         throw new Error("托管操作无效");
       return record(
@@ -199,6 +201,7 @@ if (locked)
           operation: value.operation,
           branch: value.branch,
           title: value.title,
+          strategy: value.strategy,
         }),
       );
     });

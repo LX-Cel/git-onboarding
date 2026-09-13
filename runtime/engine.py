@@ -23,9 +23,9 @@ SAFE_ENV = {**os.environ, 'GIT_TERMINAL_PROMPT': '0', 'GIT_CONFIG_NOSYSTEM': '1'
             'GIT_CONFIG_GLOBAL': '/dev/null', 'GIT_PAGER': 'cat', 'GIT_EDITOR': 'true',
             'GIT_OPTIONAL_LOCKS': '0', 'LC_ALL': 'C.UTF-8'}
 
-def git(repo, *args, check=True):
+def git(repo, *args, check=True, extra_env=None):
     result = subprocess.run(['git', '-c', 'core.quotepath=false', '-c', 'core.fsmonitor=false',
-                             '-C', str(repo), *args], env=SAFE_ENV, capture_output=True, timeout=10)
+                             '-C', str(repo), *args], env={**SAFE_ENV, **(extra_env or {})}, capture_output=True, timeout=10)
     if check and result.returncode:
         raise ValueError(result.stderr.decode(errors='replace').strip()[:2000])
     return result.stdout.decode(errors='replace').rstrip('\n')
@@ -261,7 +261,7 @@ def dispatch(request):
     lesson, mode = request.get('lesson'), request.get('mode', 'guided')
     if action == 'probe':
         hashes = {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
-                  for name in ['engine.py', 'advanced.py', 'maintenance.py', 'teamwork.py', 'relay.py', 'lessons.json']}
+                  for name in ['engine.py', 'advanced.py', 'maintenance.py', 'teamwork.py', 'hosting.py', 'relay.py', 'lessons.json']}
         return {'courseVersion': COURSE_VERSION, 'courseHashes': hashes, 'uid': os.getuid(), 'git': subprocess.check_output(['git', '--version'], text=True).strip(),
                 'windowsMount': Path('/mnt/c').exists(), 'interop': bool(os.environ.get('WSL_INTEROP')),
                 'initVisible': Path('/init').exists()}

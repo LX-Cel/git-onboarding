@@ -6,6 +6,8 @@
 
 当前发布为 **Windows x64 私有预览版 0.2.0-preview.1**，延续选定的 J 版 Fluent 2 视觉方向。在 [GitHub Release 下载](https://github.com/LX-Cel/git-onboarding/releases/tag/v0.2.0-preview.1)安装包 `Git-Onboarding-0.2.0-preview.1-Setup.exe` 和 SHA256 校验文件；本地构建产物位于 `release/`。项目尚未授予开源许可证；成熟后再决定公开与许可证。
 
+开发分支现有 37 门课程、74 个场景，比已发布预览版新增 PR 上游冲突、Squash/Rebase 合并，以及受保护分支与必需检查。新增课程尚未包含在上述安装包中。
+
 ![学习路径](docs/screenshots/home.png)
 
 ![真实 Git 练习工作台](docs/screenshots/workbench.png)

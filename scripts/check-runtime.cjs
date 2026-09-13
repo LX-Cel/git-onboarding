@@ -28,6 +28,7 @@ for (const name of [
   "advanced.py",
   "maintenance.py",
   "teamwork.py",
+  "hosting.py",
   "relay.py",
   "lessons.json",
 ]) {
