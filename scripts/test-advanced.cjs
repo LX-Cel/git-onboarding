@@ -19,15 +19,18 @@ const { Runtime, run } = require("../desktop/runtime.cjs");
     "engine.py",
     "advanced.py",
     "maintenance.py",
+    "teamwork.py",
     "relay.py",
     "lessons.json",
   ])
     files[name] = (await fs.readFile(path.resolve("runtime", name))).toString(
       "base64",
     );
-  const suite = process.argv.includes("--maintenance")
-    ? "maintenance_checks.py"
-    : "advanced_checks.py";
+  const suite = process.argv.includes("--teamwork")
+    ? "teamwork_checks.py"
+    : process.argv.includes("--maintenance")
+      ? "maintenance_checks.py"
+      : "advanced_checks.py";
   const test = (await fs.readFile(path.join("tests", suite))).toString(
     "base64",
   );

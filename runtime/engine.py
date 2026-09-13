@@ -12,6 +12,7 @@ from types import SimpleNamespace
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import advanced
 import maintenance
+import teamwork
 
 ROOT = Path('/home/student/labs')
 COURSE_VERSION = '0.2.0'
@@ -85,6 +86,8 @@ def initialize(lesson, mode, reset=False):
         advanced.setup(advanced_api(), repo, base, lesson, mode, record)
     elif lesson in maintenance.IDS:
         maintenance.setup(advanced_api(), repo, base, lesson, mode, record)
+    elif lesson in teamwork.IDS:
+        teamwork.setup(advanced_api(), repo, base, lesson, mode, record)
     elif lesson == 'recovery':
         (repo / 'notes.txt').write_text('这段笔记需要保留。\n')
         (repo / 'draft.txt').write_text('初始草稿\n')
@@ -164,6 +167,8 @@ def assess(repo, base, lesson, mode):
         return advanced.assess(advanced_api(), repo, base, lesson, mode, record)
     if lesson in maintenance.IDS:
         return maintenance.assess(advanced_api(), repo, base, lesson, mode, record)
+    if lesson in teamwork.IDS:
+        return teamwork.assess(advanced_api(), repo, base, lesson, mode, record)
     if lesson == 'basics':
         original = text_at(repo, record['initial'], 'README.md').strip()
         committed = text_at(repo, 'HEAD', 'README.md').strip()
@@ -256,7 +261,7 @@ def dispatch(request):
     lesson, mode = request.get('lesson'), request.get('mode', 'guided')
     if action == 'probe':
         hashes = {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
-                  for name in ['engine.py', 'advanced.py', 'maintenance.py', 'relay.py', 'lessons.json']}
+                  for name in ['engine.py', 'advanced.py', 'maintenance.py', 'teamwork.py', 'relay.py', 'lessons.json']}
         return {'courseVersion': COURSE_VERSION, 'courseHashes': hashes, 'uid': os.getuid(), 'git': subprocess.check_output(['git', '--version'], text=True).strip(),
                 'windowsMount': Path('/mnt/c').exists(), 'interop': bool(os.environ.get('WSL_INTEROP')),
                 'initVisible': Path('/init').exists()}

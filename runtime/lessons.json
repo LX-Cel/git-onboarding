@@ -1005,5 +1005,557 @@
       "mkdir -p docs；git mv old-guide.md docs/guide.md；git rm obsolete.txt。",
       "查看暂存差异，确认手册正文不变，再提交。"
     ]
+  },
+  {
+    "id": "push-rejected",
+    "number": "22",
+    "title": "推送被拒绝后保留双方工作",
+    "subtitle": "本地提交尚未推送，队友已更新 origin/main",
+    "category": "远程协作",
+    "level": "进阶",
+    "minutes": 25,
+    "file": "feature.txt",
+    "story": "本地提交尚未推送，队友已更新 origin/main。直接 push 会被拒绝，需要先理解分叉并整合双方工作。",
+    "challengeStory": "独立挑战：本地提交尚未推送，队友已更新 origin/main。直接 push 会被拒绝，需要先理解分叉并整合双方工作。",
+    "target": "main 保留队友提交和 team.txt；feature.txt 为 ready；origin/main 收到整合后的完整历史。",
+    "challengeTarget": "main 保留队友提交和 team.txt；feature.txt 为 released；origin/main 收到整合后的完整历史。",
+    "commands": [
+      "push",
+      "fetch",
+      "non-fast-forward"
+    ],
+    "concepts": [
+      "push",
+      "fetch",
+      "non-fast-forward"
+    ],
+    "steps": [
+      {
+        "title": "阅读拒绝原因",
+        "body": "先观察普通 push 的拒绝信息；不要覆盖远端来掩盖分叉。",
+        "command": "git push origin main\ngit fetch origin\ngit log --oneline --graph --all"
+      },
+      {
+        "title": "整合远端",
+        "body": "这份本地提交尚未共享，可重放到 origin/main 之后；也可使用保留双方历史的 merge。",
+        "command": "git rebase origin/main\ngit diff origin/main..HEAD"
+      },
+      {
+        "title": "再次推送",
+        "body": "检查双方内容，再推送新的 main。",
+        "command": "git push origin main\ngit status"
+      }
+    ],
+    "hints": [
+      "拒绝推送表示远端有本地还没包含的提交，不代表本地工作丢失。",
+      "fetch 后用 log --all 检查；再 rebase 或 merge origin/main。",
+      "git fetch origin；git rebase origin/main；git push origin main。"
+    ]
+  },
+  {
+    "id": "force-with-lease",
+    "number": "23",
+    "title": "带着保护条件更新共享历史",
+    "subtitle": "团队已同意整理 feature/topic 的两个功能提交，本地已合并成一个提交",
+    "category": "远程协作",
+    "level": "进阶",
+    "minutes": 25,
+    "file": "feature.txt",
+    "story": "团队已同意整理 feature/topic 的两个功能提交，本地已合并成一个提交。但队友在你整理期间又推送了修改。先保存队友原始历史，再移植其改动，用带租约的推送更新共享分支。",
+    "challengeStory": "独立挑战：团队已同意整理 feature/topic 的两个功能提交，本地已合并成一个提交。但队友在你整理期间又推送了修改。先保存队友原始历史，再移植其改动，用带租约的推送更新共享分支。",
+    "target": "backup/team 保留队友原始远端提交；feature/topic 整理为两个提交，完整保留 feature.txt（ready）、tests.txt 和 team.txt；origin 同步整理后的分支。",
+    "challengeTarget": "backup/team 保留队友原始远端提交；feature/topic 整理为两个提交，完整保留 feature.txt（released）、tests.txt 和 team.txt；origin 同步整理后的分支。",
+    "commands": [
+      "push --force-with-lease",
+      "备份引用",
+      "共享历史"
+    ],
+    "concepts": [
+      "push --force-with-lease",
+      "备份引用",
+      "共享历史"
+    ],
+    "steps": [
+      {
+        "title": "先观察租约保护",
+        "body": "当前远端跟踪引用已过期，带租约的 push 应拒绝覆盖队友刚追加的提交。",
+        "command": "git push --force-with-lease origin feature/topic\ngit fetch origin\ngit log --oneline --graph --all"
+      },
+      {
+        "title": "备份并保留队友工作",
+        "body": "保存 fetched 提交的明确引用。origin/feature/topic 的最后一个提交是队友独立追加的改动，把它移植到整理后的本地分支。",
+        "command": "git branch backup/team origin/feature/topic\ngit cherry-pick backup/team\ngit diff backup/team HEAD"
+      },
+      {
+        "title": "使用明确租约推送",
+        "body": "指定备份的 ID 作为期望远端位置，后续后台 fetch 不会改变这一保护条件；若再次拒绝，先重新核对队友的新工作。",
+        "command": "git push --force-with-lease=refs/heads/feature/topic:$(git rev-parse backup/team) origin feature/topic"
+      }
+    ],
+    "hints": [
+      "租约只保护你尚未见过的远端变化，并不自动合并队友内容。",
+      "fetch 后先 branch backup/team，再 cherry-pick backup/team；确认新旧分支内容一致。",
+      "只在双方同意整理时改写共享历史。本关推送明确指定 backup/team 的原 ID；切勿用裸 --force 代替排查。"
+    ]
+  },
+  {
+    "id": "remote-repair",
+    "number": "24",
+    "title": "修复远端地址与过期分支",
+    "subtitle": "origin 的地址被写错，远端 obsolete 分支也已删除",
+    "category": "远程协作",
+    "level": "进阶",
+    "minutes": 25,
+    "file": "README.md",
+    "story": "origin 的地址被写错，远端 obsolete 分支也已删除。修复到 ../origin.git，将这个远端改名 upstream，并清理过期跟踪分支。",
+    "challengeStory": "独立挑战：origin 的地址被写错，远端 obsolete 分支也已删除。修复到 ../origin.git，将这个远端改名 upstream，并清理过期跟踪分支。",
+    "target": "只保留正确的 upstream 远端；main 跟踪 upstream/main；不存在旧的 origin/obsolete 或 upstream/obsolete；本地提交不变。",
+    "challengeTarget": "只保留正确的 upstream 远端；main 跟踪 upstream/main；不存在旧的 origin/obsolete 或 upstream/obsolete；本地提交不变。",
+    "commands": [
+      "remote set-url",
+      "remote rename",
+      "fetch --prune"
+    ],
+    "concepts": [
+      "remote set-url",
+      "remote rename",
+      "fetch --prune"
+    ],
+    "steps": [
+      {
+        "title": "定位配置",
+        "body": "确认失败是路径配置而非没有提交。",
+        "command": "git remote -v\ngit fetch origin"
+      },
+      {
+        "title": "修复并重命名",
+        "body": "set-url 修改地址，rename 会同步调整对应远端跟踪配置。",
+        "command": "git remote set-url origin ../origin.git\ngit remote rename origin upstream"
+      },
+      {
+        "title": "清理并检查跟踪关系",
+        "body": "fetch --prune 删除已消失的远端跟踪引用，不删除本地工作分支。",
+        "command": "git fetch --prune upstream\ngit branch -vv\ngit branch -r"
+      }
+    ],
+    "hints": [
+      "真实练习远端位于工作区旁的 origin.git。",
+      "先 remote set-url，再 remote rename；不要重新创建空远端掩盖地址问题。",
+      "git fetch --prune upstream 后，branch -r 不应再列出 obsolete。"
+    ]
+  },
+  {
+    "id": "rebase-onto",
+    "number": "25",
+    "title": "把堆叠分支移到正确基线",
+    "subtitle": "feature/topic 从尚未评审的 feature/base 分出，但 topic 的工作可独立交付",
+    "category": "历史整理",
+    "level": "进阶",
+    "minutes": 25,
+    "file": "feature.txt",
+    "story": "feature/topic 从尚未评审的 feature/base 分出，但 topic 的工作可独立交付。把 topic 自己的提交移到最新 main，不带入基础分支的实验。",
+    "challengeStory": "独立挑战：feature/topic 从尚未评审的 feature/base 分出，但 topic 的工作可独立交付。把 topic 自己的提交移到最新 main，不带入基础分支的实验。",
+    "target": "feature/topic 只有一个直接位于最新 main 之后的提交；feature.txt 为 ready，保留 team.txt，不包含 experimental.txt；feature/base 保持原样。",
+    "challengeTarget": "feature/topic 只有一个直接位于最新 main 之后的提交；feature.txt 为 released，保留 team.txt，不包含 experimental.txt；feature/base 保持原样。",
+    "commands": [
+      "rebase --onto",
+      "堆叠分支",
+      "提交范围"
+    ],
+    "concepts": [
+      "rebase --onto",
+      "堆叠分支",
+      "提交范围"
+    ],
+    "steps": [
+      {
+        "title": "明确旧基线与新基线",
+        "body": "main 是新基线；feature/base 是需要排除的旧祖先；feature/topic 是要移动的分支。",
+        "command": "git log --oneline --graph --all\ngit log feature/base..feature/topic --oneline"
+      },
+      {
+        "title": "只移动选定范围",
+        "body": "--onto 的三个参数分别表示新基线、排除到的旧基线、要操作的分支。",
+        "command": "git rebase --onto main feature/base feature/topic"
+      },
+      {
+        "title": "检查没有带入实验",
+        "body": "检查结果只包含 topic 的修改。",
+        "command": "git diff main..feature/topic\ngit log --oneline --graph --all"
+      }
+    ],
+    "hints": [
+      "普通 rebase main 可能把 feature/base 的实验一并重放。",
+      "需要的是 feature/base..feature/topic 范围。",
+      "git rebase --onto main feature/base feature/topic；不要移动 feature/base。"
+    ]
+  },
+  {
+    "id": "autosquash",
+    "number": "26",
+    "title": "自动归并 fixup 提交",
+    "subtitle": "feature/topic 有功能提交、独立文档提交，以及指向功能提交的 fixup",
+    "category": "历史整理",
+    "level": "进阶",
+    "minutes": 25,
+    "file": "feature.txt",
+    "story": "feature/topic 有功能提交、独立文档提交，以及指向功能提交的 fixup。把修正归回功能提交，同时保留文档提交的独立性。",
+    "challengeStory": "独立挑战：feature/topic 有功能提交、独立文档提交，以及指向功能提交的 fixup。把修正归回功能提交，同时保留文档提交的独立性。",
+    "target": "main 之后有两个提交：第一个包含 feature.txt 的 ready，第二个添加 docs.txt；功能修正不能留在文档提交里，main 不变。",
+    "challengeTarget": "main 之后有两个提交：第一个包含 feature.txt 的 released，第二个添加 docs.txt；功能修正不能留在文档提交里，main 不变。",
+    "commands": [
+      "rebase --autosquash",
+      "commit --fixup",
+      "历史整理"
+    ],
+    "concepts": [
+      "rebase --autosquash",
+      "commit --fixup",
+      "历史整理"
+    ],
+    "steps": [
+      {
+        "title": "识别修正对象",
+        "body": "fixup! 的说明关联到原功能提交。真正的结果仍要按每个提交内容检查。",
+        "command": "git log --oneline main..HEAD"
+      },
+      {
+        "title": "自动安排顺序",
+        "body": "打开 todo 后应看到 fixup 被移到对应功能提交后。nano 用 Ctrl+O、Enter 保存，Ctrl+X 退出。",
+        "command": "git rebase -i --autosquash main"
+      },
+      {
+        "title": "核对提交边界",
+        "body": "功能提交应已包含修正，文档仍单独提交。",
+        "command": "git show HEAD^\ngit show HEAD\ngit status"
+      }
+    ],
+    "hints": [
+      "只修改 fixup 的提交说明，不会合并它的实际内容。",
+      "--autosquash 会自动移动并标记 fixup；这里保留两次独立提交，不是全部压成一次。",
+      "git rebase -i --autosquash main；保存自动生成的 todo，然后分别检查 HEAD^ 和 HEAD。"
+    ]
+  },
+  {
+    "id": "stash-conflict",
+    "number": "27",
+    "title": "恢复 stash 时处理冲突",
+    "subtitle": "已有一份 stash，但主线随后修改了同一处配置",
+    "category": "故障恢复",
+    "level": "进阶",
+    "minutes": 25,
+    "file": "feature.txt",
+    "story": "已有一份 stash，但主线随后修改了同一处配置。恢复时发生冲突，需要保留双方语义，提交后再清理原 stash。",
+    "challengeStory": "独立挑战：已有一份 stash，但主线随后修改了同一处配置。恢复时发生冲突，需要保留双方语义，提交后再清理原 stash。",
+    "target": "feature.txt 提交为 feature=ready 与 team=preserved 两行；保留主线原历史，工作区干净，stash 列表为空。",
+    "challengeTarget": "feature.txt 提交为 feature=released 与 team=preserved 两行；保留主线原历史，工作区干净，stash 列表为空。",
+    "commands": [
+      "stash pop",
+      "冲突处理",
+      "stash drop"
+    ],
+    "concepts": [
+      "stash pop",
+      "冲突处理",
+      "stash drop"
+    ],
+    "steps": [
+      {
+        "title": "恢复并观察冲突",
+        "body": "pop 冲突时会保留 stash 条目，避免丢失现场。",
+        "command": "git stash list\ngit stash pop\ngit status"
+      },
+      {
+        "title": "合并双方内容",
+        "body": "将 feature.txt 保存为目标两行，移除冲突标记后暂存并提交。stash 冲突没有 stash --continue 命令。",
+        "command": "git add feature.txt\ngit commit -m \"整合暂存工作与主线配置\""
+      },
+      {
+        "title": "确认恢复后清理条目",
+        "body": "先检查已提交内容，再删除本关已恢复的 stash。",
+        "command": "git show HEAD:feature.txt\ngit stash drop\ngit stash list"
+      }
+    ],
+    "hints": [
+      "遇到冲突时原 stash 仍在，先解决内容。",
+      "编辑为目标两行，add 后普通 commit。",
+      "确认内容和历史完整后再 stash drop，不能先清空 stash 再丢弃冲突文件。"
+    ]
+  },
+  {
+    "id": "merge-revert",
+    "number": "28",
+    "title": "撤销错误合并但保留后续工作",
+    "subtitle": "main 已合入错误功能，队友又追加了有用工作",
+    "category": "故障恢复",
+    "level": "进阶",
+    "minutes": 25,
+    "file": "feature.txt",
+    "story": "main 已合入错误功能，队友又追加了有用工作。不能 reset 到合并之前；用新的反向提交撤销这次 merge 的改动。",
+    "challengeStory": "独立挑战：main 已合入错误功能，队友又追加了有用工作。不能 reset 到合并之前；用新的反向提交撤销这次 merge 的改动。",
+    "target": "feature.txt 恢复 draft，team.txt 保留；错误合并与队友提交仍在历史里，并新增修正提交。",
+    "challengeTarget": "feature.txt 恢复 draft，team.txt 保留；错误合并与队友提交仍在历史里，并新增修正提交。",
+    "commands": [
+      "revert -m",
+      "合并父节点",
+      "共享分支恢复"
+    ],
+    "concepts": [
+      "revert -m",
+      "合并父节点",
+      "共享分支恢复"
+    ],
+    "steps": [
+      {
+        "title": "确认父节点",
+        "body": "bad-merge 是错误合并。第一个父节点是当时的 main，第二个是功能分支。",
+        "command": "git show --no-patch --pretty=raw bad-merge\ngit log --oneline --graph --all"
+      },
+      {
+        "title": "以原 main 为主线撤销",
+        "body": "-m 1 指定以第一个父节点为主线计算需要反转的差异。它不是保留“第一个改动”。",
+        "command": "git revert -m 1 --no-edit bad-merge"
+      },
+      {
+        "title": "检查后续工作仍保留",
+        "body": "撤销 merge 不会从历史中删除 merge，也不自动让已合并祖先下次重新带入。",
+        "command": "git show HEAD\ngit status"
+      }
+    ],
+    "hints": [
+      "reset 会回退后续工作，本关需要保留已有共享历史。",
+      "先确认 bad-merge 的父节点，再使用 revert -m 1。",
+      "git revert -m 1 --no-edit bad-merge；检查 feature.txt 和 team.txt。"
+    ]
+  },
+  {
+    "id": "submodule",
+    "number": "29",
+    "title": "初始化并升级子模块版本",
+    "subtitle": "项目声明了 vendor/library 子模块，但本地尚未检出",
+    "category": "仓库维护",
+    "level": "进阶",
+    "minutes": 25,
+    "file": ".gitmodules",
+    "story": "项目声明了 vendor/library 子模块，但本地尚未检出。库仓库已有新版本，初始化后升级子模块，再提交父仓库记录的版本指针。",
+    "challengeStory": "独立挑战：项目声明了 vendor/library 子模块，但本地尚未检出。库仓库已有新版本，初始化后升级子模块，再提交父仓库记录的版本指针。",
+    "target": "vendor/library 检出 version=ready；父仓库提交的 gitlink 指向该版本；保留 .gitmodules，父子仓库都没有未提交修改。",
+    "challengeTarget": "vendor/library 检出 version=released；父仓库提交的 gitlink 指向该版本；保留 .gitmodules，父子仓库都没有未提交修改。",
+    "commands": [
+      "submodule update",
+      "gitlink",
+      "嵌套仓库"
+    ],
+    "concepts": [
+      "submodule update",
+      "gitlink",
+      "嵌套仓库"
+    ],
+    "steps": [
+      {
+        "title": "初始化固定版本",
+        "body": "课程使用本地可信库地址，单次命令显式允许 file 协议。不要为未知子模块全局放开协议。",
+        "command": "git -c protocol.file.allow=always submodule update --init --recursive\ngit submodule status"
+      },
+      {
+        "title": "检出库的新版本",
+        "body": "父仓库原先只记录旧 SHA；更新子目录不会自动修改父仓库历史。",
+        "command": "git -C vendor/library fetch origin\ngit -C vendor/library checkout origin/main"
+      },
+      {
+        "title": "提交父仓库指针",
+        "body": "diff --submodule 展示库版本变化。提交 gitlink 后，协作者才会得到相同版本。",
+        "command": "git diff --submodule\ngit add vendor/library\ngit commit -m \"升级 library 子模块\"\ngit submodule status"
+      }
+    ],
+    "hints": [
+      "先初始化，后升级，最后提交父仓库指针。",
+      "子模块是独立仓库；git -C vendor/library 操作的是它的历史。",
+      "父仓库需要 git add vendor/library 和 commit。只 checkout 新版不会通过本关。"
+    ]
+  },
+  {
+    "id": "sparse-checkout",
+    "number": "30",
+    "title": "只展开当前需要的目录",
+    "subtitle": "大型仓库包含 web、admin 和 docs，你只负责 web 与文档",
+    "category": "仓库维护",
+    "level": "进阶",
+    "minutes": 25,
+    "file": "apps/web/index.txt",
+    "story": "大型仓库包含 web、admin 和 docs，你只负责 web 与文档。通过稀疏检出缩小工作区，不删除 Git 历史中的其他目录。",
+    "challengeStory": "独立挑战：大型仓库包含 web、admin 和 docs，你只负责 web 与文档。通过稀疏检出缩小工作区，不删除 Git 历史中的其他目录。",
+    "target": "启用 cone 模式，选择 apps/web 和 docs；admin 不出现在工作区，但仍在索引与提交中；没有删除文件的提交。",
+    "challengeTarget": "启用 cone 模式，选择 apps/web 和 docs；admin 不出现在工作区，但仍在索引与提交中；没有删除文件的提交。",
+    "commands": [
+      "sparse-checkout",
+      "cone",
+      "大型仓库"
+    ],
+    "concepts": [
+      "sparse-checkout",
+      "cone",
+      "大型仓库"
+    ],
+    "steps": [
+      {
+        "title": "查看原始目录",
+        "body": "稀疏检出改变工作区展开范围，不改变仓库全部提交内容。",
+        "command": "git ls-files\ngit status"
+      },
+      {
+        "title": "设置展开范围",
+        "body": "cone 模式按目录选择。根目录文件仍可能保留，这是正常行为。",
+        "command": "git sparse-checkout init --cone\ngit sparse-checkout set apps/web docs"
+      },
+      {
+        "title": "确认内容没有被删除",
+        "body": "确认只改变检出设置；如需恢复完整工作区，可在完成检查后 disable。",
+        "command": "git sparse-checkout list\ngit ls-files\ngit status"
+      }
+    ],
+    "hints": [
+      "直接删除 admin 不是稀疏检出。",
+      "使用 sparse-checkout set apps/web docs。",
+      "工作区没有 admin，但 git show HEAD:apps/admin/index.txt 仍能看到它；恢复全部内容用 sparse-checkout disable。"
+    ]
+  },
+  {
+    "id": "shallow-clone",
+    "number": "31",
+    "title": "从浅克隆补回完整历史",
+    "subtitle": "先以深度 1 克隆本地远端到工作区旁的 checkout，观察历史受限，再补齐完整历史以进行排查",
+    "category": "仓库维护",
+    "level": "进阶",
+    "minutes": 25,
+    "file": "README.md",
+    "story": "先以深度 1 克隆本地远端到工作区旁的 checkout，观察历史受限，再补齐完整历史以进行排查。",
+    "challengeStory": "独立挑战：先以深度 1 克隆本地远端到工作区旁的 checkout，观察历史受限，再补齐完整历史以进行排查。",
+    "target": "../checkout 是 origin 的独立克隆，补齐完整八个提交且不再是浅仓库；release.txt 为 release=7。",
+    "challengeTarget": "../checkout 是 origin 的独立克隆，补齐完整八个提交且不再是浅仓库；release.txt 为 release=7。",
+    "commands": [
+      "clone --depth",
+      "fetch --unshallow",
+      "历史深度"
+    ],
+    "concepts": [
+      "clone --depth",
+      "fetch --unshallow",
+      "历史深度"
+    ],
+    "steps": [
+      {
+        "title": "创建真实浅克隆",
+        "body": "本地路径克隆可能忽略 --depth，这里显式用 file:// 传输。checkout 在 workspace 旁，不嵌套进当前练习仓库。",
+        "command": "git clone --depth 1 \"file://$(cd .. && pwd)/origin.git\" ../checkout\ngit -C ../checkout rev-parse --is-shallow-repository\ngit -C ../checkout log --oneline"
+      },
+      {
+        "title": "补齐历史",
+        "body": "--deepen 可以逐步加深，--unshallow 获取源仓库可提供的完整历史。",
+        "command": "git -C ../checkout fetch --unshallow origin"
+      },
+      {
+        "title": "验证完整性",
+        "body": "这里的源仓库共有八次提交；检出内容与最新发布一致。",
+        "command": "git -C ../checkout rev-list --count HEAD\ngit -C ../checkout rev-parse --is-shallow-repository"
+      }
+    ],
+    "hints": [
+      "请克隆到 ../checkout；现有 workspace 用来显示任务说明。",
+      "使用 file:// 的本地传输才能真实观察 --depth 的效果。",
+      "git -C ../checkout fetch --unshallow origin；最后应有八个提交，is-shallow-repository 为 false。"
+    ]
+  },
+  {
+    "id": "patch-am",
+    "number": "32",
+    "title": "接收邮件补丁并保留作者",
+    "subtitle": "贡献者以 format-patch 提供了一份 incoming.patch，本地主线已有额外提交",
+    "category": "定位与发布",
+    "level": "进阶",
+    "minutes": 25,
+    "file": "feature.txt",
+    "story": "贡献者以 format-patch 提供了一份 incoming.patch，本地主线已有额外提交。用 am 导入邮件补丁，保留原作者与自己的主线工作。",
+    "challengeStory": "独立挑战：贡献者以 format-patch 提供了一份 incoming.patch，本地主线已有额外提交。用 am 导入邮件补丁，保留原作者与自己的主线工作。",
+    "target": "main 新增一个应用补丁的提交，feature.txt 为 ready，team.txt 保留；提交作者仍是 Patch Author <author@example.invalid>。",
+    "challengeTarget": "main 新增一个应用补丁的提交，feature.txt 为 released，team.txt 保留；提交作者仍是 Patch Author <author@example.invalid>。",
+    "commands": [
+      "format-patch",
+      "am",
+      "补丁交换"
+    ],
+    "concepts": [
+      "format-patch",
+      "am",
+      "补丁交换"
+    ],
+    "steps": [
+      {
+        "title": "查看补丁",
+        "body": "邮件补丁包含作者、说明和差异；本关文件在工作区旁。",
+        "command": "head -25 ../incoming.patch\ngit log --oneline --all"
+      },
+      {
+        "title": "应用到当前主线",
+        "body": "am 会创建提交并保留作者。普通 apply 只改文件，不完整保留邮件提交信息。",
+        "command": "git am ../incoming.patch"
+      },
+      {
+        "title": "核对内容和作者",
+        "body": "如果实际项目中 am 冲突，解决并 add 后 am --continue；取消当前应用用 am --abort。",
+        "command": "git show --format=fuller HEAD\ngit status"
+      }
+    ],
+    "hints": [
+      "不要把来源分支直接合并进 main；练习邮件补丁的交付方式。",
+      "git am ../incoming.patch。",
+      "git show --format=fuller HEAD 应显示贡献者为 Author，你是 Committer。"
+    ]
+  },
+  {
+    "id": "bundle",
+    "number": "33",
+    "title": "无网络交付完整仓库",
+    "subtitle": "需要把当前仓库交付给离线环境",
+    "category": "定位与发布",
+    "level": "进阶",
+    "minutes": 25,
+    "file": "feature.txt",
+    "story": "需要把当前仓库交付给离线环境。创建包含完整引用与对象的 bundle，验证后从这个文件克隆到旁边的 verification。",
+    "challengeStory": "独立挑战：需要把当前仓库交付给离线环境。创建包含完整引用与对象的 bundle，验证后从这个文件克隆到旁边的 verification。",
+    "target": "../transfer.bundle 通过 Git 验证；../verification 从中恢复完整 main 和 feature.txt（ready）。",
+    "challengeTarget": "../transfer.bundle 通过 Git 验证；../verification 从中恢复完整 main 和 feature.txt（released）。",
+    "commands": [
+      "bundle create",
+      "bundle verify",
+      "离线传输"
+    ],
+    "concepts": [
+      "bundle create",
+      "bundle verify",
+      "离线传输"
+    ],
+    "steps": [
+      {
+        "title": "导出完整仓库",
+        "body": "--all 包含本练习的所有引用。真实项目交付时还应检查哪些引用适合共享。",
+        "command": "git bundle create ../transfer.bundle --all"
+      },
+      {
+        "title": "检查 bundle",
+        "body": "增量 bundle 可能要求接收方具备前置提交；本关创建的是可独立克隆的完整 bundle。",
+        "command": "git bundle verify ../transfer.bundle\ngit bundle list-heads ../transfer.bundle"
+      },
+      {
+        "title": "从文件验证恢复",
+        "body": "verification 是工作区旁的独立仓库，只从 bundle 文件获取对象。",
+        "command": "git clone ../transfer.bundle ../verification\ngit -C ../verification log --oneline\ngit -C ../verification show main:feature.txt"
+      }
+    ],
+    "hints": [
+      "不要用复制工作区文件代替提交历史的交付。",
+      "先 bundle create --all，再 bundle verify。",
+      "从 ../transfer.bundle 克隆到 ../verification，检查实际提交和文件内容。"
+    ]
   }
 ]

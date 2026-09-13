@@ -34,6 +34,83 @@ async function terminalCommand(page, command) {
   expect(status.code, status.output).toBe(0);
 }
 
+test("submodule initialization and parent gitlink update through desktop", async () => {
+  const env = {
+    ...process.env,
+    GIT_ONBOARDING_DATA_DIR: path.resolve(
+      process.env.GIT_ONBOARDING_TEST_DATA_DIR || ".local/ui-after-wsl-restart",
+    ),
+  };
+  delete env.ELECTRON_RUN_AS_NODE;
+  const app = await electron.launch({
+    args: ["."],
+    cwd: path.resolve("."),
+    env,
+  });
+  try {
+    const page = await app.firstWindow();
+    const errors = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await expect(page.locator(".local-status")).toContainText(
+      "本地练习环境已就绪",
+    );
+    await page.getByRole("combobox", { name: "显示比例" }).selectOption("1");
+    await page.getByRole("searchbox", { name: "查找练习" }).fill("submodule");
+    const card = page
+      .locator(".course-card")
+      .filter({ hasText: "初始化并升级子模块版本" });
+    await card.getByRole("button").first().click();
+    await expect(
+      page.getByRole("textbox", { name: "文件内容" }),
+    ).toBeEditable();
+    await page.getByRole("button", { name: "重新开始", exact: true }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "重新开始", exact: true })
+      .click();
+    await expect(
+      page.getByRole("button", { name: "检查练习结果", exact: true }),
+    ).toBeEnabled();
+    await terminalCommand(
+      page,
+      "git -c protocol.file.allow=always submodule update --init --recursive && git -C vendor/library fetch origin && git -C vendor/library checkout origin/main",
+    );
+    await page
+      .getByRole("button", { name: "检查练习结果", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toContainText("3 / 5 条件通过");
+    await expect(page.getByRole("dialog")).toContainText(
+      "父仓库提交了正确的 gitlink",
+    );
+    await page.getByRole("button", { name: "返回练习", exact: true }).click();
+    await terminalCommand(
+      page,
+      'git add vendor/library && git commit -m "upgrade library"',
+    );
+    await page
+      .getByRole("button", { name: "检查练习结果", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toContainText("本关已完成");
+    await page.getByRole("button", { name: "关闭检查结果" }).click();
+    await expect(
+      page.locator('option[value="vendor/library/version.txt"]'),
+    ).toHaveCount(1);
+    await page
+      .getByRole("combobox", { name: "选择练习文件" })
+      .selectOption("vendor/library/version.txt");
+    await expect(page.getByRole("textbox", { name: "文件内容" })).toHaveValue(
+      "version=ready\n",
+    );
+    await page.screenshot({
+      path: "test-results/submodule.png",
+      fullPage: true,
+    });
+    expect(errors).toEqual([]);
+  } finally {
+    await app.close();
+  }
+});
+
 test("maintenance catalog, partial staging and editable ignore rules", async () => {
   const env = {
     ...process.env,
@@ -56,7 +133,14 @@ test("maintenance catalog, partial staging and editable ignore rules", async () 
     await page
       .getByRole("combobox", { name: "课程分类" })
       .selectOption("仓库维护");
-    await expect(page.locator(".course-card")).toHaveCount(2);
+    await expect(
+      page.locator(".course-card").filter({ hasText: "同时保留两套工作现场" }),
+    ).toBeVisible();
+    await expect(
+      page
+        .locator(".course-card")
+        .filter({ hasText: "初始化并升级子模块版本" }),
+    ).toBeVisible();
     await page.getByRole("searchbox", { name: "查找练习" }).fill("worktree");
     await expect(page.locator(".course-card")).toHaveCount(1);
     await page.getByRole("combobox", { name: "课程分类" }).selectOption("全部");
@@ -155,15 +239,25 @@ test("advanced catalog and offline fork PR lifecycle through desktop", async () 
     );
     await page.getByRole("combobox", { name: "显示比例" }).selectOption("1");
     await page.getByRole("searchbox", { name: "查找练习" }).fill("rebase");
-    await expect(page.locator(".course-card")).toHaveCount(3);
+    await expect(
+      page.locator(".course-card").filter({ hasText: "用 rebase 跟上主线" }),
+    ).toBeVisible();
+    await expect(
+      page
+        .locator(".course-card")
+        .filter({ hasText: "把堆叠分支移到正确基线" }),
+    ).toBeVisible();
     await page.getByRole("searchbox", { name: "查找练习" }).fill("无匹配场景");
     await expect(
       page.getByText("没有匹配的练习", { exact: false }),
     ).toBeVisible();
     await page.getByRole("searchbox", { name: "查找练习" }).fill("upstream");
-    await expect(page.locator(".course-card")).toHaveCount(1);
-    await expect(page.locator(".course-card button").first()).toBeEnabled();
-    await page.locator(".course-card button").first().click();
+    const forkCard = page
+      .locator(".course-card")
+      .filter({ hasText: "从 Fork 到上游合并 PR" });
+    await expect(forkCard).toBeVisible();
+    await expect(forkCard.getByRole("button").first()).toBeEnabled();
+    await forkCard.getByRole("button").first().click();
     await expect(
       page.getByRole("textbox", { name: "文件内容" }),
     ).toBeEditable();
