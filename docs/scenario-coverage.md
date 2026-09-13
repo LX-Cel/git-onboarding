@@ -22,7 +22,7 @@
 | 保存与恢复   | restore、revert、reset soft/mixed/hard 对比、stash 未跟踪文件/冲突、reflog/分离 HEAD/误删分支、合并撤销、进行中操作恢复                                        | restore/revert、三种 reset、stash/冲突、reflog、分离 HEAD、误删分支、撤销 merge、am 恢复已验证               |
 | 定位与发布   | log 搜索、blame、bisect/run、注释标签/推送标签、hotfix/backport、patch/format-patch/am、bundle                                                                 | blame/log -S 定位、bisect/run、注释标签、hotfix/backport、format-patch/am/冲突/abort/continue、bundle 已验证 |
 | 仓库维护     | .gitignore/已跟踪文件、attributes/换行符、worktree、submodule、sparse checkout/shallow clone、对象与引用/fsck/gc                                               | ignore、attributes/LF/CRLF/二进制、worktree、submodule、sparse/shallow、fsck 悬空恢复与 gc 已验证            |
-| 托管与大文件 | 分支保护/检查失败/合并策略、认证/权限失败诊断、Git LFS、签名及验证、历史敏感内容清理                                                                           | 离线 PR/保护/检查/合并策略、真实 SSH 签名、LFS 提交与迁移、假凭据历史清理已验证；认证诊断待实现              |
+| 托管与大文件 | 分支保护/检查失败/合并策略、认证/权限失败诊断、Git LFS、签名及验证、历史敏感内容清理                                                                           | 离线 PR/保护/检查/合并策略、HTTP 凭据/权限/多账号诊断、SSH 签名、LFS 提交与迁移、假凭据历史清理已验证        |
 | 综合任务     | 新人入职、fork 贡献、发布与回滚、多人并发、遗留仓库故障、自由实验区                                                                                            | fork 贡献完整流程已验证；入职、发布回滚、多人并发、遗留仓库排查、自由实验区待补                              |
 
 “所有场景”作为持续完善的覆盖目标，不能声称有限课程穷尽所有 Git 扩展与平台差异。平台差异要在课程中说明，核心 Git 与 GitHub 工作流分别验收。
@@ -117,6 +117,19 @@
 
 完整覆盖目标继续推进，尚未实现部分不包含在此预览版中。
 
+## 2026-09-13 第七批实现与验证
+
+新增失效凭据、令牌写权限、同站点多账号串用、只读上游与个人 Fork 推送四门课程，两种模式共八个场景。开发分支现有 57 门课程、114 个场景，未包含在 preview.2 安装包中。
+
+- `test:access` 146 项断言通过。通过实际 Git HTTP 客户端、credential helper、401 challenge、403 授权拒绝与 upload-pack/receive-pack 传输验证失败和修复，不以提示文本或命令记录猜测成功。修改提交作者不能修复登录；只读令牌能拉取但不能推送；换读写令牌不能增加团队仓库授权；凭据按路径选择后两个账号都需有效。
+- 检查原历史、功能内容、实际收到的远端提交与拉取/推送地址。单纯本地提交或绕过 HTTP 的文件推送不能替代认证交付。已交付功能后同步远端新提交不必制造多余提交，后续真实推送也可再次验证。
+- 两种模式均验证初始失败、修复、恢复、重置。引导提供当前模式的假凭据协议记录，避免挑战模式误用引导模式令牌。课程指出真实托管平台的错误表现可能不同，未声称模拟系统凭据管理器、线上 GitHub 认证或 TLS。
+- 四项新桌面测试均通过实际终端启动本关服务、观察失败、检查未完成、修复并提交检查。新增 `test:access-lifecycle` 连续六次真实 PTY 启停/重连后均无遗留服务进程。
+- 当前源程序全部 20 项桌面测试通过，覆盖新认证课程及既有签名/LFS/清理、仓库初始化、PR、子模块和入门路径。生产构建与镜像/课程内容校验通过。
+- 6 项 Node、原有 63 项/隔离/PTY、207 项基础工作流及 148 项维护断言通过。升级检查首次遇到一次 WSL `Creating new namespace failed: Resource temporarily unavailable`；同一发行版的最小隔离调用随后恢复，未观察到服务残留。复用原失败样本后，0.1.0 升级、工具可执行性及提交/暂存/工作区/进度保留均通过。根因未确定，未据此改动隔离限制或声称修复 WSL。
+
+剩余综合场景：新人入职、发布回滚、多人并发、遗留仓库故障和自由实验区。SSH 认证、企业 SSO、系统凭据管理器等平台差异不由本地 HTTP 场景冒充。
+
 ## 一手参考
 
 - [Git 命令参考](https://git-scm.com/docs)
@@ -137,5 +150,9 @@
 - [Git 签名格式](https://git-scm.com/docs/gitformat-signature)
 - [Git LFS 本地文件传输](https://github.com/git-lfs/git-lfs/blob/main/docs/man/git-lfs-standalone-file.adoc)
 - [git-filter-repo 历史清理](https://github.com/newren/git-filter-repo/blob/main/Documentation/git-filter-repo.txt)
+- [Git 凭据上下文与 helper](https://git-scm.com/docs/gitcredentials)
+- [Git credential 协议](https://github.com/git/git/blob/master/Documentation/git-credential.adoc)
+- [Git HTTP 传输协议](https://git-scm.com/docs/http-protocol)
+- [GitHub 克隆与认证故障](https://docs.github.com/en/repositories/creating-and-managing-repositories/troubleshooting-cloning-errors)
 
 2026-09-13 核查上述官方资料，用于建立覆盖范围；具体场景以隔离环境中的实际 Git 行为验收。

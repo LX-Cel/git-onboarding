@@ -40,6 +40,7 @@ for (const name of [
   "teamwork.py",
   "foundations.py",
   "extensions.py",
+  "access.py",
   "hosting.py",
   "relay.py",
   "lessons.json",

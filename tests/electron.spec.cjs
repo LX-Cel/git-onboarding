@@ -37,6 +37,82 @@ async function terminalCommand(page, command) {
   expect(status.code, status.output).toBe(0);
 }
 
+for (const [title, repair] of [
+  ["修复已经失效的远端凭据", "git credential approve < ../team-credential.txt"],
+  [
+    "区分身份认证与令牌写权限",
+    "git credential approve < ../team-credential.txt",
+  ],
+  [
+    "修复同一网站上的账号串用",
+    "git config credential.useHttpPath true && git credential approve < ../team-credential.txt && git credential approve < ../personal-credential.txt && git ls-remote personal",
+  ],
+  [
+    "把无权限的推送改到个人 Fork",
+    "git remote set-url --push origin http://127.0.0.1:8765/fork.git",
+  ],
+]) {
+  test(`HTTP authentication: ${title}`, async () => {
+    const env = {
+      ...process.env,
+      GIT_ONBOARDING_DATA_DIR: path.resolve(
+        process.env.GIT_ONBOARDING_TEST_DATA_DIR ||
+          ".local/ui-after-wsl-restart",
+      ),
+    };
+    delete env.ELECTRON_RUN_AS_NODE;
+    const app = await electron.launch({
+      executablePath: process.env.GIT_ONBOARDING_EXECUTABLE,
+      args: process.env.GIT_ONBOARDING_EXECUTABLE ? [] : ["."],
+      cwd: path.resolve("."),
+      env,
+    });
+    try {
+      const page = await app.firstWindow();
+      await expect(page.locator(".local-status")).toContainText(
+        "本地练习环境已就绪",
+      );
+      await page.getByRole("combobox", { name: "显示比例" }).selectOption("1");
+      await page.getByRole("searchbox", { name: "查找练习" }).fill(title);
+      await page
+        .locator(".course-card")
+        .filter({ hasText: title })
+        .getByRole("button")
+        .first()
+        .click();
+      await expect(
+        page.getByRole("button", { name: "检查练习结果", exact: true }),
+      ).toBeEnabled();
+      await page.getByRole("button", { name: "重新开始", exact: true }).click();
+      await page
+        .getByRole("dialog")
+        .getByRole("button", { name: "重新开始", exact: true })
+        .click();
+      await terminalCommand(
+        page,
+        "python ../serve.py --start && git add feature.txt && git commit -m feature && { if git push origin main; then false; else true; fi; }",
+      );
+      await page
+        .getByRole("button", { name: "检查练习结果", exact: true })
+        .click();
+      await expect(page.getByRole("dialog")).toContainText("未完成");
+      await page.getByRole("button", { name: "关闭检查结果" }).click();
+      await terminalCommand(page, repair + " && git push origin main");
+      await page
+        .getByRole("button", { name: "检查练习结果", exact: true })
+        .click();
+      await expect(page.getByRole("dialog")).toContainText("本关已完成");
+      await page.getByRole("button", { name: "关闭检查结果" }).click();
+      await expect(page.getByRole("textbox", { name: "文件内容" })).toHaveValue(
+        "ready\n",
+      );
+      await page.screenshot({ path: "test-results/authentication.png" });
+    } finally {
+      await app.close();
+    }
+  });
+}
+
 for (const [title, command, inspect] of [
   [
     "签署提交与发布标签",

@@ -15,6 +15,7 @@ import maintenance
 import teamwork
 import foundations
 import extensions
+import access
 
 ROOT = Path('/home/student/labs')
 COURSE_VERSION = '0.2.0'
@@ -94,6 +95,8 @@ def initialize(lesson, mode, reset=False):
         foundations.setup(advanced_api(), repo, base, lesson, mode, record)
     elif lesson in extensions.IDS:
         extensions.setup(advanced_api(), repo, base, lesson, mode, record)
+    elif lesson in access.IDS:
+        access.setup(advanced_api(), repo, base, lesson, mode, record)
     elif lesson == 'recovery':
         (repo / 'notes.txt').write_text('这段笔记需要保留。\n')
         (repo / 'draft.txt').write_text('初始草稿\n')
@@ -170,6 +173,8 @@ def assess(repo, base, lesson, mode):
         return foundations.assess(advanced_api(), repo, base, lesson, mode, record)
     if lesson in extensions.IDS:
         return extensions.assess(advanced_api(), repo, base, lesson, mode, record)
+    if lesson in access.IDS:
+        return access.assess(advanced_api(), repo, base, lesson, mode, record)
     status = git(repo, 'status', '--porcelain')
     clean = not status
     target = spec['target' if mode == 'guided' else 'challengeTarget']
@@ -280,7 +285,7 @@ def dispatch(request):
             except (OSError, subprocess.SubprocessError):
                 return None
         hashes = {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
-                  for name in ['engine.py', 'advanced.py', 'maintenance.py', 'teamwork.py', 'foundations.py', 'extensions.py', 'hosting.py', 'relay.py', 'lessons.json']}
+                  for name in ['engine.py', 'advanced.py', 'maintenance.py', 'teamwork.py', 'foundations.py', 'extensions.py', 'access.py', 'hosting.py', 'relay.py', 'lessons.json']}
         return {'courseVersion': COURSE_VERSION, 'courseHashes': hashes,
                 'toolsHash': json.loads(marker.read_text()).get('sha256') if marker.is_file() else None,
                 'tools': {'lfs': tool_version(['git', 'lfs', 'version']), 'filterRepo': tool_version(['git', 'filter-repo', '--version']), 'sshKeygen': bool(shutil.which('ssh-keygen'))},

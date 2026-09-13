@@ -5,10 +5,9 @@ const assert = require("node:assert/strict");
 const { Runtime, run } = require("../desktop/runtime.cjs");
 
 (async () => {
-  const directory = path.resolve(
-    ".local/upgrade-fixture",
-    randomBytes(5).toString("hex"),
-  );
+  const directory = process.env.GIT_ONBOARDING_UPGRADE_TEST_DATA
+    ? path.resolve(process.env.GIT_ONBOARDING_UPGRADE_TEST_DATA)
+    : path.resolve(".local/upgrade-fixture", randomBytes(5).toString("hex"));
   await fs.mkdir(directory, { recursive: true });
   const runtime = new Runtime(directory, path.resolve("resources"));
   // Fixture comes from our published v0.1.0. No user's running distro is modified.

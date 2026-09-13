@@ -2548,5 +2548,217 @@
       "只在这个可重置的离线练习内使用 --force。filter-repo 会重写所有相关分支/标签并移除 origin，避免误推。保留有用功能与初始历史。",
       "git log --all --oneline -- credentials.txt\ngit show v0:credentials.txt\ngit remote -v\n\ngit filter-repo --force --path credentials.txt --invert-paths\ngit log --all --oneline -- credentials.txt\ngit remote -v\n\ngit remote add origin ../origin.git\ngit push --force-with-lease=refs/heads/main:$(cat ../remote-before.txt) --force-with-lease=refs/tags/v0:$(cat ../tag-before.txt) origin main refs/tags/v0\n\ngit reflog expire --expire=now --all\ngit gc --prune=now\ngit -C ../origin.git reflog expire --expire=now --all\ngit -C ../origin.git gc --prune=now\ngit log --all --oneline --graph"
     ]
+  },
+  {
+    "id": "auth-expired",
+    "number": "54",
+    "title": "修复已经失效的远端凭据",
+    "subtitle": "提交作者与登录凭据是两回事",
+    "category": "远程协作",
+    "level": "进阶",
+    "minutes": 25,
+    "concepts": [
+      "HTTP 认证",
+      "凭据与授权",
+      "故障诊断"
+    ],
+    "commands": [
+      "credential",
+      "credential.useHttpPath",
+      "remote set-url --push",
+      "ls-remote",
+      "push"
+    ],
+    "file": "feature.txt",
+    "story": "清除失效凭据，使用本关团队读写凭据，将 feature.txt 的 ready 功能提交并通过 HTTP 推送到 origin/main。",
+    "challengeStory": "清除失效凭据，使用本关团队读写凭据，将 feature.txt 的 released 功能提交并通过 HTTP 推送到 origin/main。",
+    "target": "清除失效凭据，使用本关团队读写凭据，将 feature.txt 的 ready 功能提交并通过 HTTP 推送到 origin/main。",
+    "challengeTarget": "清除失效凭据，使用本关团队读写凭据，将 feature.txt 的 released 功能提交并通过 HTTP 推送到 origin/main。",
+    "steps": [
+      {
+        "title": "启动本关服务并阅读授权信息",
+        "body": "服务只在当前终端的隔离网络内运行，重连终端后重新启动。所有账号与令牌都是假凭据，不要输入真实凭据。本关使用 HTTP 观察协议错误；真实平台应使用 HTTPS 和安全凭据管理器。",
+        "command": "python ../serve.py --start\ncat ../access-guide.txt\ngit remote -v\ngit config --show-origin --get-all credential.helper"
+      },
+      {
+        "title": "从实际错误区分原因",
+        "body": "ls-remote 只读取远端；push 需要写权限。401 表示本关凭据无效，403 表示账号已识别但缺少当前仓库或写入权限。修改 user.name/user.email 不会修复登录，关闭 TLS 校验也不能解决认证。",
+        "command": "git ls-remote origin\ngit add feature.txt\ngit commit -m feature\ngit push origin main"
+      },
+      {
+        "title": "修复凭据选择或推送目标",
+        "body": "通过 Git credential 协议拒绝旧条目，再批准课程提供的有效读写凭据。本关的 store 文件只存假令牌，真实平台不要照搬明文保存方案。独立挑战使用 access-guide.txt 中对应的令牌。 课程提供的 credential.txt 记录已对应当前模式，可直接交给 approve；它不是要提交到仓库的项目文件。",
+        "command": "printf 'url=http://127.0.0.1:8765/team.git\\n\\n' | git credential reject\ncat ../team-credential.txt\ngit credential approve < ../team-credential.txt"
+      },
+      {
+        "title": "重试并核对交付结果",
+        "body": "Git 成功返回后还要检查功能提交、远端内容与地址。判题会验证实际 HTTP 接收的提交，不把本地提交当作远端交付。",
+        "command": "git ls-remote origin\ngit push origin main\ngit status"
+      }
+    ],
+    "hints": [
+      "服务只在当前终端的隔离网络内运行，重连终端后重新启动。所有账号与令牌都是假凭据，不要输入真实凭据。本关使用 HTTP 观察协议错误；真实平台应使用 HTTPS 和安全凭据管理器。",
+      "通过 Git credential 协议拒绝旧条目，再批准课程提供的有效读写凭据。本关的 store 文件只存假令牌，真实平台不要照搬明文保存方案。独立挑战使用 access-guide.txt 中对应的令牌。 课程提供的 credential.txt 记录已对应当前模式，可直接交给 approve；它不是要提交到仓库的项目文件。",
+      "python ../serve.py --start\ncat ../access-guide.txt\ngit remote -v\ngit config --show-origin --get-all credential.helper\n\ngit ls-remote origin\ngit add feature.txt\ngit commit -m feature\ngit push origin main\n\nprintf 'url=http://127.0.0.1:8765/team.git\\n\\n' | git credential reject\ncat ../team-credential.txt\ngit credential approve < ../team-credential.txt\n\ngit ls-remote origin\ngit push origin main\ngit status"
+    ]
+  },
+  {
+    "id": "auth-scope",
+    "number": "55",
+    "title": "区分身份认证与令牌写权限",
+    "subtitle": "能拉取代码不代表可以推送",
+    "category": "远程协作",
+    "level": "进阶",
+    "minutes": 25,
+    "concepts": [
+      "HTTP 认证",
+      "凭据与授权",
+      "故障诊断"
+    ],
+    "commands": [
+      "credential",
+      "credential.useHttpPath",
+      "remote set-url --push",
+      "ls-remote",
+      "push"
+    ],
+    "file": "feature.txt",
+    "story": "确认当前账号可以读取但不能写入，换用本关有写权限的令牌，将 feature.txt 的 ready 功能提交并通过 HTTP 推送。",
+    "challengeStory": "确认当前账号可以读取但不能写入，换用本关有写权限的令牌，将 feature.txt 的 released 功能提交并通过 HTTP 推送。",
+    "target": "确认当前账号可以读取但不能写入，换用本关有写权限的令牌，将 feature.txt 的 ready 功能提交并通过 HTTP 推送。",
+    "challengeTarget": "确认当前账号可以读取但不能写入，换用本关有写权限的令牌，将 feature.txt 的 released 功能提交并通过 HTTP 推送。",
+    "steps": [
+      {
+        "title": "启动本关服务并阅读授权信息",
+        "body": "服务只在当前终端的隔离网络内运行，重连终端后重新启动。所有账号与令牌都是假凭据，不要输入真实凭据。本关使用 HTTP 观察协议错误；真实平台应使用 HTTPS 和安全凭据管理器。",
+        "command": "python ../serve.py --start\ncat ../access-guide.txt\ngit remote -v\ngit config --show-origin --get-all credential.helper"
+      },
+      {
+        "title": "从实际错误区分原因",
+        "body": "ls-remote 只读取远端；push 需要写权限。401 表示本关凭据无效，403 表示账号已识别但缺少当前仓库或写入权限。修改 user.name/user.email 不会修复登录，关闭 TLS 校验也不能解决认证。",
+        "command": "git ls-remote origin\ngit add feature.txt\ngit commit -m feature\ngit push origin main"
+      },
+      {
+        "title": "修复凭据选择或推送目标",
+        "body": "通过 Git credential 协议拒绝旧条目，再批准课程提供的有效读写凭据。本关的 store 文件只存假令牌，真实平台不要照搬明文保存方案。独立挑战使用 access-guide.txt 中对应的令牌。 课程提供的 credential.txt 记录已对应当前模式，可直接交给 approve；它不是要提交到仓库的项目文件。",
+        "command": "printf 'url=http://127.0.0.1:8765/team.git\\n\\n' | git credential reject\ncat ../team-credential.txt\ngit credential approve < ../team-credential.txt"
+      },
+      {
+        "title": "重试并核对交付结果",
+        "body": "Git 成功返回后还要检查功能提交、远端内容与地址。判题会验证实际 HTTP 接收的提交，不把本地提交当作远端交付。",
+        "command": "git ls-remote origin\ngit push origin main\ngit status"
+      }
+    ],
+    "hints": [
+      "服务只在当前终端的隔离网络内运行，重连终端后重新启动。所有账号与令牌都是假凭据，不要输入真实凭据。本关使用 HTTP 观察协议错误；真实平台应使用 HTTPS 和安全凭据管理器。",
+      "通过 Git credential 协议拒绝旧条目，再批准课程提供的有效读写凭据。本关的 store 文件只存假令牌，真实平台不要照搬明文保存方案。独立挑战使用 access-guide.txt 中对应的令牌。 课程提供的 credential.txt 记录已对应当前模式，可直接交给 approve；它不是要提交到仓库的项目文件。",
+      "python ../serve.py --start\ncat ../access-guide.txt\ngit remote -v\ngit config --show-origin --get-all credential.helper\n\ngit ls-remote origin\ngit add feature.txt\ngit commit -m feature\ngit push origin main\n\nprintf 'url=http://127.0.0.1:8765/team.git\\n\\n' | git credential reject\ncat ../team-credential.txt\ngit credential approve < ../team-credential.txt\n\ngit ls-remote origin\ngit push origin main\ngit status"
+    ]
+  },
+  {
+    "id": "auth-context",
+    "number": "56",
+    "title": "修复同一网站上的账号串用",
+    "subtitle": "按仓库路径选择凭据，保留另一个账号",
+    "category": "远程协作",
+    "level": "进阶",
+    "minutes": 25,
+    "concepts": [
+      "HTTP 认证",
+      "凭据与授权",
+      "故障诊断"
+    ],
+    "commands": [
+      "credential",
+      "credential.useHttpPath",
+      "remote set-url --push",
+      "ls-remote",
+      "push"
+    ],
+    "file": "feature.txt",
+    "story": "团队和个人仓库位于同一网站。按仓库路径区分凭据，将 feature.txt 的 ready 功能推送到团队仓库，且个人仓库仍能访问。",
+    "challengeStory": "团队和个人仓库位于同一网站。按仓库路径区分凭据，将 feature.txt 的 released 功能推送到团队仓库，且个人仓库仍能访问。",
+    "target": "团队和个人仓库位于同一网站。按仓库路径区分凭据，将 feature.txt 的 ready 功能推送到团队仓库，且个人仓库仍能访问。",
+    "challengeTarget": "团队和个人仓库位于同一网站。按仓库路径区分凭据，将 feature.txt 的 released 功能推送到团队仓库，且个人仓库仍能访问。",
+    "steps": [
+      {
+        "title": "启动本关服务并阅读授权信息",
+        "body": "服务只在当前终端的隔离网络内运行，重连终端后重新启动。所有账号与令牌都是假凭据，不要输入真实凭据。本关使用 HTTP 观察协议错误；真实平台应使用 HTTPS 和安全凭据管理器。",
+        "command": "python ../serve.py --start\ncat ../access-guide.txt\ngit remote -v\ngit config --show-origin --get-all credential.helper"
+      },
+      {
+        "title": "从实际错误区分原因",
+        "body": "ls-remote 只读取远端；push 需要写权限。401 表示本关凭据无效，403 表示账号已识别但缺少当前仓库或写入权限。修改 user.name/user.email 不会修复登录，关闭 TLS 校验也不能解决认证。",
+        "command": "git ls-remote origin\ngit add feature.txt\ngit commit -m feature\ngit push origin main"
+      },
+      {
+        "title": "修复凭据选择或推送目标",
+        "body": "默认 HTTP 凭据匹配可能忽略仓库路径。启用本仓库的 useHttpPath，分别保存团队与个人凭据；不要通过删除另一个账号来掩盖问题。 课程提供的 credential.txt 记录已对应当前模式，可直接交给 approve；它不是要提交到仓库的项目文件。",
+        "command": "git config --local credential.useHttpPath true\ncat ../team-credential.txt ../personal-credential.txt\ngit credential approve < ../team-credential.txt\ngit credential approve < ../personal-credential.txt"
+      },
+      {
+        "title": "重试并核对交付结果",
+        "body": "Git 成功返回后还要检查功能提交、远端内容与地址。判题会验证实际 HTTP 接收的提交，不把本地提交当作远端交付。",
+        "command": "git ls-remote origin\ngit ls-remote personal\ngit push origin main\ngit status"
+      }
+    ],
+    "hints": [
+      "服务只在当前终端的隔离网络内运行，重连终端后重新启动。所有账号与令牌都是假凭据，不要输入真实凭据。本关使用 HTTP 观察协议错误；真实平台应使用 HTTPS 和安全凭据管理器。",
+      "默认 HTTP 凭据匹配可能忽略仓库路径。启用本仓库的 useHttpPath，分别保存团队与个人凭据；不要通过删除另一个账号来掩盖问题。 课程提供的 credential.txt 记录已对应当前模式，可直接交给 approve；它不是要提交到仓库的项目文件。",
+      "python ../serve.py --start\ncat ../access-guide.txt\ngit remote -v\ngit config --show-origin --get-all credential.helper\n\ngit ls-remote origin\ngit add feature.txt\ngit commit -m feature\ngit push origin main\n\ngit config --local credential.useHttpPath true\ncat ../team-credential.txt ../personal-credential.txt\ngit credential approve < ../team-credential.txt\ngit credential approve < ../personal-credential.txt\n\ngit ls-remote origin\ngit ls-remote personal\ngit push origin main\ngit status"
+    ]
+  },
+  {
+    "id": "auth-permission",
+    "number": "57",
+    "title": "把无权限的推送改到个人 Fork",
+    "subtitle": "修复推送目标，保留只读上游",
+    "category": "远程协作",
+    "level": "进阶",
+    "minutes": 25,
+    "concepts": [
+      "HTTP 认证",
+      "凭据与授权",
+      "故障诊断"
+    ],
+    "commands": [
+      "credential",
+      "credential.useHttpPath",
+      "remote set-url --push",
+      "ls-remote",
+      "push"
+    ],
+    "file": "feature.txt",
+    "story": "你可以读取团队仓库，却没有向其写入的权限。保留 origin 的团队拉取地址，把推送地址改为个人 fork.git，交付 feature.txt 的 ready 功能，团队主线保持不变。",
+    "challengeStory": "你可以读取团队仓库，却没有向其写入的权限。保留 origin 的团队拉取地址，把推送地址改为个人 fork.git，交付 feature.txt 的 released 功能，团队主线保持不变。",
+    "target": "你可以读取团队仓库，却没有向其写入的权限。保留 origin 的团队拉取地址，把推送地址改为个人 fork.git，交付 feature.txt 的 ready 功能，团队主线保持不变。",
+    "challengeTarget": "你可以读取团队仓库，却没有向其写入的权限。保留 origin 的团队拉取地址，把推送地址改为个人 fork.git，交付 feature.txt 的 released 功能，团队主线保持不变。",
+    "steps": [
+      {
+        "title": "启动本关服务并阅读授权信息",
+        "body": "服务只在当前终端的隔离网络内运行，重连终端后重新启动。所有账号与令牌都是假凭据，不要输入真实凭据。本关使用 HTTP 观察协议错误；真实平台应使用 HTTPS 和安全凭据管理器。",
+        "command": "python ../serve.py --start\ncat ../access-guide.txt\ngit remote -v\ngit config --show-origin --get-all credential.helper"
+      },
+      {
+        "title": "从实际错误区分原因",
+        "body": "ls-remote 只读取远端；push 需要写权限。401 表示本关凭据无效，403 表示账号已识别但缺少当前仓库或写入权限。修改 user.name/user.email 不会修复登录，关闭 TLS 校验也不能解决认证。",
+        "command": "git ls-remote origin\ngit add feature.txt\ngit commit -m feature\ngit push origin main"
+      },
+      {
+        "title": "修复凭据选择或推送目标",
+        "body": "本关的团队仓库明确只读，再换同一账号的令牌也不会增加仓库授权。单独设置 push URL，将功能交付到自己的 Fork，保留团队拉取地址。",
+        "command": "git remote set-url --push origin http://127.0.0.1:8765/fork.git"
+      },
+      {
+        "title": "重试并核对交付结果",
+        "body": "Git 成功返回后还要检查功能提交、远端内容与地址。判题会验证实际 HTTP 接收的提交，不把本地提交当作远端交付。",
+        "command": "git remote -v\ngit ls-remote origin\ngit push origin main\ngit status"
+      }
+    ],
+    "hints": [
+      "服务只在当前终端的隔离网络内运行，重连终端后重新启动。所有账号与令牌都是假凭据，不要输入真实凭据。本关使用 HTTP 观察协议错误；真实平台应使用 HTTPS 和安全凭据管理器。",
+      "本关的团队仓库明确只读，再换同一账号的令牌也不会增加仓库授权。单独设置 push URL，将功能交付到自己的 Fork，保留团队拉取地址。",
+      "python ../serve.py --start\ncat ../access-guide.txt\ngit remote -v\ngit config --show-origin --get-all credential.helper\n\ngit ls-remote origin\ngit add feature.txt\ngit commit -m feature\ngit push origin main\n\ngit remote set-url --push origin http://127.0.0.1:8765/fork.git\n\ngit remote -v\ngit ls-remote origin\ngit push origin main\ngit status"
+    ]
   }
 ]

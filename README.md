@@ -8,6 +8,8 @@
 
 本预览版现有 53 门课程、106 个场景，比 preview.1 新增 PR 合并策略与保护检查，初始化/克隆、pull 策略、merge/am 恢复、分离 HEAD/误删分支、blame/log 定位、跨平台换行、fsck/gc 恢复，以及 SSH 签名、LFS 提交与历史迁移、假凭据历史清理。发布记录会注明每个安装包实际包含的课程。
 
+开发分支现有 57 门课程、114 个场景，新增失效凭据、令牌写权限、多账号路径匹配和只读上游/Fork 推送诊断。这四门课程尚未包含在 preview.2 安装包中，后续将与综合任务一起发布。
+
 ![学习路径](docs/screenshots/home.png)
 
 ![真实 Git 练习工作台](docs/screenshots/workbench.png)
@@ -66,6 +68,8 @@ npm run package
 在 `release/` 生成与 `package.json.version` 对应的安装包；已发布预览版的源码以对应发布标签为准，开发分支会继续变化。打包前会验证镜像和离线工具包 SHA256、课程版本及课程更新包与源文件的一致性，二进制镜像和工具包不写入 Git。安装包内含镜像与工具，不要求用户安装构建工具。
 
 仅修改课程代码时，可用 `npm run runtime:refresh` 更新已校验的本地镜像及课程更新包，无需重新下载 Linux 软件包。跨版本保留数据测试为 `npm run test:upgrade`，需要先将 v0.1.0 发布附件的 `runtime.tar` 放在 `.local/runtime-v0.1.0.tar`。
+
+`test:access` 在隔离环境内用真实 HTTP 认证和 Git 协议验证账号/权限故障。`test:access-lifecycle` 验证终端服务连续启动、关闭和重连后没有遗留进程。升级测试若在升级之前失败，可用 `GIT_ONBOARDING_UPGRADE_TEST_DATA` 指定该次记录的测试数据目录复用旧镜像；该参数只应指向测试目录，不得指向个人练习数据。已完成升级的目录不能再作为 0.1.0 初始样本。
 
 桌面版本使用 `package.json.version`；课程兼容版本使用 `package.json.courseVersion`，并与 `runtime/engine.py` 的 `COURSE_VERSION` 保持一致。仅界面改版不提升课程版本，不重建用户练习。课程代码有变化时同步提升课程版本并刷新镜像，打包会检查版本、哈希和课程源文件一致性。
 
