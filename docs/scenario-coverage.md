@@ -39,10 +39,27 @@
 
 这批验证不等于完整矩阵通过。上表未覆盖的路径（例如 rebase --onto、autosquash、stash 冲突、force-with-lease、PR 合并冲突、不同平台认证等）仍需继续实现和验收。尚未构建或发布 0.2.0 安装包。
 
+## 2026-09-13 第二批实现与验证
+
+新增 10 个课程、20 个场景：部分暂存、amend、reset soft/mixed/hard、共享 worktree、bisect 自动回归定位、注释标签发布、已跟踪文件退出索引并保留本地内容、文件重命名与删除。总计 21 个课程、42 个场景。
+
+- `npm run test:maintenance`：148 项断言通过。验证错误提交范围、三种 reset 状态不能混淆、独立 clone 不能替代 worktree、未提交修复不能通过、二分定位错误提交不能通过、轻量标签/错误标签目标/未推送标签不能通过、仅新增忽略规则或删除本地日志不能通过。两种模式都验证完成、续练和重置。
+- 原有 `test:advanced` 114 项、`test:runtime` 63 项及真实 PTY、6 项 Node 测试保持通过。
+- `test:ui` 3 个 Electron 测试通过，新增部分暂存后提交但保留工作区另一处改动，以及直接在编辑器保存 `.gitignore` 后完成解除跟踪。
+- `test:upgrade` 再次验证旧镜像升级后提交、暂存区、工作区及学习进度保留。
+- 课程更新增加内容校验，版本相同但文件不同也会提示更新，避免执行旧代码。编辑器允许 `.gitignore`、`.gitattributes`、`.gitmodules`，继续禁止 `.git`、隐藏目录和路径穿越。
+- 终端改为在交互 Bash 启动前进入课程目录，首个提示符就绪后开放输入；启动期间输入排队，真实 PTY 测试验证早期输入、resize、Ctrl+C。修复了内部 `cd` 与用户快速输入混杂的竞态。
+- bisect 课程通过 `refs/bisect/bad` 保存结果，不假定结束时 HEAD 一定是错误提交；检查脚本直接读取当前源文件，避免快速切换时的字节码缓存影响。
+
+上表“当前证据”的第一批前状态以这两段记录为补充。仍需完成的范围包括 init/clone 专题、rebase --onto/autosquash、stash 冲突、force-with-lease、PR 冲突及合并策略、patch/bundle、submodule/sparse/shallow、换行符、签名/LFS、认证诊断、历史清理与综合任务。完整目标未完成，尚未发布 0.2.0 安装包。
+
 ## 一手参考
 
 - [Git 命令参考](https://git-scm.com/docs)
 - [Git 用户手册](https://git-scm.com/docs/user-manual)
 - [GitHub fork 工作流](https://docs.github.com/en/pull-requests/how-tos/work-with-forks)
+- [reset 的状态语义](https://git-scm.com/docs/git-reset)
+- [worktree](https://git-scm.com/docs/git-worktree)
+- [bisect](https://git-scm.com/docs/git-bisect)
 
 2026-09-13 核查上述官方资料，用于建立覆盖范围；具体场景以隔离环境中的实际 Git 行为验收。

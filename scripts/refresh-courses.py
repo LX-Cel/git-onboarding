@@ -13,7 +13,9 @@ manifest = json.loads((res / 'runtime-manifest.json').read_text(encoding='utf-8'
 image = res / 'runtime.tar'
 with image.open('rb') as stream:
     assert hashlib.file_digest(stream, 'sha256').hexdigest() == manifest['sha256'], 'Base image hash mismatch'
-files = {name: (ROOT / 'runtime' / name).read_bytes().replace(b'\r\n', b'\n') for name in ['lessons.json', 'advanced.py', 'engine.py']}
+files = {name: (ROOT / 'runtime' / name).read_bytes().replace(b'\r\n', b'\n') for name in ['lessons.json', 'advanced.py', 'maintenance.py', 'relay.py', 'engine.py']}
+compile(files['relay.py'], 'relay.py', 'exec')
+compile(files['maintenance.py'], 'maintenance.py', 'exec')
 compile(files['advanced.py'], 'advanced.py', 'exec')
 compile(files['engine.py'], 'engine.py', 'exec')
 json.loads(files['lessons.json'])

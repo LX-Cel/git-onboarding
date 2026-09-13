@@ -2,7 +2,7 @@
 
 一个面向 Git 新手的中文桌面练习应用。从第一次提交，到分支协作、冲突处理和误操作恢复，在真实 Git 仓库里练习。
 
-**开发中：0.2.0 系统课程扩展。** 当前源码包含 11 个课程、22 个引导/挑战场景，新增 rebase（含冲突与交互整理）、cherry-pick（含冲突）、stash、reflog，以及 origin/upstream 双远端的离线 Fork/PR 评审合并流程。课程可以按分类和命令搜索。完整覆盖工作仍在进行，见 [覆盖矩阵与验收记录](docs/scenario-coverage.md)；0.2.0 尚未发布安装包，下面的下载仍是 0.1.2。
+**开发中：0.2.0 系统课程扩展。** 当前源码包含 21 个课程、42 个引导/挑战场景。覆盖 rebase（含冲突与交互整理）、cherry-pick（含冲突）、stash、reflog、origin/upstream 双远端的离线 Fork/PR 评审合并，以及部分暂存、amend、三种 reset、worktree、bisect、标签发布、忽略规则和重命名。课程可以按分类和命令搜索。完整覆盖工作仍在进行，见 [覆盖矩阵与验收记录](docs/scenario-coverage.md)；0.2.0 尚未发布安装包，下面的下载仍是 0.1.2。
 
 当前发布为 **Windows x64 私有试用版 0.1.2**，采用选定的 J 版 Fluent 2 视觉方向。在 [GitHub Release 下载](https://github.com/LX-Cel/git-onboarding/releases/tag/v0.1.2)安装包 `Git-Onboarding-0.1.2-Setup.exe` 和 SHA256 校验文件；本地构建产物位于 `release/`。项目尚未授予开源许可证；成熟后再决定公开与许可证。
 

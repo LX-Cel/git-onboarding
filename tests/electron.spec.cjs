@@ -2,6 +2,137 @@ const { test, expect, _electron: electron } = require("@playwright/test");
 const path = require("node:path");
 const fs = require("node:fs/promises");
 
+async function terminalCommand(page, command) {
+  await expect(page.locator(".terminal-panel")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
+  const status = await page.evaluate(
+    (value) =>
+      new Promise((resolve, reject) => {
+        let buffer = "";
+        let timeout;
+        const off = window.gitLab.onData((data) => {
+          buffer += new TextDecoder().decode(
+            Uint8Array.from(atob(data), (c) => c.charCodeAt(0)),
+          );
+          const match = /\x1b\]133;D;(\d+)\x07/.exec(buffer);
+          if (match) {
+            clearTimeout(timeout);
+            off();
+            resolve({ code: Number(match[1]), output: buffer });
+          }
+        });
+        timeout = setTimeout(() => {
+          off();
+          reject(new Error("Terminal did not return a prompt"));
+        }, 15000);
+        window.gitLab.input(value + "\r");
+      }),
+    command,
+  );
+  expect(status.code, status.output).toBe(0);
+}
+
+test("maintenance catalog, partial staging and editable ignore rules", async () => {
+  const env = {
+    ...process.env,
+    GIT_ONBOARDING_DATA_DIR: path.resolve(
+      process.env.GIT_ONBOARDING_TEST_DATA_DIR || ".local/ui-after-wsl-restart",
+    ),
+  };
+  delete env.ELECTRON_RUN_AS_NODE;
+  const app = await electron.launch({
+    args: ["."],
+    cwd: path.resolve("."),
+    env,
+  });
+  try {
+    const page = await app.firstWindow();
+    await expect(page.locator(".local-status")).toContainText(
+      "本地练习环境已就绪",
+    );
+    await page.getByRole("combobox", { name: "显示比例" }).selectOption("1");
+    await page
+      .getByRole("combobox", { name: "课程分类" })
+      .selectOption("仓库维护");
+    await expect(page.locator(".course-card")).toHaveCount(2);
+    await page.getByRole("searchbox", { name: "查找练习" }).fill("worktree");
+    await expect(page.locator(".course-card")).toHaveCount(1);
+    await page.getByRole("combobox", { name: "课程分类" }).selectOption("全部");
+    await page.getByRole("searchbox", { name: "查找练习" }).fill("add -p");
+    await page.locator(".course-card button").first().click();
+    await expect(
+      page.getByRole("textbox", { name: "文件内容" }),
+    ).toBeEditable();
+    async function reset() {
+      await page.getByRole("button", { name: "重新开始", exact: true }).click();
+      await page
+        .getByRole("dialog")
+        .getByRole("button", { name: "重新开始", exact: true })
+        .click();
+      await expect(
+        page.getByRole("button", { name: "检查练习结果", exact: true }),
+      ).toBeEnabled();
+    }
+    await reset();
+    await expect(page.getByRole("textbox", { name: "文件内容" })).toHaveValue(
+      /theme=dark/,
+    );
+    await terminalCommand(page, 'printf "y\\nn\\n" | git add -p settings.ini');
+    await terminalCommand(page, 'git commit -m "feature only"');
+    await page
+      .getByRole("button", { name: "检查练习结果", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toContainText("本关已完成");
+    await page.getByRole("button", { name: "关闭检查结果" }).click();
+    await page.getByRole("button", { name: "仓库状态", exact: true }).click();
+    await expect(page.locator(".state-zone").first()).toContainText(
+      "settings.ini",
+    );
+    expect(
+      await page
+        .locator(".unit-nav button")
+        .evaluateAll((buttons) =>
+          buttons.every(
+            (button) => button.scrollHeight <= button.clientHeight + 1,
+          ),
+        ),
+    ).toBe(true);
+    await page.screenshot({
+      path: "test-results/partial-stage.png",
+      fullPage: true,
+    });
+    await page
+      .locator(".unit-nav button")
+      .filter({ hasText: "停止跟踪日志但保留本地文件" })
+      .click();
+    await reset();
+    const editor = page.getByRole("textbox", { name: "文件内容" });
+    await expect(editor).toHaveValue("# 项目忽略规则\n");
+    await editor.fill("*.log\ncache/\n");
+    await page.getByRole("button", { name: "保存", exact: true }).click();
+    await expect(page.locator(".feedback-bar")).toContainText(
+      "文件已保存到真实工作区",
+    );
+    await expect(
+      page.getByRole("button", { name: "保存", exact: true }),
+    ).toBeDisabled();
+    await terminalCommand(
+      page,
+      'git rm --cached build.log && git rm -r --cached cache && git add .gitignore && git commit -m "untrack build artifacts"',
+    );
+    await page
+      .getByRole("button", { name: "检查练习结果", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toContainText("本关已完成");
+    await page.getByRole("button", { name: "关闭检查结果" }).click();
+    await expect(editor).toHaveValue("*.log\ncache/\n");
+  } finally {
+    await app.close();
+  }
+});
+
 test("advanced catalog and offline fork PR lifecycle through desktop", async () => {
   const env = {
     ...process.env,
@@ -347,14 +478,6 @@ test("Windows desktop: initialize, learn, edit, commit, reset confirmation and r
   );
   await expect(page.getByRole("textbox", { name: "文件内容" })).toBeEditable();
   await page.getByRole("button", { name: "重新开始", exact: true }).click();
-  await page.evaluate(() => {
-    window.testTerminalOutput = "";
-    window.gitLab.onData((data) => {
-      window.testTerminalOutput += new TextDecoder()
-        .decode(Uint8Array.from(atob(data), (c) => c.charCodeAt(0)))
-        .replace(/\x1b\[[0-9;]*m/g, "");
-    });
-  });
   await page
     .getByRole("dialog")
     .getByRole("button", { name: "重新开始", exact: true })
@@ -370,9 +493,11 @@ test("Windows desktop: initialize, learn, edit, commit, reset confirmation and r
     page.getByRole("button", { name: "保存", exact: true }),
   ).toBeDisabled();
   await page.locator(".xterm-helper-textarea").focus();
-  await expect
-    .poll(() => page.evaluate(() => window.testTerminalOutput))
-    .toContain("basics-challenge/workspace $ ");
+  await expect(page.locator(".terminal-panel")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
+  await page.locator(".xterm-helper-textarea").focus();
   await page.keyboard.type(
     'git add README.md && git commit -m "challenge result test"',
     { delay: 5 },

@@ -20,6 +20,19 @@ function validateSelection(value) {
   return { lesson: value.lesson, mode: value.mode };
 }
 function decode(buffer) {
+  // WSL diagnostics can be UTF-16 followed by UTF-8 stderr from the Linux process.
+  const lineEnd = buffer.lastIndexOf(Buffer.from([0x0a, 0x00]));
+  if (
+    lineEnd >= 0 &&
+    lineEnd + 2 < buffer.length &&
+    !buffer.subarray(lineEnd + 2).includes(0)
+  )
+    return (
+      buffer
+        .subarray(0, lineEnd + 2)
+        .toString("utf16le")
+        .replace(/^\uFEFF/, "") + buffer.subarray(lineEnd + 2).toString("utf8")
+    );
   return buffer.includes(0)
     ? buffer.toString("utf16le").replace(/^\uFEFF/, "")
     : buffer.toString("utf8");
@@ -112,6 +125,25 @@ class Runtime {
     }
     return this.owner;
   }
+  async coursePayload() {
+    return JSON.parse(
+      await fs.readFile(
+        path.join(this.resources, "course-update.json"),
+        "utf8",
+      ),
+    );
+  }
+  async coursesCurrent(probe) {
+    if (probe.courseVersion !== COURSE_VERSION) return false;
+    const payload = await this.coursePayload();
+    return (
+      payload.version === COURSE_VERSION &&
+      Object.keys(payload.files).length > 0 &&
+      Object.entries(payload.files).every(
+        ([name, file]) => probe.courseHashes?.[name] === file.sha256,
+      )
+    );
+  }
   async status() {
     if (process.platform !== "win32" || process.arch !== "x64")
       return {
@@ -132,7 +164,7 @@ class Runtime {
         ) {
           throw new Error("练习环境隔离检查未通过，已禁止启动终端");
         }
-        if (probe.courseVersion !== COURSE_VERSION) {
+        if (!(await this.coursesCurrent(probe))) {
           return {
             ready: false,
             supported: true,
@@ -239,7 +271,7 @@ class Runtime {
         );
       }
       const beforeUpdate = await this.call({ action: "probe" });
-      if (beforeUpdate.courseVersion !== COURSE_VERSION) {
+      if (!(await this.coursesCurrent(beforeUpdate))) {
         this.stopTerminal();
         onOutput("正在更新课程判定；现有练习仓库和学习进度会保留…");
         const payload = await fs.readFile(
@@ -310,13 +342,25 @@ class Runtime {
         "--exec",
         "python3",
         "/opt/git-onboarding/relay.py",
+        `/home/student/labs/${selection.lesson}-${selection.mode}/workspace`,
       ],
       { windowsHide: true, stdio: ["pipe", "pipe", "pipe"] },
     );
     this.terminal = proc;
+    proc.ready = false;
+    proc.inputQueue = [];
+    let resolveReady, rejectReady;
+    const readiness = new Promise((resolve, reject) => {
+      resolveReady = resolve;
+      rejectReady = reject;
+    });
+    const startupTimer = setTimeout(() => {
+      rejectReady(new Error("终端启动超时，请重新连接"));
+      proc.kill();
+    }, 15000);
+    startupTimer.unref();
     let pending = "",
-      entered = false;
-    const labPath = `/home/student/labs/${selection.lesson}-${selection.mode}/workspace`;
+      promptTail = "";
     proc.stdout.on("data", (chunk) => {
       if (this.terminal !== proc) return;
       pending += chunk.toString();
@@ -332,13 +376,17 @@ class Runtime {
           const message = JSON.parse(line);
           if (message.data) {
             onData(message.data);
-            if (!entered) {
-              entered = true;
-              proc.stdin.write(
-                JSON.stringify({
-                  data: Buffer.from(`cd -- ${labPath}\r`).toString("base64"),
-                }) + "\n",
-              );
+            if (!proc.ready) {
+              promptTail = (
+                promptTail + Buffer.from(message.data, "base64").toString()
+              ).slice(-1024);
+              if (/\x1b\]133;D;\d+\x07/.test(promptTail)) {
+                proc.ready = true;
+                clearTimeout(startupTimer);
+                for (const data of proc.inputQueue) proc.stdin.write(data);
+                proc.inputQueue = [];
+                resolveReady();
+              }
             }
           }
         } catch {
@@ -355,21 +403,34 @@ class Runtime {
     });
     proc.stdin.on("error", () => {});
     proc.on("error", (error) => {
+      clearTimeout(startupTimer);
+      rejectReady(error);
       if (this.terminal === proc) onExit(error.message);
     });
     proc.on("close", () => {
+      clearTimeout(startupTimer);
+      rejectReady(new Error("终端在启动完成前关闭"));
       if (this.terminal === proc) {
         this.terminal = null;
         onExit("终端已关闭，可以重新连接。");
       }
     });
+    return readiness;
   }
   terminalInput(data) {
     if (typeof data !== "string" || data.length > 65536)
       throw new Error("终端输入无效");
-    this.terminal?.stdin.write(
-      JSON.stringify({ data: Buffer.from(data).toString("base64") }) + "\n",
-    );
+    const message =
+      JSON.stringify({ data: Buffer.from(data).toString("base64") }) + "\n";
+    if (this.terminal && !this.terminal.ready) {
+      if (
+        this.terminal.inputQueue.reduce((sum, entry) => sum + entry.length, 0) +
+          message.length >
+        262144
+      )
+        throw new Error("终端尚未就绪，输入过多");
+      this.terminal.inputQueue.push(message);
+    } else this.terminal?.stdin.write(message);
   }
   terminalResize({ cols, rows }) {
     if (

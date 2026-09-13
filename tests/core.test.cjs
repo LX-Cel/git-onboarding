@@ -18,15 +18,33 @@ test(
     runtime.loadOwner = async () => runtime.owner;
     runtime.registered = async () => [runtime.owner.distro];
     let courseVersion = require("../package.json").courseVersion;
+    let courseHashes = { "engine.py": "expected-hash" };
+    runtime.coursePayload = async () => ({
+      version: require("../package.json").courseVersion,
+      files: { "engine.py": { sha256: "expected-hash" } },
+    });
     runtime.call = async () => ({
       uid: 1000,
       courseVersion,
+      courseHashes,
       git: "test Git",
       windowsMount: false,
       interop: false,
       initVisible: false,
     });
     assert.equal((await runtime.status()).ready, true);
+    courseHashes = { "engine.py": "stale-hash" };
+    assert.equal(
+      (await runtime.status()).updateRequired,
+      true,
+      "same version with stale content must update",
+    );
+    courseHashes = undefined;
+    assert.equal(
+      (await runtime.status()).updateRequired,
+      true,
+      "old engines without fingerprints must update",
+    );
     courseVersion = "0.1.1";
     const outdated = await runtime.status();
     assert.equal(outdated.ready, false);
@@ -82,6 +100,15 @@ test("selection rejects unknown lessons, modes and traversal", () => {
 test("WSL UTF-16 status output and UTF-8 Linux output decode correctly", () => {
   assert.equal(decode(Buffer.from("Ubuntu\r\n", "utf16le")), "Ubuntu\r\n");
   assert.equal(decode(Buffer.from("真实 Git")), "真实 Git");
+  assert.equal(
+    decode(
+      Buffer.concat([
+        Buffer.from("wsl: 代理提示\r\n", "utf16le"),
+        Buffer.from("Traceback: 真实错误\n"),
+      ]),
+    ),
+    "wsl: 代理提示\r\nTraceback: 真实错误\n",
+  );
 });
 test("graph connects merge commits to their real parents", async () => {
   const { layoutGraph } = await import("../src/graph.js");

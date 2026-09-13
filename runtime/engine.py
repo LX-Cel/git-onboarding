@@ -1,5 +1,6 @@
 """Trusted lesson orchestration. All actions run inside the unprivileged sandbox."""
 import json
+import hashlib
 import os
 from pathlib import Path
 import re
@@ -10,11 +11,13 @@ from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import advanced
+import maintenance
 
 ROOT = Path('/home/student/labs')
 COURSE_VERSION = '0.2.0'
 LESSONS = json.loads(Path(__file__).with_name('lessons.json').read_text())
 IDS = {lesson['id'] for lesson in LESSONS}
+EDITOR_DOTFILES = {'.gitignore', '.gitattributes', '.gitmodules'}
 SAFE_ENV = {**os.environ, 'GIT_TERMINAL_PROMPT': '0', 'GIT_CONFIG_NOSYSTEM': '1',
             'GIT_CONFIG_GLOBAL': '/dev/null', 'GIT_PAGER': 'cat', 'GIT_EDITOR': 'true',
             'GIT_OPTIONAL_LOCKS': '0', 'LC_ALL': 'C.UTF-8'}
@@ -80,6 +83,8 @@ def initialize(lesson, mode, reset=False):
         git(teammate, 'push', 'origin', 'main')
     elif lesson in advanced.IDS:
         advanced.setup(advanced_api(), repo, base, lesson, mode, record)
+    elif lesson in maintenance.IDS:
+        maintenance.setup(advanced_api(), repo, base, lesson, mode, record)
     elif lesson == 'recovery':
         (repo / 'notes.txt').write_text('这段笔记需要保留。\n')
         (repo / 'draft.txt').write_text('初始草稿\n')
@@ -101,7 +106,7 @@ def safe_file(repo, name, existing=False):
     if not isinstance(name, str) or len(name) > 240 or '\\' in name or '\x00' in name:
         raise ValueError('无效文件路径')
     parts = Path(name).parts
-    if not parts or Path(name).is_absolute() or any(p in ('.git', '..') or p.startswith('.') for p in parts):
+    if not parts or Path(name).is_absolute() or any(p in ('.git', '..') or (p.startswith('.') and not (i == len(parts) - 1 and p in EDITOR_DOTFILES)) for i, p in enumerate(parts)):
         raise ValueError('只能编辑练习仓库中的普通文件')
     path = repo / name
     if not path.resolve().is_relative_to(repo.resolve()) or any(p.is_symlink() for p in [path, *path.parents] if p != ROOT.parent):
@@ -157,6 +162,8 @@ def assess(repo, base, lesson, mode):
     target = spec['target' if mode == 'guided' else 'challengeTarget']
     if lesson in advanced.IDS:
         return advanced.assess(advanced_api(), repo, base, lesson, mode, record)
+    if lesson in maintenance.IDS:
+        return maintenance.assess(advanced_api(), repo, base, lesson, mode, record)
     if lesson == 'basics':
         original = text_at(repo, record['initial'], 'README.md').strip()
         committed = text_at(repo, 'HEAD', 'README.md').strip()
@@ -200,7 +207,7 @@ def snapshot(lesson, mode):
         dirs[:] = [d for d in dirs if not d.startswith('.') and not (Path(folder) / d).is_symlink()]
         for name in names:
             p = Path(folder) / name
-            if not name.startswith('.') and not p.is_symlink() and p.is_file():
+            if (not name.startswith('.') or name in EDITOR_DOTFILES) and not p.is_symlink() and p.is_file():
                 files.append(str(p.relative_to(repo)))
             if len(files) >= 150:
                 break
@@ -248,7 +255,9 @@ def dispatch(request):
     action = request.get('action')
     lesson, mode = request.get('lesson'), request.get('mode', 'guided')
     if action == 'probe':
-        return {'courseVersion': COURSE_VERSION, 'uid': os.getuid(), 'git': subprocess.check_output(['git', '--version'], text=True).strip(),
+        hashes = {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
+                  for name in ['engine.py', 'advanced.py', 'maintenance.py', 'relay.py', 'lessons.json']}
+        return {'courseVersion': COURSE_VERSION, 'courseHashes': hashes, 'uid': os.getuid(), 'git': subprocess.check_output(['git', '--version'], text=True).strip(),
                 'windowsMount': Path('/mnt/c').exists(), 'interop': bool(os.environ.get('WSL_INTEROP')),
                 'initVisible': Path('/init').exists()}
     base, repo = location(lesson, mode)

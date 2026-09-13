@@ -4,6 +4,6 @@
   "architecture": "x64",
   "source": "alpine-minirootfs-3.24.1-x86_64.tar.gz",
   "sourceSha256": "41f73e3cf5fa919b8aa5ca6b30dc48f0da2720776d7423e2a7748211456fe081",
-  "sha256": "bc0e7f06876757b914c79091bb6477a454b3826601f1a20fa0630fff8f8b726e",
+  "sha256": "fa98016f62f205f43de18e286fe8b4163a312f538bbcabf9a39ba2d4f6e3c8e3",
   "git": "git version 2.54.0"
 }

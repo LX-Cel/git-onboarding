@@ -42,13 +42,14 @@ const { Runtime, run } = require("../desktop/runtime.cjs");
     reset: true,
   });
   let output = "";
-  runtime.startTerminal(
+  const startup = runtime.startTerminal(
     { lesson: "basics", mode: "guided" },
     (data) => {
       output += Buffer.from(data, "base64").toString();
     },
     console.log,
   );
+  runtime.terminalInput("printf 'EARLY_INPUT_OK\\n'\r");
   const until = async (predicate, message) => {
     const deadline = Date.now() + 12000;
     while (!predicate() && Date.now() < deadline)
@@ -56,6 +57,11 @@ const { Runtime, run } = require("../desktop/runtime.cjs");
     assert.ok(predicate(), message + "\n" + output);
   };
   try {
+    await startup;
+    await until(
+      () => output.includes("EARLY_INPUT_OK\r\n"),
+      "input queued during startup must execute in order",
+    );
     await until(
       () => output.includes("basics-guided/workspace"),
       "PTY should enter lesson directory",

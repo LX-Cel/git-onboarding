@@ -63,7 +63,7 @@ function handle(channel, callback) {
 }
 function connect() {
   if (!selected) throw new Error("请先选择练习");
-  runtime.startTerminal(
+  return runtime.startTerminal(
     selected,
     (data) => {
       if (!window.isDestroyed()) window.webContents.send("terminal:data", data);

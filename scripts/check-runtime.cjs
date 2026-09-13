@@ -23,7 +23,13 @@ const engineVersion = fs
   .match(/^COURSE_VERSION = ['"]([^'"]+)['"]/m)?.[1];
 if (!version || engineVersion !== version)
   throw new Error("Course engine and package courseVersion must match.");
-for (const name of ["engine.py", "advanced.py", "lessons.json"]) {
+for (const name of [
+  "engine.py",
+  "advanced.py",
+  "maintenance.py",
+  "relay.py",
+  "lessons.json",
+]) {
   const entry = update.files[name];
   const bytes = Buffer.from(entry.data, "base64");
   if (

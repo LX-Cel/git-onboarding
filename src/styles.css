@@ -341,6 +341,7 @@ svg {
 }
 .unit-nav button {
   align-items: flex-start;
+  flex-shrink: 0;
   gap: 10px;
   line-height: 21px;
 }

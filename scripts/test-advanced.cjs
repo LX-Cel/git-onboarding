@@ -15,11 +15,20 @@ const { Runtime, run } = require("../desktop/runtime.cjs");
       "Set GIT_ONBOARDING_TEST_DATA to an initialized test environment",
     );
   const files = {};
-  for (const name of ["engine.py", "advanced.py", "lessons.json"])
+  for (const name of [
+    "engine.py",
+    "advanced.py",
+    "maintenance.py",
+    "relay.py",
+    "lessons.json",
+  ])
     files[name] = (await fs.readFile(path.resolve("runtime", name))).toString(
       "base64",
     );
-  const test = (await fs.readFile("tests/advanced_checks.py")).toString(
+  const suite = process.argv.includes("--maintenance")
+    ? "maintenance_checks.py"
+    : "advanced_checks.py";
+  const test = (await fs.readFile(path.join("tests", suite))).toString(
     "base64",
   );
   const script = `import base64, json, os, pathlib, tempfile\nwith tempfile.TemporaryDirectory(prefix='course-test-') as directory:\n for name, data in json.loads(${JSON.stringify(JSON.stringify(files))}).items():\n  (pathlib.Path(directory)/name).write_bytes(base64.b64decode(data))\n os.environ['COURSE_TEST_DIR']=directory\n exec(compile(base64.b64decode(${JSON.stringify(test)}), 'advanced_checks.py', 'exec'))\n`;

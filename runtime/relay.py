@@ -4,6 +4,7 @@ import fcntl
 import json
 import os
 import pty
+import re
 import select
 import signal
 import struct
@@ -18,8 +19,12 @@ def session():
     os.setsid()
     fcntl.ioctl(0, termios.TIOCSCTTY, 0)
 
-proc = subprocess.Popen(['/opt/git-onboarding/sandbox.sh', '/bin/bash', '--noprofile',
-                         '--rcfile', '/opt/git-onboarding/bashrc', '-i'],
+directory = sys.argv[1] if len(sys.argv) == 2 else '/home/student'
+if directory != '/home/student' and not re.fullmatch(r'/home/student/labs/[a-z0-9-]+-(guided|challenge)/workspace', directory):
+    raise ValueError('Invalid lesson directory')
+proc = subprocess.Popen(['/opt/git-onboarding/sandbox.sh', '/bin/bash', '-c',
+                         'cd -- "$1" && exec /bin/bash --noprofile --rcfile /opt/git-onboarding/bashrc -i',
+                         'git-onboarding', directory],
                         stdin=slave, stdout=slave, stderr=slave, preexec_fn=session)
 os.close(slave)
 pending = b''

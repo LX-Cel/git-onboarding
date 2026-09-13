@@ -545,5 +545,465 @@
       "先整合 upstream/main，再创建功能分支；推送后在托管练习创建 PR。评审关注 feature.txt 和 tests.txt。",
       "每次推送之后重新请求评审，合并后 fetch upstream、更新本地 main、push origin main。离线评审并不是 Git 命令，真实平台可使用网页或 gh pr。"
     ]
+  },
+  {
+    "id": "partial-stage",
+    "number": "12",
+    "title": "一次只提交一件事",
+    "subtitle": "settings.ini 同时包含启用功能和切换主题两处修改",
+    "category": "基础操作",
+    "level": "进阶",
+    "minutes": 20,
+    "file": "settings.ini",
+    "story": "settings.ini 同时包含启用功能和切换主题两处修改。本次只交付功能，主题试验要留在工作区。",
+    "challengeStory": "独立挑战：settings.ini 同时包含启用功能和切换主题两处修改。本次只交付功能，主题试验要留在工作区。",
+    "target": "新提交包含 enabled=yes、theme=light；工作区保留 enabled=yes、theme=dark；暂存区为空。",
+    "challengeTarget": "新提交包含 enabled=yes、theme=light；工作区保留 enabled=yes、theme=dark；暂存区为空。",
+    "concepts": [
+      "add -p",
+      "diff --cached",
+      "部分暂存"
+    ],
+    "commands": [
+      "add -p",
+      "diff --cached",
+      "部分暂存"
+    ],
+    "steps": [
+      {
+        "title": "观察两段修改",
+        "body": "两段差异相隔多行，适合按 hunk 分别暂存。",
+        "command": "git diff -- settings.ini"
+      },
+      {
+        "title": "只暂存功能",
+        "body": "在 add -p 中对 enabled 的第一段输入 y，对 theme 的第二段输入 n。提交前检查暂存内容。",
+        "command": "git add -p settings.ini\ngit diff --cached"
+      },
+      {
+        "title": "提交并保留试验",
+        "body": "提交后 theme=dark 仍是未暂存修改，这正是本关要求。",
+        "command": "git commit -m \"启用功能\"\ngit diff\ngit status"
+      }
+    ],
+    "hints": [
+      "不要把整个文件直接 add 后提交。",
+      "git add -p 可以按差异片段暂存；y 选中，n 跳过，s 尝试拆分。",
+      "第一段 enabled 选 y，第二段 theme 选 n；检查 git diff --cached 后 commit。"
+    ]
+  },
+  {
+    "id": "amend",
+    "number": "13",
+    "title": "补上刚才漏交的文件",
+    "subtitle": "最新本地提交包含功能，却漏了 tests.txt",
+    "category": "历史整理",
+    "level": "进阶",
+    "minutes": 20,
+    "file": "tests.txt",
+    "story": "最新本地提交包含功能，却漏了 tests.txt。尚未推送这次提交，请把测试补进同一个提交。",
+    "challengeStory": "独立挑战：最新本地提交包含功能，却漏了 tests.txt。尚未推送这次提交，请把测试补进同一个提交。",
+    "target": "用一个新提交替换遗漏测试的提交；feature.txt 为 ready，tests.txt 为 tests=pass；基线后的提交数仍为一。",
+    "challengeTarget": "用一个新提交替换遗漏测试的提交；feature.txt 为 released，tests.txt 为 tests=pass；基线后的提交数仍为一。",
+    "concepts": [
+      "commit --amend",
+      "show",
+      "本地历史"
+    ],
+    "commands": [
+      "commit --amend",
+      "show",
+      "本地历史"
+    ],
+    "steps": [
+      {
+        "title": "确认遗漏",
+        "body": "tests.txt 已在工作区，但不在最新提交的文件清单中。",
+        "command": "git status\ngit show --stat HEAD"
+      },
+      {
+        "title": "修订最新提交",
+        "body": "amend 创建新的提交 ID，替换当前分支最后一次提交。本关没有共享历史。",
+        "command": "git add tests.txt\ngit commit --amend --no-edit"
+      },
+      {
+        "title": "核对结果",
+        "body": "确认一个提交包含功能和测试，不是另外追加了一个提交。",
+        "command": "git log --oneline baseline..HEAD\ngit show --stat HEAD"
+      }
+    ],
+    "hints": [
+      "只运行普通 commit 会变成两个提交，不满足本关目标。",
+      "先 add tests.txt，再 commit --amend --no-edit。",
+      "用 git show HEAD 和 git log baseline..HEAD 检查内容与数量。共享提交要先和协作者确认改写方式。"
+    ]
+  },
+  {
+    "id": "reset-soft",
+    "number": "14",
+    "title": "reset --soft：把修改留在暂存区",
+    "subtitle": "当前 main 比 baseline 多一个本地提交，需要重新安排这份工作",
+    "category": "故障恢复",
+    "level": "进阶",
+    "minutes": 20,
+    "file": "feature.txt",
+    "story": "当前 main 比 baseline 多一个本地提交，需要重新安排这份工作。scratch.txt 是独立的未跟踪草稿，不与恢复路径冲突。",
+    "challengeStory": "独立挑战：当前 main 比 baseline 多一个本地提交，需要重新安排这份工作。scratch.txt 是独立的未跟踪草稿，不与恢复路径冲突。",
+    "target": "main 回到 baseline；feature.txt 的 ready 仍在暂存区，工作区与暂存区一致。 scratch.txt 仍在本地且未跟踪。",
+    "challengeTarget": "main 回到 baseline；feature.txt 的 released 仍在暂存区，工作区与暂存区一致。 scratch.txt 仍在本地且未跟踪。",
+    "concepts": [
+      "reset --soft",
+      "HEAD / index / worktree",
+      "reflog"
+    ],
+    "commands": [
+      "reset --soft",
+      "HEAD / index / worktree",
+      "reflog"
+    ],
+    "steps": [
+      {
+        "title": "查看要移动到哪里",
+        "body": "先查看 baseline 到 HEAD 的差异。hard 会丢弃已跟踪文件的工作区修改；本关提供的是可重置练习。",
+        "command": "git log --oneline\ngit diff baseline HEAD\ngit status"
+      },
+      {
+        "title": "执行本关重置",
+        "body": "soft 只移动分支；mixed 同时重置暂存区；hard 还重置工作区。选择本关标题对应的模式。",
+        "command": "git reset --soft baseline"
+      },
+      {
+        "title": "对比三个位置",
+        "body": "检查 HEAD、暂存区与工作区。不要把“重置后干净”当成所有模式的共同目标。",
+        "command": "git status\ngit diff\ngit diff --cached\ngit show HEAD:feature.txt"
+      }
+    ],
+    "hints": [
+      "本关使用标签 baseline 作为恢复位置。",
+      "运行 git reset --soft baseline 后，分别检查 git diff 与 git diff --cached。",
+      "feature.txt 的 ready 仍在暂存区，工作区与暂存区一致。 hard 不保证保留所有未跟踪文件：阻碍恢复已跟踪路径的未跟踪文件可能被删除；本关 scratch.txt 无此冲突。"
+    ]
+  },
+  {
+    "id": "reset-mixed",
+    "number": "15",
+    "title": "reset --mixed：把修改留在工作区",
+    "subtitle": "当前 main 比 baseline 多一个本地提交，需要重新安排这份工作",
+    "category": "故障恢复",
+    "level": "进阶",
+    "minutes": 20,
+    "file": "feature.txt",
+    "story": "当前 main 比 baseline 多一个本地提交，需要重新安排这份工作。scratch.txt 是独立的未跟踪草稿，不与恢复路径冲突。",
+    "challengeStory": "独立挑战：当前 main 比 baseline 多一个本地提交，需要重新安排这份工作。scratch.txt 是独立的未跟踪草稿，不与恢复路径冲突。",
+    "target": "main 回到 baseline；暂存区为空，feature.txt 的 ready 保留为未暂存修改。 scratch.txt 仍在本地且未跟踪。",
+    "challengeTarget": "main 回到 baseline；暂存区为空，feature.txt 的 released 保留为未暂存修改。 scratch.txt 仍在本地且未跟踪。",
+    "concepts": [
+      "reset --mixed",
+      "HEAD / index / worktree",
+      "reflog"
+    ],
+    "commands": [
+      "reset --mixed",
+      "HEAD / index / worktree",
+      "reflog"
+    ],
+    "steps": [
+      {
+        "title": "查看要移动到哪里",
+        "body": "先查看 baseline 到 HEAD 的差异。hard 会丢弃已跟踪文件的工作区修改；本关提供的是可重置练习。",
+        "command": "git log --oneline\ngit diff baseline HEAD\ngit status"
+      },
+      {
+        "title": "执行本关重置",
+        "body": "soft 只移动分支；mixed 同时重置暂存区；hard 还重置工作区。选择本关标题对应的模式。",
+        "command": "git reset --mixed baseline"
+      },
+      {
+        "title": "对比三个位置",
+        "body": "检查 HEAD、暂存区与工作区。不要把“重置后干净”当成所有模式的共同目标。",
+        "command": "git status\ngit diff\ngit diff --cached\ngit show HEAD:feature.txt"
+      }
+    ],
+    "hints": [
+      "本关使用标签 baseline 作为恢复位置。",
+      "运行 git reset --mixed baseline 后，分别检查 git diff 与 git diff --cached。",
+      "暂存区为空，feature.txt 的 ready 保留为未暂存修改。 hard 不保证保留所有未跟踪文件：阻碍恢复已跟踪路径的未跟踪文件可能被删除；本关 scratch.txt 无此冲突。"
+    ]
+  },
+  {
+    "id": "reset-hard",
+    "number": "16",
+    "title": "reset --hard：回到确认可丢弃的基线",
+    "subtitle": "当前 main 比 baseline 多一个本地提交，需要重新安排这份工作",
+    "category": "故障恢复",
+    "level": "进阶",
+    "minutes": 20,
+    "file": "feature.txt",
+    "story": "当前 main 比 baseline 多一个本地提交，需要重新安排这份工作。scratch.txt 是独立的未跟踪草稿，不与恢复路径冲突。",
+    "challengeStory": "独立挑战：当前 main 比 baseline 多一个本地提交，需要重新安排这份工作。scratch.txt 是独立的未跟踪草稿，不与恢复路径冲突。",
+    "target": "main 回到 baseline；feature.txt 和暂存区回到 draft；不保留这次已跟踪修改。 scratch.txt 仍在本地且未跟踪。",
+    "challengeTarget": "main 回到 baseline；feature.txt 和暂存区回到 draft；不保留这次已跟踪修改。 scratch.txt 仍在本地且未跟踪。",
+    "concepts": [
+      "reset --hard",
+      "HEAD / index / worktree",
+      "reflog"
+    ],
+    "commands": [
+      "reset --hard",
+      "HEAD / index / worktree",
+      "reflog"
+    ],
+    "steps": [
+      {
+        "title": "查看要移动到哪里",
+        "body": "先查看 baseline 到 HEAD 的差异。hard 会丢弃已跟踪文件的工作区修改；本关提供的是可重置练习。",
+        "command": "git log --oneline\ngit diff baseline HEAD\ngit status"
+      },
+      {
+        "title": "执行本关重置",
+        "body": "soft 只移动分支；mixed 同时重置暂存区；hard 还重置工作区。选择本关标题对应的模式。",
+        "command": "git reset --hard baseline"
+      },
+      {
+        "title": "对比三个位置",
+        "body": "检查 HEAD、暂存区与工作区。不要把“重置后干净”当成所有模式的共同目标。",
+        "command": "git status\ngit diff\ngit diff --cached\ngit show HEAD:feature.txt"
+      }
+    ],
+    "hints": [
+      "本关使用标签 baseline 作为恢复位置。",
+      "运行 git reset --hard baseline 后，分别检查 git diff 与 git diff --cached。",
+      "feature.txt 和暂存区回到 draft；不保留这次已跟踪修改。 hard 不保证保留所有未跟踪文件：阻碍恢复已跟踪路径的未跟踪文件可能被删除；本关 scratch.txt 无此冲突。"
+    ]
+  },
+  {
+    "id": "worktree",
+    "number": "17",
+    "title": "同时保留两套工作现场",
+    "subtitle": "main 上有未提交功能，紧急修复又不能混入半成品",
+    "category": "仓库维护",
+    "level": "进阶",
+    "minutes": 20,
+    "file": "feature.txt",
+    "story": "main 上有未提交功能，紧急修复又不能混入半成品。创建共享仓库的第二工作树处理 hotfix，让 main 的文件保持原样。",
+    "challengeStory": "独立挑战：main 上有未提交功能，紧急修复又不能混入半成品。创建共享仓库的第二工作树处理 hotfix，让 main 的文件保持原样。",
+    "target": "../hotfix-tree 检出 hotfix 并提交 config.ini 的 safe_mode=strict；当前 main 保留未提交的 feature.txt（ready）且不移动。",
+    "challengeTarget": "../hotfix-tree 检出 hotfix 并提交 config.ini 的 safe_mode=strict；当前 main 保留未提交的 feature.txt（released）且不移动。",
+    "concepts": [
+      "worktree add",
+      "并行开发",
+      "worktree list"
+    ],
+    "commands": [
+      "worktree add",
+      "并行开发",
+      "worktree list"
+    ],
+    "steps": [
+      {
+        "title": "查看当前工作现场",
+        "body": "不要通过 stash 或提交移动这份半成品；第二工作树有独立的工作区和暂存区。",
+        "command": "git status\ngit worktree list"
+      },
+      {
+        "title": "创建第二工作树",
+        "body": "hotfix 是新的分支。进入新目录后修改配置并提交。",
+        "command": "git worktree add ../hotfix-tree -b hotfix\ncd ../hotfix-tree\nprintf \"safe_mode=strict\\n\" > config.ini\ngit add config.ini\ngit commit -m \"严格模式修复\""
+      },
+      {
+        "title": "返回主工作树核验",
+        "body": "回到 workspace 查看原来的未提交功能；两个目录共享提交和分支，但拥有独立现场。完成检查后可用 worktree remove 清理干净的第二工作树。",
+        "command": "cd ../workspace\ngit worktree list\ngit status\ngit show hotfix:config.ini"
+      }
+    ],
+    "hints": [
+      "不能用独立 git clone 冒充共享 worktree。",
+      "git worktree add ../hotfix-tree -b hotfix；在新目录修改 config.ini 并 commit。",
+      "返回 ../workspace。不要把主工作树的 feature.txt 一并提交，也不要在检查前移除 hotfix-tree。"
+    ]
+  },
+  {
+    "id": "bisect",
+    "number": "18",
+    "title": "定位首次引入错误的提交",
+    "subtitle": "报价函数在一串提交中出现了回归",
+    "category": "定位与发布",
+    "level": "进阶",
+    "minutes": 20,
+    "file": "price.py",
+    "story": "报价函数在一串提交中出现了回归。baseline 正常，当前 main 错误；利用已有 check.py 自动二分定位，不修改生产文件。",
+    "challengeStory": "独立挑战：报价函数在一串提交中出现了回归。baseline 正常，当前 main 错误；利用已有 check.py 自动二分定位，不修改生产文件。",
+    "target": "culprit 分支指向首次引入计算错误的提交；结束 bisect 并返回原来的 main；保留原有历史。",
+    "challengeTarget": "culprit 分支指向首次引入计算错误的提交；结束 bisect 并返回原来的 main；保留原有历史。",
+    "concepts": [
+      "bisect run",
+      "bisect reset",
+      "回归定位"
+    ],
+    "commands": [
+      "bisect run",
+      "bisect reset",
+      "回归定位"
+    ],
+    "steps": [
+      {
+        "title": "确认测试能够区分好坏",
+        "body": "当前测试应该失败；Python 的非零退出码代表错误。baseline 是已知正常版本。",
+        "command": "python3 check.py\ngit log --oneline"
+      },
+      {
+        "title": "执行自动二分",
+        "body": "bisect run 根据脚本退出码自动选择 good/bad。不要让测试修改被测源文件。",
+        "command": "git bisect start HEAD baseline\ngit bisect run python3 check.py"
+      },
+      {
+        "title": "保留证据并退出",
+        "body": "二分结束时 HEAD 可能仍停在最后测试的正常提交。用 refs/bisect/bad 保留已定位的首次错误，再结束二分返回原主线。",
+        "command": "git branch culprit refs/bisect/bad\ngit bisect log\ngit bisect reset\ngit show culprit"
+      }
+    ],
+    "hints": [
+      "只标记当前最新提交不等于找到了首次错误。",
+      "git bisect start HEAD baseline；git bisect run python3 check.py。",
+      "二分完成后 git branch culprit refs/bisect/bad，再 git bisect reset。不要假定结束时的 HEAD 一定是错误提交。"
+    ]
+  },
+  {
+    "id": "tags",
+    "number": "19",
+    "title": "给一次发布留下准确标签",
+    "subtitle": "发布提交已经在本地 main，远端仍停在上一版",
+    "category": "定位与发布",
+    "level": "进阶",
+    "minutes": 20,
+    "file": "feature.txt",
+    "story": "发布提交已经在本地 main，远端仍停在上一版。创建含发布说明的注释标签，同时发布分支与标签。",
+    "challengeStory": "独立挑战：发布提交已经在本地 main，远端仍停在上一版。创建含发布说明的注释标签，同时发布分支与标签。",
+    "target": "注释标签 v1.0.0 指向当前准备发布的提交；origin 收到相同标签对象和 main；不能使用轻量标签代替。",
+    "challengeTarget": "注释标签 v2.0.0 指向当前准备发布的提交；origin 收到相同标签对象和 main；不能使用轻量标签代替。",
+    "concepts": [
+      "tag -a",
+      "push --follow-tags",
+      "发布版本"
+    ],
+    "commands": [
+      "tag -a",
+      "push --follow-tags",
+      "发布版本"
+    ],
+    "steps": [
+      {
+        "title": "确认发布对象",
+        "body": "确认 HEAD 的内容和版本。标签名采用本关目标，不要推送所有无关标签。",
+        "command": "git log -1 --stat\ngit remote -v"
+      },
+      {
+        "title": "创建注释标签",
+        "body": "带 -a 的标签是独立对象，含标签说明。挑战模式改用 v2.0.0。",
+        "command": "git tag -a v1.0.0 -m \"发布 1.0.0\"\ngit show v1.0.0"
+      },
+      {
+        "title": "推送并核对",
+        "body": "--follow-tags 推送本次可达、远端缺少的注释标签；普通 push 不一定包含标签。",
+        "command": "git push origin main --follow-tags\ngit ls-remote --tags origin"
+      }
+    ],
+    "hints": [
+      "只建本地标签，远端不会自动得到它。",
+      "使用目标版本的 git tag -a，再 git push origin main --follow-tags。",
+      "可用 git cat-file -t refs/tags/v1.0.0 确认输出 tag。若误建轻量标签，先在本练习删除该标签再正确创建；挑战使用 v2.0.0。"
+    ]
+  },
+  {
+    "id": "ignore",
+    "number": "20",
+    "title": "停止跟踪日志但保留本地文件",
+    "subtitle": "build.log 和 cache/data.txt 已经误入版本控制",
+    "category": "仓库维护",
+    "level": "进阶",
+    "minutes": 20,
+    "file": ".gitignore",
+    "story": "build.log 和 cache/data.txt 已经误入版本控制。增加项目忽略规则，并从索引移除它们，保留磁盘上的原内容。",
+    "challengeStory": "独立挑战：build.log 和 cache/data.txt 已经误入版本控制。增加项目忽略规则，并从索引移除它们，保留磁盘上的原内容。",
+    "target": "提交 .gitignore，覆盖所有 *.log 与 cache/；停止跟踪已有日志和缓存，但不删除本地文件；新日志与缓存也会被忽略。",
+    "challengeTarget": "提交 .gitignore，覆盖所有 *.log 与 cache/；停止跟踪已有日志和缓存，但不删除本地文件；新日志与缓存也会被忽略。",
+    "concepts": [
+      ".gitignore",
+      "rm --cached",
+      "check-ignore"
+    ],
+    "commands": [
+      ".gitignore",
+      "rm --cached",
+      "check-ignore"
+    ],
+    "steps": [
+      {
+        "title": "检查已跟踪的文件",
+        "body": "规则只影响未跟踪文件，新增 .gitignore 不会自动让旧文件退出跟踪。",
+        "command": "git ls-files\ngit status"
+      },
+      {
+        "title": "添加规则并解除跟踪",
+        "body": "在编辑器把 *.log 和 cache/ 各写一行并保存。--cached 只从索引移除。",
+        "command": "git rm --cached build.log\ngit rm -r --cached cache\ngit add .gitignore\ngit diff --cached"
+      },
+      {
+        "title": "提交并检查本地保留",
+        "body": "确认本地文件仍存在，并检查未来的新文件也匹配规则。",
+        "command": "git commit -m \"停止跟踪构建产物\"\ngit check-ignore build.log future.log cache/data.txt cache/future.txt\nls build.log cache/data.txt"
+      }
+    ],
+    "hints": [
+      "仅写 .gitignore 不够；日志已经在 Git 的索引中。",
+      "用 git rm --cached 而不是删除磁盘文件。cache 是目录，需要 -r。",
+      "规则为 *.log 和 cache/；保存、解除跟踪后提交。git ls-files 不应再列出日志或缓存。"
+    ]
+  },
+  {
+    "id": "rename",
+    "number": "21",
+    "title": "整理文件名并删除过时示例",
+    "subtitle": "将根目录手册归档到 docs/guide.md，完整保留正文，并删除已经过时的 obsolete.txt",
+    "category": "基础操作",
+    "level": "进阶",
+    "minutes": 20,
+    "file": "old-guide.md",
+    "story": "将根目录手册归档到 docs/guide.md，完整保留正文，并删除已经过时的 obsolete.txt。提交后仍能追溯旧手册。",
+    "challengeStory": "独立挑战：将根目录手册归档到 docs/guide.md，完整保留正文，并删除已经过时的 obsolete.txt。提交后仍能追溯旧手册。",
+    "target": "新提交包含原文不变的 docs/guide.md，不再包含 old-guide.md 或 obsolete.txt；工作区干净，原历史保留。",
+    "challengeTarget": "新提交包含原文不变的 docs/guide.md，不再包含 old-guide.md 或 obsolete.txt；工作区干净，原历史保留。",
+    "concepts": [
+      "mv",
+      "rm",
+      "log --follow"
+    ],
+    "commands": [
+      "mv",
+      "rm",
+      "log --follow"
+    ],
+    "steps": [
+      {
+        "title": "移动与删除",
+        "body": "Git 通过内容相似度识别重命名，git mv 会同时更新工作区和索引。",
+        "command": "mkdir -p docs\ngit mv old-guide.md docs/guide.md\ngit rm obsolete.txt"
+      },
+      {
+        "title": "核对暂存差异",
+        "body": "确认是同一份手册迁移，未混入额外改动。",
+        "command": "git diff --cached --stat\ngit diff --cached"
+      },
+      {
+        "title": "提交并追溯",
+        "body": "log --follow 可以跨识别到的重命名继续查看单个文件历史。",
+        "command": "git commit -m \"整理手册与过时示例\"\ngit log --follow --oneline -- docs/guide.md\ngit status"
+      }
+    ],
+    "hints": [
+      "目标是移动而非复制；旧路径不应继续存在。",
+      "mkdir -p docs；git mv old-guide.md docs/guide.md；git rm obsolete.txt。",
+      "查看暂存差异，确认手册正文不变，再提交。"
+    ]
   }
 ]

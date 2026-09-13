@@ -98,10 +98,12 @@ function TerminalPane({ sessionKey, onChange, onResult }) {
   const host = useRef(null),
     term = useRef(null);
   const [ended, setEnded] = useState(false);
+  const [connecting, setConnecting] = useState(true);
   const [reconnect, setReconnect] = useState(0);
   useEffect(() => {
     if (!api || !host.current) return;
     const terminal = new XTerminal({
+      disableStdin: true,
       cursorBlink: true,
       cursorStyle: "bar",
       fontSize: 16,
@@ -158,9 +160,14 @@ function TerminalPane({ sessionKey, onChange, onResult }) {
     const observer = new ResizeObserver(resize);
     observer.observe(host.current);
     setEnded(false);
+    setConnecting(true);
+    let active = true;
     api
       .connect()
       .then(() => {
+        if (!active) return;
+        terminal.options.disableStdin = false;
+        setConnecting(false);
         resize();
         // Startup may finish after the learner has already focused the editor.
         if (
@@ -170,10 +177,12 @@ function TerminalPane({ sessionKey, onChange, onResult }) {
           terminal.focus();
       })
       .catch((error) => {
+        if (!active) return;
         terminal.writeln(error.message);
         setEnded(true);
       });
     return () => {
+      active = false;
       offData();
       offExit();
       input.dispose();
@@ -184,10 +193,11 @@ function TerminalPane({ sessionKey, onChange, onResult }) {
     };
   }, [sessionKey, reconnect]);
   return (
-    <section className="terminal-panel">
+    <section className="terminal-panel" aria-busy={connecting && !ended}>
       <div className="terminal-bar">
         <span>
-          <Terminal size={16} /> 终端 <i /> Bash
+          <Terminal size={16} /> 终端 <i />{" "}
+          {connecting && !ended ? "正在连接…" : "Bash"}
         </span>
         <div>
           <button

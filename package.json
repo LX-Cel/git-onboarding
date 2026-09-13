@@ -15,6 +15,7 @@
     "test": "node --test tests/*.test.cjs",
     "test:runtime": "node scripts/test-runtime.cjs",
     "test:advanced": "node scripts/test-advanced.cjs",
+    "test:maintenance": "node scripts/test-advanced.cjs --maintenance",
     "test:upgrade": "node scripts/test-upgrade.cjs",
     "test:ui": "playwright test",
     "runtime:build": "python scripts/prepare-runtime.py",
