@@ -6,9 +6,13 @@ import re
 import shutil
 import subprocess
 import sys
+from types import SimpleNamespace
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import advanced
 
 ROOT = Path('/home/student/labs')
-COURSE_VERSION = '0.1.1'
+COURSE_VERSION = '0.2.0'
 LESSONS = json.loads(Path(__file__).with_name('lessons.json').read_text())
 IDS = {lesson['id'] for lesson in LESSONS}
 SAFE_ENV = {**os.environ, 'GIT_TERMINAL_PROMPT': '0', 'GIT_CONFIG_NOSYSTEM': '1',
@@ -32,6 +36,9 @@ def commit(repo, message):
     git(repo, 'add', '--all')
     git(repo, 'commit', '-m', message)
     return git(repo, 'rev-parse', 'HEAD')
+
+def advanced_api():
+    return SimpleNamespace(git=git, config=config, commit=commit, text_at=text_at, ancestor=ancestor)
 
 def location(lesson, mode):
     if lesson not in IDS or mode not in ('guided', 'challenge'):
@@ -71,7 +78,9 @@ def initialize(lesson, mode, reset=False):
         (teammate / 'release.txt').write_text(f'release={value}\nowner=team\nstatus=draft\n')
         record['teammate'] = commit(teammate, '队友：更新发布版本')
         git(teammate, 'push', 'origin', 'main')
-    else:
+    elif lesson in advanced.IDS:
+        advanced.setup(advanced_api(), repo, base, lesson, mode, record)
+    elif lesson == 'recovery':
         (repo / 'notes.txt').write_text('这段笔记需要保留。\n')
         (repo / 'draft.txt').write_text('初始草稿\n')
         (repo / 'config.ini').write_text('safe_mode=on\n')
@@ -83,6 +92,8 @@ def initialize(lesson, mode, reset=False):
         (repo / 'draft.txt').write_text(draft + '\n')
         record['draft'] = draft
         git(repo, 'add', 'draft.txt')
+    else:
+        raise ValueError('课程尚未实现')
     (base / 'scenario.json').write_text(json.dumps(record, ensure_ascii=False))
     return snapshot(lesson, mode)
 
@@ -144,6 +155,8 @@ def assess(repo, base, lesson, mode):
     status = git(repo, 'status', '--porcelain')
     clean = not status
     target = spec['target' if mode == 'guided' else 'challengeTarget']
+    if lesson in advanced.IDS:
+        return advanced.assess(advanced_api(), repo, base, lesson, mode, record)
     if lesson == 'basics':
         original = text_at(repo, record['initial'], 'README.md').strip()
         committed = text_at(repo, 'HEAD', 'README.md').strip()
@@ -217,7 +230,12 @@ def snapshot(lesson, mode):
         checks = []
         error = str(exc)[:1000]
     conflicts = git(repo, 'diff', '--name-only', '--diff-filter=U').splitlines()
+    record = json.loads((base / 'scenario.json').read_text())
+    remotes = [{'name': name, 'url': git(repo, 'remote', 'get-url', name, check=False)}
+               for name in git(repo, 'remote').splitlines()]
     return {'path': str(repo), 'branch': git(repo, 'branch', '--show-current'),
+            'operation': advanced.operation(advanced_api(), repo), 'remotes': remotes,
+            'hosting': advanced.hosting_view(advanced_api(), repo, base, record),
             'head': git(repo, 'rev-parse', '--short', 'HEAD', check=False),
             'files': sorted(files), 'changes': changes, 'history': history, 'checks': checks,
             'complete': bool(checks) and all(c['done'] for c in checks), 'conflicts': conflicts,
@@ -237,6 +255,10 @@ def dispatch(request):
     if action == 'init':
         return initialize(lesson, mode, request.get('reset') is True)
     if action == 'state':
+        return snapshot(lesson, mode)
+    if action == 'host':
+        record = json.loads((base / 'scenario.json').read_text())
+        advanced.host_action(advanced_api(), repo, base, record, request)
         return snapshot(lesson, mode)
     if action == 'read':
         return {'content': read_file(repo, request.get('path'))}

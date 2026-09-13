@@ -35,6 +35,7 @@ import lessons from "../runtime/lessons.json";
 import { layoutGraph } from "./graph.js";
 import { version } from "../package.json";
 import CheckResult from "./CheckResult.jsx";
+import HostingPanel from "./HostingPanel.jsx";
 
 const api = window.gitLab;
 const colors = ["#3469e8", "#8764b8", "#b66c16", "#18856b", "#497caa"];
@@ -214,6 +215,17 @@ function TerminalPane({ sessionKey, onChange, onResult }) {
 }
 
 function App() {
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("全部");
+  const categories = ["全部", ...new Set(lessons.map((item) => item.category))];
+  const visibleLessons = lessons.filter(
+    (item) =>
+      (category === "全部" || item.category === category) &&
+      [item.title, item.story, ...item.concepts, ...(item.commands || [])]
+        .join(" ")
+        .toLowerCase()
+        .includes(query.trim().toLowerCase()),
+  );
   const [displayScale, setDisplayScale] = useState(1);
   const [view, setView] = useState("home");
   const [runtime, setRuntime] = useState(null);
@@ -291,7 +303,7 @@ function App() {
     const prev = stateRef.current;
     if (next.conflicts.length)
       setFeedback(
-        `发现合并冲突：${next.conflicts.join("、")}。编辑文件，删除冲突标记并保留正确内容，再暂存和提交。`,
+        `发现 ${next.operation || "合并"} 冲突：${next.conflicts.join("、")}。解决文件并暂存后，${next.operation === "rebase" ? "运行 git rebase --continue" : next.operation === "cherry-pick" ? "运行 git cherry-pick --continue" : "按 git status 提示完成当前操作"}。`,
       );
     else if (lastExit.current !== 0)
       setFeedback(
@@ -423,6 +435,7 @@ function App() {
     else action();
   }
   async function begin(nextLesson = lesson, nextMode = mode, reset = false) {
+    if (!runtime) return;
     if (!runtime?.ready) {
       setSetup(true);
       return;
@@ -574,7 +587,7 @@ function App() {
           </button>
         </nav>
         <div className="nav-label">
-          练习单元 <span>03</span>
+          练习单元 <span>{lessons.length}</span>
         </div>
         <div className="unit-nav">
           {lessons.map((item) => (
@@ -680,7 +693,10 @@ function App() {
               <div className="progress-pill">
                 <GraduationCap size={20} />
                 <span>
-                  <b>{completed} / 3</b> 单元挑战完成
+                  <b>
+                    {completed} / {lessons.length}
+                  </b>{" "}
+                  单元挑战完成
                 </span>
               </div>
             </div>
@@ -812,14 +828,45 @@ function App() {
             <div className="section-heading">
               <div>
                 <h2>
-                  你的学习路径 <span>三个单元，循序渐进</span>
+                  你的学习路径{" "}
+                  <span>{lessons.length} 个单元 · 引导与独立挑战</span>
                 </h2>
               </div>
               <span className="subtle">已有经验？可以直接挑战。</span>
             </div>
+            <div className="catalog-filter">
+              <label>
+                查找练习
+                <input
+                  type="search"
+                  placeholder="搜索命令或场景，如 rebase、PR、恢复"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                />
+              </label>
+              <label>
+                课程分类
+                <select
+                  value={category}
+                  onChange={(event) => setCategory(event.target.value)}
+                >
+                  {categories.map((value) => (
+                    <option key={value}>{value}</option>
+                  ))}
+                </select>
+              </label>
+              <span role="status">{visibleLessons.length} 个结果</span>
+            </div>
+            {!visibleLessons.length && (
+              <p className="empty">
+                没有匹配的练习，试试其他命令或切换到全部分类。
+              </p>
+            )}
             <div className="course-grid">
-              {lessons.map((item, index) => {
-                const Icon = [GitCommitHorizontal, GitBranch, RotateCcw][index];
+              {visibleLessons.map((item, index) => {
+                const Icon = [GitCommitHorizontal, GitBranch, RotateCcw][
+                  index % 3
+                ];
                 const done = progress[`${item.id}-challenge`];
                 return (
                   <article
@@ -847,7 +894,7 @@ function App() {
                     </div>
                     <div className="course-actions">
                       <button
-                        disabled={busy}
+                        disabled={busy || !runtime}
                         onClick={() => begin(item, "guided")}
                       >
                         {progress[`${item.id}-guided`]
@@ -856,7 +903,7 @@ function App() {
                         <ArrowRight size={15} />
                       </button>
                       <button
-                        disabled={busy}
+                        disabled={busy || !runtime}
                         onClick={() => begin(item, "challenge")}
                       >
                         直接挑战
@@ -1052,11 +1099,15 @@ function App() {
                     ["task", "本次任务", BookOpen],
                     ["state", "仓库状态", Layers],
                     ["graph", "提交图", GitBranch],
+                    ...(state?.hosting
+                      ? [["hosting", "托管练习", GitBranch]]
+                      : []),
                   ].map(([value, label, Icon]) => (
                     <button
                       key={value}
                       className={tab === value ? "active" : ""}
                       aria-pressed={tab === value}
+                      disabled={busy}
                       onClick={() => setTab(value)}
                     >
                       <Icon size={15} />
@@ -1217,7 +1268,25 @@ function App() {
                     )}
                   </section>
                 </div>
-                {tab !== "task" && (
+                {tab === "hosting" && (
+                  <HostingPanel
+                    key={`${lesson.id}-${mode}`}
+                    hosting={state?.hosting}
+                    busy={busy || dirty}
+                    onAction={async (value) => {
+                      if (dirty || busy) return;
+                      setBusy(true);
+                      try {
+                        applyState(await api.host(value));
+                      } catch (error) {
+                        setError(error.message);
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  />
+                )}
+                {tab !== "task" && tab !== "hosting" && (
                   <section
                     className="state-panel"
                     aria-label={tab === "state" ? "仓库状态详情" : "提交历史"}
@@ -1244,6 +1313,18 @@ function App() {
                             <b>{state?.branch || "分离 HEAD"}</b>
                             <code>{state?.head}</code>
                           </div>
+                          {state?.operation && (
+                            <p role="status">
+                              进行中：{state.operation}。运行 git status
+                              查看继续或取消操作的方法。
+                            </p>
+                          )}
+                          {state?.remotes?.map((remote) => (
+                            <div className="remote-card" key={remote.name}>
+                              <b>{remote.name}</b>
+                              <code>{remote.url}</code>
+                            </div>
+                          ))}
                           <div className="state-zone">
                             <div>
                               <span className="zone-dot work" />

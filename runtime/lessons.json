@@ -42,6 +42,14 @@
       "先修改并保存 README.md，再把这次修改放进暂存区，最后提交。",
       "会用到 git diff、git add、git commit 和 git status。",
       "在 README.md 中写下自己的内容并保存，然后运行：\ngit add README.md\ngit commit -m \"记录学习成果\"\ngit status\n判题检查的是 README 的实际改动，不是提交说明里是否出现特定句子。"
+    ],
+    "category": "基础操作",
+    "commands": [
+      "status",
+      "diff",
+      "add",
+      "commit",
+      "log"
     ]
   },
   {
@@ -87,6 +95,13 @@
       "先在 feature/welcome 提交自己的修改，再获取并合并队友的更新。冲突意味着 Git 需要你决定最终文件内容。",
       "git fetch origin 后，在功能分支运行 git merge origin/main。解决文件中的冲突标记、保存、add、commit，最后合并到 main 并 push。",
       "git switch -c feature/welcome\n# 编辑 release.txt 为目标内容并保存\ngit add release.txt\ngit commit -m \"准备发布\"\ngit fetch origin\ngit merge origin/main\n# 将冲突文件改成目标内容并保存\ngit add release.txt\ngit commit -m \"解决冲突\"\ngit switch main\ngit merge feature/welcome\ngit push origin main"
+    ],
+    "category": "远程协作",
+    "commands": [
+      "switch",
+      "fetch",
+      "merge",
+      "push"
     ]
   },
   {
@@ -132,6 +147,403 @@
       "这三处错误分别位于工作区、暂存区和提交历史。不要用一个大范围重置处理所有问题。",
       "notes.txt 用 git restore；draft.txt 用 git restore --staged；错误提交用 git revert。先取消暂存，再执行 revert。",
       "git restore -- notes.txt\ngit restore --staged -- draft.txt\ngit revert --no-edit HEAD\ngit status"
+    ],
+    "category": "故障恢复",
+    "commands": [
+      "restore",
+      "revert"
+    ]
+  },
+  {
+    "id": "rebase",
+    "number": "04",
+    "title": "用 rebase 跟上主线",
+    "subtitle": "feature/topic 已提交功能，main 随后加入队友更新",
+    "category": "历史整理",
+    "level": "进阶",
+    "minutes": 25,
+    "concepts": [
+      "rebase",
+      "线性历史"
+    ],
+    "commands": [
+      "rebase",
+      "rebase --continue",
+      "rebase --abort",
+      "log"
+    ],
+    "file": "feature.txt",
+    "story": "feature/topic 已提交功能，main 随后加入队友更新。将功能提交重放到 main 之后，保留双方工作。观察重放前后提交 ID 和父节点的变化。",
+    "challengeStory": "独立完成：feature/topic 已提交功能，main 随后加入队友更新。将功能提交重放到 main 之后，保留双方工作。观察重放前后提交 ID 和父节点的变化。",
+    "target": "feature/topic 基于最新 main，仅有一个功能提交；feature.txt 为 ready；保留 upstream.txt。",
+    "challengeTarget": "feature/topic 基于最新 main，仅有一个功能提交；feature.txt 为 released；保留 upstream.txt。",
+    "steps": [
+      {
+        "title": "观察分叉",
+        "body": "当前位于 feature/topic，比较它与 main 的共同祖先和各自提交。",
+        "command": "git log --oneline --graph --all\ngit diff main...feature/topic"
+      },
+      {
+        "title": "重放功能提交",
+        "body": "rebase 会重建提交。已共享的历史不要随意改写。",
+        "command": "git rebase main"
+      },
+      {
+        "title": "检查新的历史",
+        "body": "确认功能提交的父节点是最新 main，提交图中不应新增 merge 节点。",
+        "command": "git log --oneline --graph --all"
+      },
+      {
+        "title": "验证结果",
+        "body": "目标不仅是干净工作区，还包括队友内容和线性历史。",
+        "command": "git status\ngit diff main..HEAD"
+      }
+    ],
+    "hints": [
+      "先确认当前是 feature/topic，再执行 git rebase main。",
+      "冲突时使用 git status 查看状态；解决并 add 后使用 rebase --continue。放弃本次重放用 rebase --abort。",
+      "feature.txt 应保存为目标值，upstream.txt 应保留 team-update。不要用合并提交代替重放。"
+    ]
+  },
+  {
+    "id": "rebase-conflict",
+    "number": "05",
+    "title": "解决 rebase 冲突",
+    "subtitle": "feature/topic 已提交功能，main 随后加入队友更新",
+    "category": "历史整理",
+    "level": "进阶",
+    "minutes": 25,
+    "concepts": [
+      "rebase",
+      "冲突恢复"
+    ],
+    "commands": [
+      "rebase",
+      "rebase --continue",
+      "rebase --abort",
+      "log"
+    ],
+    "file": "feature.txt",
+    "story": "feature/topic 已提交功能，main 随后加入队友更新。将功能提交重放到 main 之后，保留双方工作。双方修改同一文件，会出现真实冲突。",
+    "challengeStory": "独立完成：feature/topic 已提交功能，main 随后加入队友更新。将功能提交重放到 main 之后，保留双方工作。双方修改同一文件，会出现真实冲突。",
+    "target": "feature/topic 基于最新 main，仅有一个功能提交；feature.txt 为 ready；保留 upstream.txt。",
+    "challengeTarget": "feature/topic 基于最新 main，仅有一个功能提交；feature.txt 为 released；保留 upstream.txt。",
+    "steps": [
+      {
+        "title": "观察分叉",
+        "body": "当前位于 feature/topic，比较它与 main 的共同祖先和各自提交。",
+        "command": "git log --oneline --graph --all\ngit diff main...feature/topic"
+      },
+      {
+        "title": "重放功能提交",
+        "body": "rebase 会重建提交。已共享的历史不要随意改写。",
+        "command": "git rebase main"
+      },
+      {
+        "title": "处理暂停",
+        "body": "若冲突，将 feature.txt 保留为目标内容，保存并暂存，然后继续。想返回操作前状态可以 abort 后重试。",
+        "command": "git status\ngit add feature.txt\nGIT_EDITOR=true git rebase --continue"
+      },
+      {
+        "title": "验证结果",
+        "body": "目标不仅是干净工作区，还包括队友内容和线性历史。",
+        "command": "git status\ngit diff main..HEAD"
+      }
+    ],
+    "hints": [
+      "先确认当前是 feature/topic，再执行 git rebase main。",
+      "冲突时使用 git status 查看状态；解决并 add 后使用 rebase --continue。放弃本次重放用 rebase --abort。",
+      "feature.txt 应保存为目标值，upstream.txt 应保留 team-update。不要用合并提交代替重放。"
+    ]
+  },
+  {
+    "id": "interactive-rebase",
+    "number": "06",
+    "title": "把零散提交整理成一个",
+    "subtitle": "feature/topic 包含功能、测试和文档三个本地提交",
+    "category": "历史整理",
+    "level": "进阶",
+    "minutes": 25,
+    "concepts": [
+      "rebase -i",
+      "squash",
+      "fixup"
+    ],
+    "commands": [
+      "rebase -i",
+      "fixup",
+      "squash"
+    ],
+    "file": "feature.txt",
+    "story": "feature/topic 包含功能、测试和文档三个本地提交。提交评审前，把它们整理为一个完整提交，保留所有文件。",
+    "challengeStory": "独立完成：feature/topic 包含功能、测试和文档三个本地提交。提交评审前，把它们整理为一个完整提交，保留所有文件。",
+    "target": "feature/topic 在 main 之后只有一个提交；保留 feature.txt 的 ready、tests.txt 的 tests=pass 和 docs.txt 的 docs=ready。",
+    "challengeTarget": "feature/topic 在 main 之后只有一个提交；保留 feature.txt 的 released、tests.txt 的 tests=pass 和 docs.txt 的 docs=ready。",
+    "steps": [
+      {
+        "title": "检查提交范围",
+        "body": "这些提交尚未共享，可以整理。main 不应移动。",
+        "command": "git log --oneline main..HEAD"
+      },
+      {
+        "title": "进入交互编辑器",
+        "body": "保留第一行 pick，将后两行 pick 改成 fixup。nano 使用 Ctrl+O、Enter 保存，Ctrl+X 退出。",
+        "command": "git rebase -i main"
+      },
+      {
+        "title": "核验提交与内容",
+        "body": "fixup 合并内容并丢弃后续提交说明；squash 会让你编辑合并说明。",
+        "command": "git log --oneline main..HEAD\ngit diff main..HEAD\ngit status"
+      }
+    ],
+    "hints": [
+      "把三个提交整理成一个，不能只删除提交而丢失文件。",
+      "git rebase -i main 的列表按旧到新排列。保留首行 pick，其余改为 fixup。",
+      "如果操作中出错，可以 git rebase --abort 回到整理前，再重试。"
+    ]
+  },
+  {
+    "id": "cherry-pick",
+    "number": "07",
+    "title": "只回移需要的修复",
+    "subtitle": "feature/source 上有实验功能和修复",
+    "category": "历史整理",
+    "level": "进阶",
+    "minutes": 25,
+    "concepts": [
+      "cherry-pick",
+      "backport",
+      "选择提交"
+    ],
+    "commands": [
+      "cherry-pick",
+      "cherry-pick --continue",
+      "cherry-pick --abort",
+      "show"
+    ],
+    "file": "config.ini",
+    "story": "feature/source 上有实验功能和修复。只将标签 fix-to-pick 指向的修复移植到 release，不能把实验内容带进发布分支。",
+    "challengeStory": "独立完成：feature/source 上有实验功能和修复。只将标签 fix-to-pick 指向的修复移植到 release，不能把实验内容带进发布分支。",
+    "target": "release 新增一个独立修复提交，config.ini 为 safe_mode=strict；不包含 unrelated.txt；源分支保持原样。",
+    "challengeTarget": "release 新增一个独立修复提交，config.ini 为 safe_mode=strict；不包含 unrelated.txt；源分支保持原样。",
+    "steps": [
+      {
+        "title": "定位修复",
+        "body": "查看标签所指提交的实际差异，而不是合并整个 feature/source。",
+        "command": "git show fix-to-pick\ngit log --oneline --all"
+      },
+      {
+        "title": "移植单个提交",
+        "body": "当前在 release，-x 在提交说明中记录原提交来源。",
+        "command": "git cherry-pick -x fix-to-pick"
+      },
+      {
+        "title": "完成操作",
+        "body": "如有冲突，将 config.ini 保存为 safe_mode=strict，暂存后继续；放弃本次操作使用 cherry-pick --abort。",
+        "command": "git show HEAD\ngit status"
+      }
+    ],
+    "hints": [
+      "目标是取出一个补丁，不是合并源分支的全部祖先。",
+      "git cherry-pick -x fix-to-pick；若冲突，编辑 config.ini 后 add，再 cherry-pick --continue。",
+      "检查 release 不含 unrelated.txt，feature/source 仍保留实验和修复。"
+    ]
+  },
+  {
+    "id": "cherry-pick-conflict",
+    "number": "08",
+    "title": "处理挑选提交时的冲突",
+    "subtitle": "feature/source 上有实验功能和修复",
+    "category": "历史整理",
+    "level": "进阶",
+    "minutes": 25,
+    "concepts": [
+      "cherry-pick",
+      "backport",
+      "冲突"
+    ],
+    "commands": [
+      "cherry-pick",
+      "cherry-pick --continue",
+      "cherry-pick --abort",
+      "show"
+    ],
+    "file": "config.ini",
+    "story": "feature/source 上有实验功能和修复。只将标签 fix-to-pick 指向的修复移植到 release，不能把实验内容带进发布分支。release 使用旧配置，挑选时会发生冲突。",
+    "challengeStory": "独立完成：feature/source 上有实验功能和修复。只将标签 fix-to-pick 指向的修复移植到 release，不能把实验内容带进发布分支。release 使用旧配置，挑选时会发生冲突。",
+    "target": "release 新增一个独立修复提交，config.ini 为 safe_mode=strict；不包含 unrelated.txt；源分支保持原样。",
+    "challengeTarget": "release 新增一个独立修复提交，config.ini 为 safe_mode=strict；不包含 unrelated.txt；源分支保持原样。",
+    "steps": [
+      {
+        "title": "定位修复",
+        "body": "查看标签所指提交的实际差异，而不是合并整个 feature/source。",
+        "command": "git show fix-to-pick\ngit log --oneline --all"
+      },
+      {
+        "title": "移植单个提交",
+        "body": "当前在 release，-x 在提交说明中记录原提交来源。",
+        "command": "git cherry-pick -x fix-to-pick"
+      },
+      {
+        "title": "完成操作",
+        "body": "如有冲突，将 config.ini 保存为 safe_mode=strict，暂存后继续；放弃本次操作使用 cherry-pick --abort。",
+        "command": "git status\ngit add config.ini\nGIT_EDITOR=true git cherry-pick --continue"
+      }
+    ],
+    "hints": [
+      "目标是取出一个补丁，不是合并源分支的全部祖先。",
+      "git cherry-pick -x fix-to-pick；若冲突，编辑 config.ini 后 add，再 cherry-pick --continue。",
+      "检查 release 不含 unrelated.txt，feature/source 仍保留实验和修复。"
+    ]
+  },
+  {
+    "id": "stash",
+    "number": "09",
+    "title": "带着未完成工作处理紧急修复",
+    "subtitle": "main 上有未提交的功能和未跟踪的 scratch.txt",
+    "category": "故障恢复",
+    "level": "进阶",
+    "minutes": 25,
+    "concepts": [
+      "stash -u",
+      "pop",
+      "未跟踪文件"
+    ],
+    "commands": [
+      "stash",
+      "stash -u",
+      "stash pop",
+      "switch"
+    ],
+    "file": "feature.txt",
+    "story": "main 上有未提交的功能和未跟踪的 scratch.txt。暂存现场，切换 hotfix 提交严格模式修复，再回到 main 取回原工作。",
+    "challengeStory": "独立完成：main 上有未提交的功能和未跟踪的 scratch.txt。暂存现场，切换 hotfix 提交严格模式修复，再回到 main 取回原工作。",
+    "target": "hotfix 提交 config.ini 的 safe_mode=strict；main 保留 feature.txt 的 ready 和未跟踪草稿；清空 stash，草稿不要提交。",
+    "challengeTarget": "hotfix 提交 config.ini 的 safe_mode=strict；main 保留 feature.txt 的 released 和未跟踪草稿；清空 stash，草稿不要提交。",
+    "steps": [
+      {
+        "title": "检查并保存现场",
+        "body": "普通 stash 不包含未跟踪文件，使用 -u 保留 scratch.txt。",
+        "command": "git status\ngit stash push -u -m \"暂停功能开发\""
+      },
+      {
+        "title": "完成紧急修复",
+        "body": "在 hotfix 将 config.ini 改为 safe_mode=strict，保存并提交。",
+        "command": "git switch hotfix\ngit add config.ini\ngit commit -m \"严格模式修复\""
+      },
+      {
+        "title": "回到原工作",
+        "body": "切回 main 后恢复 stash。pop 成功会移除该条 stash；发生冲突时不会自动删除。",
+        "command": "git switch main\ngit stash pop\ngit status\ngit stash list"
+      }
+    ],
+    "hints": [
+      "不要把半成品一起提交到 hotfix。",
+      "stash push -u 包含未跟踪文件；完成修复后回到 main 再 pop。",
+      "最后 main 应有两份未提交草稿，hotfix 有单独修复，stash 列表为空。"
+    ]
+  },
+  {
+    "id": "reflog",
+    "number": "10",
+    "title": "找回被 reset 丢失的提交",
+    "subtitle": "一次 reset --hard 让 main 回到了功能实现之前",
+    "category": "故障恢复",
+    "level": "进阶",
+    "minutes": 25,
+    "concepts": [
+      "reflog",
+      "误重置",
+      "恢复分支"
+    ],
+    "commands": [
+      "reflog",
+      "reset --hard",
+      "switch -c",
+      "show"
+    ],
+    "file": "feature.txt",
+    "story": "一次 reset --hard 让 main 回到了功能实现之前。通过本地引用日志找到原来的提交，用 recovered 分支保留它，而不移动 main。",
+    "challengeStory": "独立完成：一次 reset --hard 让 main 回到了功能实现之前。通过本地引用日志找到原来的提交，用 recovered 分支保留它，而不移动 main。",
+    "target": "recovered 指向原来丢失的提交；切换到 recovered，feature.txt 为 ready；main 保持初始位置。",
+    "challengeTarget": "recovered 指向原来丢失的提交；切换到 recovered，feature.txt 为 released；main 保持初始位置。",
+    "steps": [
+      {
+        "title": "查找 HEAD 移动记录",
+        "body": "普通 log 只显示可达历史；reflog 还能看到本地引用曾经指向的位置。",
+        "command": "git reflog --oneline"
+      },
+      {
+        "title": "检查并保留提交",
+        "body": "找到“需要找回的工作”对应的 ID，用 git show 确认后创建分支；将下面占位符替换成实际 ID。",
+        "command": "git show <找回的提交ID>\ngit switch -c recovered <找回的提交ID>"
+      },
+      {
+        "title": "验证恢复",
+        "body": "reflog 是本机日志，不会随 push 传输，也不会永久保留。恢复后用分支让提交重新可达。",
+        "command": "git log --oneline --all\ngit status"
+      }
+    ],
+    "hints": [
+      "reset 后文件不在工作区，但提交可能仍能通过 reflog 找回。",
+      "找到“需要找回的工作”对应的 ID，先 git show 检查。",
+      "git switch -c recovered <实际ID>；不要重新写一个内容相同但 ID 不同的提交冒充恢复。"
+    ]
+  },
+  {
+    "id": "fork-pr",
+    "number": "11",
+    "title": "从 Fork 到上游合并 PR",
+    "subtitle": "你要贡献一个上游项目",
+    "category": "远程协作",
+    "level": "进阶",
+    "minutes": 25,
+    "concepts": [
+      "origin / upstream",
+      "Pull Request",
+      "评审与同步"
+    ],
+    "commands": [
+      "remote",
+      "fork",
+      "pull request",
+      "PR",
+      "upstream",
+      "origin",
+      "fetch",
+      "push"
+    ],
+    "file": "feature.txt",
+    "story": "你要贡献一个上游项目。使用右侧“托管练习”Fork 到个人仓库，配置两个远端，基于上游创建功能分支，推送到个人 origin 并向 upstream/main 发起 PR。收到评审意见后继续修改、推送、复审、合并，最后同步两个 main。所有仓库与评审都在本地练习环境。",
+    "challengeStory": "独立完成：你要贡献一个上游项目。使用右侧“托管练习”Fork 到个人仓库，配置两个远端，基于上游创建功能分支，推送到个人 origin 并向 upstream/main 发起 PR。收到评审意见后继续修改、推送、复审、合并，最后同步两个 main。所有仓库与评审都在本地练习环境。",
+    "target": "通过评审的 PR 合并到 upstream/main；feature.txt 为 ready，tests.txt 为 tests=pass；本地 main 与 origin/main 同步上游结果。",
+    "challengeTarget": "通过评审的 PR 合并到 upstream/main；feature.txt 为 released，tests.txt 为 tests=pass；本地 main 与 origin/main 同步上游结果。",
+    "steps": [
+      {
+        "title": "Fork 并配置远端",
+        "body": "先在托管练习点击 Fork，再运行命令。origin 是个人副本，upstream 是上游。",
+        "command": "git remote add origin ../origin.git\ngit remote add upstream ../upstream.git\ngit fetch upstream\ngit merge --ff-only upstream/main\ngit remote -v"
+      },
+      {
+        "title": "推送功能分支",
+        "body": "创建 feature/welcome。将 feature.txt 修改为 ready 并保存提交，先不添加测试。挑战模式的目标值是 released。",
+        "command": "git switch -c feature/welcome\ngit add feature.txt\ngit commit -m \"实现贡献功能\"\ngit push -u origin feature/welcome"
+      },
+      {
+        "title": "创建 PR 并响应评审",
+        "body": "在托管练习填写标题和来源分支，创建 PR 并请求评审。根据意见用终端创建 tests.txt，再向同一分支推送；无需新建 PR。",
+        "command": "printf \"tests=pass\\n\" > tests.txt\ngit add tests.txt\ngit commit -m \"根据评审补充测试\"\ngit push origin feature/welcome"
+      },
+      {
+        "title": "合并并同步",
+        "body": "重新请求评审，通过后点击合并。然后同步本地和个人仓库；功能分支可在确认合并后清理。",
+        "command": "git switch main\ngit fetch upstream\ngit merge --ff-only upstream/main\ngit push origin main\ngit branch -d feature/welcome\ngit push origin --delete feature/welcome"
+      }
+    ],
+    "hints": [
+      "PR 的来源是个人 origin 的功能分支，目标是 upstream 的 main。只在本地 commit 不会出现在 PR 中。",
+      "先整合 upstream/main，再创建功能分支；推送后在托管练习创建 PR。评审关注 feature.txt 和 tests.txt。",
+      "每次推送之后重新请求评审，合并后 fetch upstream、更新本地 main、push origin main。离线评审并不是 Git 命令，真实平台可使用网页或 gh pr。"
     ]
   }
 ]

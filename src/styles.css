@@ -1,3 +1,96 @@
+.sidebar .unit-nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.sidebar .sidebar-bottom {
+  flex-shrink: 0;
+}
+.inspector-tabs:has(button:nth-child(4)) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.inspector-tabs:has(button:nth-child(4)) button {
+  white-space: nowrap;
+}
+
+.catalog-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 16px;
+  margin: 20px 0;
+}
+.catalog-filter label {
+  display: grid;
+  gap: 8px;
+  flex: 1;
+  min-width: 180px;
+}
+.catalog-filter input,
+.catalog-filter select,
+.hosting-panel input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #b9c8de;
+  background: white;
+  border-radius: 6px;
+  color: #172338;
+  font: inherit;
+}
+.catalog-filter span {
+  padding-bottom: 10px;
+}
+.hosting-panel {
+  font-size: 16px;
+  line-height: 1.6;
+}
+.hosting-panel h2 {
+  font-size: 20px;
+}
+.hosting-panel small {
+  font-size: 12px;
+  color: #536780;
+}
+.hosting-panel label {
+  display: grid;
+  gap: 6px;
+  margin: 14px 0;
+}
+.hosting-panel button {
+  padding: 9px 14px;
+  border-radius: 6px;
+  border: 1px solid #b9c8de;
+}
+.hosting-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 16px 0;
+}
+.hosting-panel pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 12px;
+  background: #edf3fb;
+  font-size: 14px;
+}
+.remote-card {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  margin: 12px 0;
+  border: 1px solid #dce5f1;
+  border-radius: 6px;
+}
+.remote-card code {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.hosting-status {
+  font-weight: 600;
+}
+
 :root {
   --text-body: 16px;
   --text-control: 14px;

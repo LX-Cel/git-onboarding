@@ -108,7 +108,7 @@ const { Runtime, run } = require("../desktop/runtime.cjs");
     homeMarker,
   );
   console.log(
-    "PASS v0.1.0 reproducer -> v0.1.1 upgrade: commits, staged work, working tree and progress preserved",
+    `PASS v0.1.0 reproducer -> ${require("../package.json").courseVersion} upgrade: commits, staged work, working tree and progress preserved`,
   );
 })().catch((error) => {
   console.error(error);

@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld("gitLab", {
   initialize: () => invoke("runtime:initialize"),
   begin: (value) => invoke("lesson:begin", value),
   state: () => invoke("lesson:state"),
+  host: (value) => invoke("lesson:host", value),
   read: (path) => invoke("file:read", path),
   write: (value) => invoke("file:write", value),
   progress: () => invoke("progress:read"),

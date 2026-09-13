@@ -8,7 +8,9 @@ const { Runtime, run } = require("../desktop/runtime.cjs");
     await fs.readFile(path.resolve("resources/runtime-manifest.json"), "utf8"),
   );
   const runtime = new Runtime(
-    path.resolve(".local/test-data", manifest.sha256.slice(0, 12)),
+    process.env.GIT_ONBOARDING_TEST_DATA_DIR
+      ? path.resolve(process.env.GIT_ONBOARDING_TEST_DATA_DIR)
+      : path.resolve(".local/test-data", manifest.sha256.slice(0, 12)),
     path.resolve("resources"),
   );
   const status = await runtime.initialize(console.log);

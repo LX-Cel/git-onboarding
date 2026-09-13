@@ -17,7 +17,7 @@ test(
     runtime.owner = { distro: "test-owned-distro" };
     runtime.loadOwner = async () => runtime.owner;
     runtime.registered = async () => [runtime.owner.distro];
-    let courseVersion = "0.1.1";
+    let courseVersion = require("../package.json").courseVersion;
     runtime.call = async () => ({
       uid: 1000,
       courseVersion,
@@ -27,7 +27,7 @@ test(
       initVisible: false,
     });
     assert.equal((await runtime.status()).ready, true);
-    courseVersion = "0.1.0";
+    courseVersion = "0.1.1";
     const outdated = await runtime.status();
     assert.equal(outdated.ready, false);
     assert.equal(outdated.updateRequired, true);

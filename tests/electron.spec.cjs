@@ -2,6 +2,117 @@ const { test, expect, _electron: electron } = require("@playwright/test");
 const path = require("node:path");
 const fs = require("node:fs/promises");
 
+test("advanced catalog and offline fork PR lifecycle through desktop", async () => {
+  const env = {
+    ...process.env,
+    GIT_ONBOARDING_DATA_DIR: path.resolve(
+      process.env.GIT_ONBOARDING_TEST_DATA_DIR || ".local/ui-after-wsl-restart",
+    ),
+  };
+  delete env.ELECTRON_RUN_AS_NODE;
+  const app = await electron.launch({
+    args: ["."],
+    cwd: path.resolve("."),
+    env,
+  });
+  try {
+    const page = await app.firstWindow();
+    const errors = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await expect(page.locator(".local-status")).toContainText(
+      "本地练习环境已就绪",
+    );
+    await page.getByRole("combobox", { name: "显示比例" }).selectOption("1");
+    await page.getByRole("searchbox", { name: "查找练习" }).fill("rebase");
+    await expect(page.locator(".course-card")).toHaveCount(3);
+    await page.getByRole("searchbox", { name: "查找练习" }).fill("无匹配场景");
+    await expect(
+      page.getByText("没有匹配的练习", { exact: false }),
+    ).toBeVisible();
+    await page.getByRole("searchbox", { name: "查找练习" }).fill("upstream");
+    await expect(page.locator(".course-card")).toHaveCount(1);
+    await expect(page.locator(".course-card button").first()).toBeEnabled();
+    await page.locator(".course-card button").first().click();
+    await expect(
+      page.getByRole("textbox", { name: "文件内容" }),
+    ).toBeEditable();
+    await page.getByRole("button", { name: "重新开始", exact: true }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "重新开始", exact: true })
+      .click();
+    await page.getByRole("button", { name: "托管练习", exact: true }).click();
+    await page.getByRole("button", { name: "Fork 上游仓库" }).click();
+    await expect(page.getByRole("textbox", { name: "PR 标题" })).toBeVisible();
+    await page.evaluate(() => {
+      window.promptResults = [];
+      let buffer = "";
+      window.gitLab.onData((data) => {
+        buffer += new TextDecoder().decode(
+          Uint8Array.from(atob(data), (c) => c.charCodeAt(0)),
+        );
+        const pattern = /\x1b\]133;D;(\d+)\x07/g;
+        let match,
+          consumed = 0;
+        while ((match = pattern.exec(buffer))) {
+          window.promptResults.push(Number(match[1]));
+          consumed = pattern.lastIndex;
+        }
+        buffer = buffer.slice(consumed).slice(-512);
+      });
+    });
+    async function command(value) {
+      await page.evaluate((command) => {
+        window.promptResults = [];
+        window.gitLab.input(command + "\r");
+      }, value);
+      await expect
+        .poll(() => page.evaluate(() => window.promptResults.length))
+        .toBeGreaterThan(0);
+      expect(await page.evaluate(() => window.promptResults.at(-1))).toBe(0);
+    }
+    await command(
+      "git remote add origin ../origin.git && git remote add upstream ../upstream.git && git fetch upstream && git merge --ff-only upstream/main && git switch -c feature/welcome",
+    );
+    await command(
+      'printf "ready\\n" > feature.txt && git add feature.txt && git commit -m "contribution" && git push -u origin feature/welcome',
+    );
+    await page
+      .getByRole("textbox", { name: "PR 标题" })
+      .fill("贡献功能并补充测试");
+    await page.getByRole("button", { name: "创建 PR", exact: true }).click();
+    await page.getByRole("button", { name: "请求评审" }).click();
+    await expect(page.locator(".hosting-status")).toContainText("请求修改");
+    await expect(
+      page.getByRole("button", { name: "合并 PR", exact: true }),
+    ).toBeDisabled();
+    await command(
+      'printf "tests=pass\\n" > tests.txt && git add tests.txt && git commit -m "review update" && git push origin feature/welcome',
+    );
+    await page.getByRole("button", { name: "请求评审" }).click();
+    await expect(page.locator(".hosting-status")).toContainText("评审通过");
+    await page.getByRole("button", { name: "合并 PR", exact: true }).click();
+    await expect(page.locator(".hosting-status")).toContainText("已合并");
+    await command(
+      "git switch main && git fetch upstream && git merge --ff-only upstream/main && git push origin main",
+    );
+    await page
+      .getByRole("button", { name: "检查练习结果", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toContainText("本关已完成");
+    await page.getByRole("button", { name: "关闭检查结果" }).click();
+    await expect(page.getByRole("textbox", { name: "文件内容" })).toHaveValue(
+      "ready\n",
+    );
+    await page.screenshot({ path: "test-results/fork-pr.png", fullPage: true });
+    await page.getByRole("button", { name: "仓库状态", exact: true }).click();
+    await expect(page.locator(".state-content")).toContainText("upstream");
+    expect(errors).toEqual([]);
+  } finally {
+    await app.close();
+  }
+});
+
 test("Windows desktop: initialize, learn, edit, commit, reset confirmation and resume", async () => {
   const manifest = JSON.parse(
     await fs.readFile(path.resolve("resources/runtime-manifest.json"), "utf8"),

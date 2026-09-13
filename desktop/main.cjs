@@ -185,6 +185,23 @@ if (locked)
       if (!selected) throw new Error("请先选择练习");
       return record(await runtime.call({ ...selected, action: "state" }));
     });
+    handle("lesson:host", async (value) => {
+      if (
+        !selected ||
+        !value ||
+        !["fork", "create", "review", "merge"].includes(value.operation)
+      )
+        throw new Error("托管操作无效");
+      return record(
+        await runtime.call({
+          ...selected,
+          action: "host",
+          operation: value.operation,
+          branch: value.branch,
+          title: value.title,
+        }),
+      );
+    });
     handle("file:read", async (name) => {
       if (!selected || typeof name !== "string")
         throw new Error("文件请求无效");

@@ -1,0 +1,48 @@
+# 系统 Git 练习覆盖计划
+
+目标：从三关入门演示扩展为可以练习实际开发、协作、维护和故障恢复的软件。保留 Windows、一次初始化、完整终端、私有仓库和 Fluent 2 界面。不能把“Git 命令可以在终端运行”当作已覆盖：每个场景都需要构造真实初始状态、明确任务、分层提示、状态判题和通过/失败验证。
+
+## 验收规则
+
+- 新手有引导，有经验者可以搜索命令或问题后直接挑战。
+- 判题读取提交内容、父子关系、引用、索引、远端和流程状态，不通过命令字符串或提交说明猜测成功。
+- 覆盖正常路径、冲突/失败、中断后恢复、重试、重置与进度保留。
+- fork/PR 使用两个真实 bare 仓库和离线托管流程；显示来源分支、目标分支、差异、评审与合并状态，不冒充真实 GitHub。
+- 升级保留旧课程仓库、提交、草稿和进度；最终提供验证过的 Windows 安装包与 GitHub Release。
+
+## 覆盖矩阵
+
+下表是完整工作范围；状态随证据更新，未验证的代码不算完成。
+
+| 领域         | 必须覆盖的场景                                                                                                                                                 | 当前证据                              |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| 基本工作流   | init/clone、status/diff/log/show、add/commit、文件删除与重命名、部分暂存、amend                                                                                | 旧版仅基础提交已验证；其余待补        |
+| 分支与整合   | switch/checkout、tracking、fast-forward/no-ff/squash、merge 冲突/abort、rebase 冲突/continue/abort、交互整理/fixup/autosquash、cherry-pick 冲突/continue/abort | 旧版仅普通分支合并冲突已验证          |
+| 远程协作     | fetch/pull/push、拒绝推送、分叉历史、origin/upstream、fork、PR 创建/评审/修改/合并/同步清理、force-with-lease、远端重命名/删除/prune                           | 旧版仅单远端 fetch/merge/push 已验证  |
+| 保存与恢复   | restore、revert、reset soft/mixed/hard 对比、stash 未跟踪文件/冲突、reflog/分离 HEAD/误删分支、合并撤销、进行中操作恢复                                        | 旧版仅 restore/取消暂存/revert 已验证 |
+| 定位与发布   | log 搜索、blame、bisect/run、注释标签/推送标签、hotfix/backport、patch/format-patch/am、bundle                                                                 | 待实现                                |
+| 仓库维护     | .gitignore/已跟踪文件、attributes/换行符、worktree、submodule、sparse checkout/shallow clone、对象与引用/fsck/gc                                               | 待实现                                |
+| 托管与大文件 | 分支保护/检查失败/合并策略、认证/权限失败诊断、Git LFS、签名及验证、历史敏感内容清理                                                                           | 待实现，凭据仅使用练习材料            |
+| 综合任务     | 新人入职、fork 贡献、发布与回滚、多人并发、遗留仓库故障、自由实验区                                                                                            | 待实现                                |
+
+“所有场景”作为持续完善的覆盖目标，不能声称有限课程穷尽所有 Git 扩展与平台差异。平台差异要在课程中说明，核心 Git 与 GitHub 工作流分别验收。
+
+## 2026-09-13 第一批实现与验证
+
+已实现并验证：rebase 正常重放、rebase 冲突/continue/abort、交互 rebase 合并提交、cherry-pick 单提交回移及冲突/continue/abort、stash 包含未跟踪草稿与恢复、reflog 找回原提交、origin/upstream 双远端 Fork/PR 贡献。两种模式均可重置和续练，和原来三关合计 11 个课程、22 个场景。
+
+- `npm run test:advanced`：16 个新增场景、114 项真实 Git 断言。包括错误 merge 不能通过 rebase 判题、空提交不能通过修复判题、本地提交不能代替 push、请求修改不能合并、评审后 push 必须重新评审、PR 合并后必须同步两个 main。
+- `npm run test:runtime`：旧 6 个场景、63 项断言与隔离检查、真实 PTY/Bash/resize/Ctrl+C 通过。
+- `npm run test:ui`：2 个真实 Electron 测试通过。新增测试从课程搜索开始，实际操作 Fork、终端配置远端/提交/推送、PR 创建、请求修改、补充测试、评审、合并和同步，最后手动检查完成。
+- `npm run test:upgrade`：从旧 0.1.0 镜像更新至 0.2.0，提交历史、暂存内容、工作区与进度保留。
+- `npm test`：6 项通过；生产构建通过，仍有原有的大 JS 包提示。
+
+这批验证不等于完整矩阵通过。上表未覆盖的路径（例如 rebase --onto、autosquash、stash 冲突、force-with-lease、PR 合并冲突、不同平台认证等）仍需继续实现和验收。尚未构建或发布 0.2.0 安装包。
+
+## 一手参考
+
+- [Git 命令参考](https://git-scm.com/docs)
+- [Git 用户手册](https://git-scm.com/docs/user-manual)
+- [GitHub fork 工作流](https://docs.github.com/en/pull-requests/how-tos/work-with-forks)
+
+2026-09-13 核查上述官方资料，用于建立覆盖范围；具体场景以隔离环境中的实际 Git 行为验收。
