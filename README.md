@@ -2,11 +2,11 @@
 
 一个面向 Git 新手的中文桌面练习应用。从第一次提交，到分支协作、冲突处理和误操作恢复，在真实 Git 仓库里练习。
 
-**0.2.0-preview.1：系统课程扩展预览版。** 包含 33 个课程、66 个引导/挑战场景。涵盖基础提交与部分暂存、历史整理与恢复、双远端 Fork/PR、推送异常与租约保护、worktree、bisect、子模块、稀疏检出、浅克隆、标签、补丁与离线交付等。课程可以按分类和命令搜索。完整覆盖工作仍在进行，见 [覆盖矩阵与验收记录](docs/scenario-coverage.md)；此预览版提供已完成的课程，不代表全部规划已经完成。
+**0.2.0-preview.2：系统课程扩展预览版。** 包含 53 个课程、106 个引导/挑战场景。涵盖基础提交与部分暂存、历史整理与恢复、双远端 Fork/PR、推送异常与租约保护、worktree、bisect、子模块、稀疏检出、浅克隆、标签、补丁与离线交付等。课程可以按分类和命令搜索。完整覆盖工作仍在进行，见 [覆盖矩阵与验收记录](docs/scenario-coverage.md)；此预览版提供已完成的课程，不代表全部规划已经完成。
 
-当前发布为 **Windows x64 私有预览版 0.2.0-preview.1**，延续选定的 J 版 Fluent 2 视觉方向。在 [GitHub Release 下载](https://github.com/LX-Cel/git-onboarding/releases/tag/v0.2.0-preview.1)安装包 `Git-Onboarding-0.2.0-preview.1-Setup.exe` 和 SHA256 校验文件；本地构建产物位于 `release/`。项目尚未授予开源许可证；成熟后再决定公开与许可证。
+当前发布为 **Windows x64 私有预览版 0.2.0-preview.2**，延续选定的 J 版 Fluent 2 视觉方向。在 [GitHub Release 下载](https://github.com/LX-Cel/git-onboarding/releases/tag/v0.2.0-preview.2)安装包 `Git-Onboarding-0.2.0-preview.2-Setup.exe` 和 SHA256 校验文件；本地构建产物位于 `release/`。项目尚未授予开源许可证；成熟后再决定公开与许可证。
 
-开发分支现有 53 门课程、106 个场景，比 preview.1 新增 PR 合并策略与保护检查，初始化/克隆、pull 策略、merge/am 恢复、分离 HEAD/误删分支、blame/log 定位、跨平台换行、fsck/gc 恢复，以及 SSH 签名、LFS 提交与历史迁移、假凭据历史清理。发布记录会注明每个安装包实际包含的课程。
+本预览版现有 53 门课程、106 个场景，比 preview.1 新增 PR 合并策略与保护检查，初始化/克隆、pull 策略、merge/am 恢复、分离 HEAD/误删分支、blame/log 定位、跨平台换行、fsck/gc 恢复，以及 SSH 签名、LFS 提交与历史迁移、假凭据历史清理。发布记录会注明每个安装包实际包含的课程。
 
 ![学习路径](docs/screenshots/home.png)
 
@@ -14,7 +14,7 @@
 
 ## 使用
 
-1. 安装 `Git-Onboarding-0.2.0-preview.1-Setup.exe`，打开 Git Onboarding。已有版本先关闭应用，安装到原目录；无需先卸载。打开后按提示「保留练习并更新」，保留现有练习仓库与学习进度。
+1. 安装 `Git-Onboarding-0.2.0-preview.2-Setup.exe`，打开 Git Onboarding。已有版本先关闭应用，安装到原目录；无需先卸载。打开后按提示「保留练习并更新」，保留现有练习仓库与学习进度。
 2. 点击「准备练习环境」。应用验证并导入内置的专用 Linux 镜像；不要求预装 Git 或 Docker。
 3. 若尚未安装 WSL，应用请求管理员授权安装系统组件，提示重启后继续。需要支持 WSL 2 的 Windows x64 和已启用的硬件虚拟化。
 4. 选择引导练习或直接挑战。文件保存、Git 暂存与 Git 提交是三个不同操作。
