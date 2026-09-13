@@ -13,7 +13,8 @@ manifest = json.loads((res / 'runtime-manifest.json').read_text(encoding='utf-8'
 image = res / 'runtime.tar'
 with image.open('rb') as stream:
     assert hashlib.file_digest(stream, 'sha256').hexdigest() == manifest['sha256'], 'Base image hash mismatch'
-files = {name: (ROOT / 'runtime' / name).read_bytes().replace(b'\r\n', b'\n') for name in ['lessons.json', 'advanced.py', 'maintenance.py', 'teamwork.py', 'foundations.py', 'extensions.py', 'access.py', 'hosting.py', 'relay.py', 'engine.py']}
+files = {name: (ROOT / 'runtime' / name).read_bytes().replace(b'\r\n', b'\n') for name in ['lessons.json', 'advanced.py', 'maintenance.py', 'teamwork.py', 'foundations.py', 'extensions.py', 'access.py', 'capstone.py', 'hosting.py', 'relay.py', 'engine.py']}
+compile(files['capstone.py'], 'capstone.py', 'exec')
 compile(files['access.py'], 'access.py', 'exec')
 compile(files['extensions.py'], 'extensions.py', 'exec')
 compile(files['foundations.py'], 'foundations.py', 'exec')

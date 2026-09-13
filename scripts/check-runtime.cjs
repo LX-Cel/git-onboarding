@@ -41,6 +41,7 @@ for (const name of [
   "foundations.py",
   "extensions.py",
   "access.py",
+  "capstone.py",
   "hosting.py",
   "relay.py",
   "lessons.json",

@@ -23,6 +23,7 @@ const { Runtime, run } = require("../desktop/runtime.cjs");
     "foundations.py",
     "extensions.py",
     "access.py",
+    "capstone.py",
     "hosting.py",
     "relay.py",
     "lessons.json",
@@ -30,19 +31,21 @@ const { Runtime, run } = require("../desktop/runtime.cjs");
     files[name] = (await fs.readFile(path.resolve("runtime", name))).toString(
       "base64",
     );
-  const suite = process.argv.includes("--access")
-    ? "access_checks.py"
-    : process.argv.includes("--extensions")
-      ? "extensions_checks.py"
-      : process.argv.includes("--foundations")
-        ? "foundations_checks.py"
-        : process.argv.includes("--hosting")
-          ? "hosting_checks.py"
-          : process.argv.includes("--teamwork")
-            ? "teamwork_checks.py"
-            : process.argv.includes("--maintenance")
-              ? "maintenance_checks.py"
-              : "advanced_checks.py";
+  const suite = process.argv.includes("--capstone")
+    ? "capstone_checks.py"
+    : process.argv.includes("--access")
+      ? "access_checks.py"
+      : process.argv.includes("--extensions")
+        ? "extensions_checks.py"
+        : process.argv.includes("--foundations")
+          ? "foundations_checks.py"
+          : process.argv.includes("--hosting")
+            ? "hosting_checks.py"
+            : process.argv.includes("--teamwork")
+              ? "teamwork_checks.py"
+              : process.argv.includes("--maintenance")
+                ? "maintenance_checks.py"
+                : "advanced_checks.py";
   const test = (await fs.readFile(path.join("tests", suite))).toString(
     "base64",
   );

@@ -30,7 +30,8 @@
     "test:foundations": "node scripts/test-advanced.cjs --foundations",
     "test:extensions": "node scripts/test-advanced.cjs --extensions",
     "test:access": "node scripts/test-advanced.cjs --access",
-    "test:access-lifecycle": "node scripts/test-access-lifecycle.cjs"
+    "test:access-lifecycle": "node scripts/test-access-lifecycle.cjs",
+    "test:capstone": "node scripts/test-advanced.cjs --capstone"
   },
   "dependencies": {
     "@xterm/addon-fit": "0.11.0",

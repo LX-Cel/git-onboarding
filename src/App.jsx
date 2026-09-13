@@ -34,6 +34,7 @@ import {
 import lessons from "../runtime/lessons.json";
 import { layoutGraph } from "./graph.js";
 import { version } from "../package.json";
+const assessedLessons = lessons.filter((item) => !item.freeplay);
 import CheckResult from "./CheckResult.jsx";
 import HostingPanel from "./HostingPanel.jsx";
 
@@ -355,23 +356,28 @@ function App() {
     if (next.complete) api?.progress().then(setProgress);
   }, []);
 
-  const syncEditor = useCallback(async (next, epoch) => {
-    const previousName = fileRef.current;
-    if (dirtyRef.current || epoch !== selectionEpoch.current) return;
-    const name = next.files.includes(previousName)
-      ? previousName
-      : next.files[0] || "";
-    const result = name ? await api.read(name) : { content: "" };
-    if (
-      epoch === selectionEpoch.current &&
-      !dirtyRef.current &&
-      fileRef.current === previousName
-    ) {
-      setFile(name);
-      setContent(result.content);
-      setSaved(result.content);
-    }
-  }, []);
+  const syncEditor = useCallback(
+    async (next, epoch) => {
+      const previousName = fileRef.current;
+      if (dirtyRef.current || epoch !== selectionEpoch.current) return;
+      const name = next.files.includes(previousName)
+        ? previousName
+        : next.files.includes(lesson.file)
+          ? lesson.file
+          : next.files[0] || "";
+      const result = name ? await api.read(name) : { content: "" };
+      if (
+        epoch === selectionEpoch.current &&
+        !dirtyRef.current &&
+        fileRef.current === previousName
+      ) {
+        setFile(name);
+        setContent(result.content);
+        setSaved(result.content);
+      }
+    },
+    [lesson.file],
+  );
 
   const refresh = useCallback(async () => {
     if (
@@ -414,7 +420,7 @@ function App() {
         epoch !== selectionEpoch.current
       )
         return;
-      if (snapshot.error || !snapshot.checks.length)
+      if (snapshot.error || (!snapshot.freeplay && !snapshot.checks.length))
         throw new Error(snapshot.error || "未能读取完成条件，请重试。");
       applyState(snapshot);
       await syncEditor(snapshot, epoch);
@@ -561,8 +567,8 @@ function App() {
       api?.disconnect();
       setView("home");
     });
-  const completed = Object.keys(progress).filter((k) =>
-    k.endsWith("-challenge"),
+  const completed = assessedLessons.filter(
+    (item) => progress[`${item.id}-challenge`],
   ).length;
   const target = lesson[mode === "guided" ? "target" : "challengeTarget"];
   const working = state?.changes.filter((c) => c.worktree !== " ") || [];
@@ -723,7 +729,7 @@ function App() {
                 <GraduationCap size={20} />
                 <span>
                   <b>
-                    {completed} / {lessons.length}
+                    {completed} / {assessedLessons.length}
                   </b>{" "}
                   单元挑战完成
                 </span>
@@ -750,8 +756,9 @@ function App() {
                   disabled={busy || !runtime}
                   onClick={() =>
                     begin(
-                      lessons.find((l) => !progress[`${l.id}-challenge`]) ||
-                        lessons[0],
+                      assessedLessons.find(
+                        (l) => !progress[`${l.id}-challenge`],
+                      ) || lessons[0],
                       "guided",
                     )
                   }
@@ -912,7 +919,7 @@ function App() {
                       {item.level}
                       <span>·</span>
                       <Clock3 size={12} />
-                      {item.minutes} 分钟
+                      {item.freeplay ? "不限时" : `${item.minutes} 分钟`}
                     </div>
                     <h3>{item.title}</h3>
                     <p>{item.subtitle}</p>
@@ -926,16 +933,18 @@ function App() {
                         disabled={busy || !runtime}
                         onClick={() => begin(item, "guided")}
                       >
-                        {progress[`${item.id}-guided`]
-                          ? "再次带练"
-                          : "开始带练"}
+                        {item.freeplay
+                          ? "打开引导实验"
+                          : progress[`${item.id}-guided`]
+                            ? "再次带练"
+                            : "开始带练"}
                         <ArrowRight size={15} />
                       </button>
                       <button
                         disabled={busy || !runtime}
                         onClick={() => begin(item, "challenge")}
                       >
-                        直接挑战
+                        {item.freeplay ? "打开自由实验" : "直接挑战"}
                         <ChevronRight size={14} />
                       </button>
                     </div>
@@ -1245,7 +1254,9 @@ function App() {
                     ))}
                   </div>
                   <section className="checks" aria-label="当前检查结果">
-                    <h2 className="inspector-heading">检查结果</h2>
+                    <h2 className="inspector-heading">
+                      {state?.freeplay ? "实验状态" : "检查结果"}
+                    </h2>
                     <div
                       className={`result-summary ${state?.complete ? "passed" : ""}`}
                     >
@@ -1256,11 +1267,16 @@ function App() {
                       )}
                       <div>
                         <strong>
-                          {state?.complete ? "本关已完成" : "等待完成练习"}
+                          {state?.freeplay
+                            ? "自由实验中"
+                            : state?.complete
+                              ? "本关已完成"
+                              : "等待完成练习"}
                         </strong>
                         <small>
-                          {state?.checks.filter((c) => c.done).length || 0} /{" "}
-                          {state?.checks.length || 0} 条件通过
+                          {state?.freeplay
+                            ? "没有固定通关目标，改动会保留"
+                            : `${state?.checks.filter((c) => c.done).length || 0} / ${state?.checks.length || 0} 条件通过`}
                         </small>
                       </div>
                     </div>
@@ -1451,7 +1467,7 @@ function App() {
                       ) : (
                         <CheckCircle2 size={16} />
                       )}
-                      检查练习结果
+                      {state?.freeplay ? "查看实验状态" : "检查练习结果"}
                     </button>
                     {state?.complete && !dirty && (
                       <button

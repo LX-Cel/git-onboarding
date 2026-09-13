@@ -16,6 +16,7 @@ import teamwork
 import foundations
 import extensions
 import access
+import capstone
 
 ROOT = Path('/home/student/labs')
 COURSE_VERSION = '0.2.0'
@@ -97,6 +98,8 @@ def initialize(lesson, mode, reset=False):
         extensions.setup(advanced_api(), repo, base, lesson, mode, record)
     elif lesson in access.IDS:
         access.setup(advanced_api(), repo, base, lesson, mode, record)
+    elif lesson in capstone.IDS:
+        capstone.setup(advanced_api(), repo, base, lesson, mode, record)
     elif lesson == 'recovery':
         (repo / 'notes.txt').write_text('这段笔记需要保留。\n')
         (repo / 'draft.txt').write_text('初始草稿\n')
@@ -175,6 +178,8 @@ def assess(repo, base, lesson, mode):
         return extensions.assess(advanced_api(), repo, base, lesson, mode, record)
     if lesson in access.IDS:
         return access.assess(advanced_api(), repo, base, lesson, mode, record)
+    if lesson in capstone.IDS:
+        return capstone.assess(advanced_api(), repo, base, lesson, mode, record)
     status = git(repo, 'status', '--porcelain')
     clean = not status
     target = spec['target' if mode == 'guided' else 'challengeTarget']
@@ -223,7 +228,7 @@ def snapshot(lesson, mode):
     if not repo.is_dir() or repo.is_symlink():
         raise ValueError('仓库不存在或路径被修改，请重新开始本练习')
     has_repo = foundations.is_repository(advanced_api(), repo)
-    if not has_repo and lesson not in foundations.UNINITIALIZED:
+    if not has_repo and lesson not in foundations.UNINITIALIZED | capstone.UNINITIALIZED:
         raise ValueError('当前目录不是有效的 Git 仓库，请修复或重新开始本练习')
     files = []
     for folder, dirs, names in os.walk(repo, followlinks=False):
@@ -263,7 +268,7 @@ def snapshot(lesson, mode):
     record = json.loads((base / 'scenario.json').read_text())
     remotes = [{'name': name, 'url': git(repo, 'remote', 'get-url', name, check=False)}
                for name in git(repo, 'remote', check=has_repo).splitlines()]
-    return {'path': str(repo), 'repositoryReady': has_repo, 'branch': git(repo, 'branch', '--show-current', check=has_repo),
+    return {'path': str(repo), 'repositoryReady': has_repo, 'freeplay': lesson == 'freeplay', 'branch': git(repo, 'branch', '--show-current', check=has_repo),
             'operation': advanced.operation(advanced_api(), repo), 'remotes': remotes,
             'hosting': advanced.hosting_view(advanced_api(), repo, base, record),
             'head': git(repo, 'rev-parse', '--short', 'HEAD', check=False),
@@ -285,7 +290,7 @@ def dispatch(request):
             except (OSError, subprocess.SubprocessError):
                 return None
         hashes = {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
-                  for name in ['engine.py', 'advanced.py', 'maintenance.py', 'teamwork.py', 'foundations.py', 'extensions.py', 'access.py', 'hosting.py', 'relay.py', 'lessons.json']}
+                  for name in ['engine.py', 'advanced.py', 'maintenance.py', 'teamwork.py', 'foundations.py', 'extensions.py', 'access.py', 'capstone.py', 'hosting.py', 'relay.py', 'lessons.json']}
         return {'courseVersion': COURSE_VERSION, 'courseHashes': hashes,
                 'toolsHash': json.loads(marker.read_text()).get('sha256') if marker.is_file() else None,
                 'tools': {'lfs': tool_version(['git', 'lfs', 'version']), 'filterRepo': tool_version(['git', 'filter-repo', '--version']), 'sshKeygen': bool(shutil.which('ssh-keygen'))},

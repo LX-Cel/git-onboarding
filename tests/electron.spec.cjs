@@ -4,7 +4,7 @@ const fs = require("node:fs/promises");
 
 async function terminalCommand(page, command) {
   await expect(
-    page.getByRole("button", { name: "检查练习结果", exact: true }),
+    page.getByRole("button", { name: /^(检查练习结果|查看实验状态)$/ }),
   ).toBeEnabled();
   await expect(page.locator(".terminal-panel")).toHaveAttribute(
     "aria-busy",
@@ -35,6 +35,187 @@ async function terminalCommand(page, command) {
     command,
   );
   expect(status.code, status.output).toBe(0);
+}
+
+test("Interactive rebase through the real nano terminal editor", async () => {
+  const env = {
+    ...process.env,
+    GIT_ONBOARDING_DATA_DIR: path.resolve(
+      process.env.GIT_ONBOARDING_TEST_DATA_DIR || ".local/ui-after-wsl-restart",
+    ),
+  };
+  delete env.ELECTRON_RUN_AS_NODE;
+  const app = await electron.launch({
+    executablePath: process.env.GIT_ONBOARDING_EXECUTABLE,
+    args: process.env.GIT_ONBOARDING_EXECUTABLE ? [] : ["."],
+    cwd: path.resolve("."),
+    env,
+  });
+  try {
+    const page = await app.firstWindow();
+    await expect(page.locator(".local-status")).toContainText(
+      "本地练习环境已就绪",
+    );
+    await page
+      .getByRole("searchbox", { name: "查找练习" })
+      .fill("把零散提交整理成一个");
+    await page.locator(".course-card").getByRole("button").first().click();
+    await expect(
+      page.getByRole("button", { name: "检查练习结果", exact: true }),
+    ).toBeEnabled();
+    await page.getByRole("button", { name: "重新开始", exact: true }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "重新开始", exact: true })
+      .click();
+    await terminalCommand(page, "git status --short");
+    await page.evaluate(() => {
+      window.nanoOutput = "";
+      window.nanoOff = window.gitLab.onData((data) => {
+        window.nanoOutput += new TextDecoder().decode(
+          Uint8Array.from(atob(data), (c) => c.charCodeAt(0)),
+        );
+      });
+      window.gitLab.input("GIT_SEQUENCE_EDITOR=nano git rebase -i HEAD~3\r");
+    });
+    await expect
+      .poll(() => page.evaluate(() => window.nanoOutput))
+      .toMatch(/Write Out/);
+    await page.locator(".xterm-helper-textarea").focus();
+    await page.keyboard.press("Control+Home");
+    for (let line = 0; line < 2; line++) {
+      await page.keyboard.press("ArrowDown");
+      await page.keyboard.press("Home");
+      for (let char = 0; char < 5; char++) await page.keyboard.press("Delete");
+      await page.keyboard.type("fixup ");
+    }
+    await page.keyboard.press("Control+o");
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Control+x");
+    await expect
+      .poll(() =>
+        page.evaluate(() => /\x1b\]133;D;0\x07/.test(window.nanoOutput)),
+      )
+      .toBe(true);
+    await page.evaluate(() => window.nanoOff());
+    await page
+      .getByRole("button", { name: "检查练习结果", exact: true })
+      .click();
+    await expect(page.getByRole("dialog")).toContainText("本关已完成");
+  } finally {
+    await app.close();
+  }
+});
+
+for (const [title, command] of [
+  [
+    "综合：接手团队的第一项任务",
+    "git clone ../origin.git . && git config user.name 'Git Learner' && git config user.email learner@example.invalid && git switch --track origin/feature/welcome && printf '个人入职笔记\\n' > notes.local && printf 'notes.local\\n' > .gitignore && cat ../target-value.txt > feature.txt && git add feature.txt .gitignore && git commit -m handover && git push -u origin feature/welcome",
+  ],
+  [
+    "综合：恢复错误发布并交付补丁",
+    "git stash push -m draft && git revert --no-edit v2.0.0 && printf '2.0.1\\n' > version.txt && git add version.txt && git commit -m patch && git tag -a v2.0.1 -m 'safe patch' && git push origin main refs/tags/v2.0.1 && git stash pop",
+  ],
+  [
+    "综合：在队友更新后交付功能",
+    "git stash push -u -m drafts && git fetch origin && { git rebase origin/main || test -d .git/rebase-merge; } && cat ../target-value.txt > feature.txt && git add feature.txt && GIT_EDITOR=true git rebase --continue && git push --force-with-lease origin feature/topic && git stash pop",
+  ],
+  [
+    "综合：修复遗留仓库而不丢草稿",
+    "git switch -C main $(git log -g --all --format=%H --grep='遗失的完整功能提交' -1) && git restore --worktree config.ini && git remote set-url origin ../origin.git && git push -u origin main",
+  ],
+  [
+    "自由实验区",
+    "git switch feature/experiment && printf 'my experiment\\n' > feature.txt && git add feature.txt && git commit -m experiment && printf 'unfinished\\n' > notes.local",
+  ],
+]) {
+  test(`Composite workflow: ${title}`, async () => {
+    const env = {
+      ...process.env,
+      GIT_ONBOARDING_DATA_DIR: path.resolve(
+        process.env.GIT_ONBOARDING_TEST_DATA_DIR ||
+          ".local/ui-after-wsl-restart",
+      ),
+    };
+    delete env.ELECTRON_RUN_AS_NODE;
+    const app = await electron.launch({
+      executablePath: process.env.GIT_ONBOARDING_EXECUTABLE,
+      args: process.env.GIT_ONBOARDING_EXECUTABLE ? [] : ["."],
+      cwd: path.resolve("."),
+      env,
+    });
+    try {
+      const page = await app.firstWindow();
+      const errors = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+      await expect(page.locator(".local-status")).toContainText(
+        "本地练习环境已就绪",
+      );
+      await page.getByRole("combobox", { name: "显示比例" }).selectOption("1");
+      await page.getByRole("searchbox", { name: "查找练习" }).fill(title);
+      await page
+        .locator(".course-card")
+        .filter({ hasText: title })
+        .getByRole("button")
+        .first()
+        .click();
+      await expect(
+        page.getByRole("button", { name: /^(检查练习结果|查看实验状态)$/ }),
+      ).toBeEnabled();
+      await page.getByRole("button", { name: "重新开始", exact: true }).click();
+      await page
+        .getByRole("dialog")
+        .getByRole("button", { name: "重新开始", exact: true })
+        .click();
+      await terminalCommand(page, command);
+      await page
+        .getByRole("button", { name: /^(检查练习结果|查看实验状态)$/ })
+        .click();
+      const freeplay = title === "自由实验区";
+      await expect(page.getByRole("dialog")).toContainText(
+        freeplay ? "实验状态已更新" : "本关已完成",
+      );
+      if (freeplay) {
+        await expect(page.getByRole("dialog")).toContainText("notes.local");
+        await expect(page.getByRole("dialog")).not.toContainText("未完成");
+        expect(
+          (await page.evaluate(() => window.gitLab.progress()))[
+            "freeplay-guided"
+          ],
+        ).toBeUndefined();
+      }
+      await page.getByRole("button", { name: "关闭检查结果" }).click();
+      await expect(page.getByRole("textbox", { name: "文件内容" })).toHaveValue(
+        freeplay ? "my experiment\n" : "ready\n",
+      );
+      if (freeplay) {
+        await page
+          .getByRole("button", { name: "学习路径", exact: true })
+          .click();
+        await page.getByRole("searchbox", { name: "查找练习" }).fill(title);
+        await page
+          .locator(".course-card")
+          .filter({ hasText: title })
+          .getByRole("button")
+          .first()
+          .click();
+        await expect(
+          page.getByRole("textbox", { name: "文件内容" }),
+        ).toHaveValue("my experiment\n");
+        await page
+          .getByRole("button", { name: "查看实验状态", exact: true })
+          .click();
+        await expect(page.getByRole("dialog")).toContainText("notes.local");
+        await page.getByRole("button", { name: "关闭检查结果" }).click();
+      }
+      await page.screenshot({
+        path: `test-results/composite-${freeplay ? "freeplay" : title.includes("补丁") ? "release" : title.includes("队友") ? "concurrent" : title.includes("遗留") ? "legacy" : "onboarding"}.png`,
+      });
+      expect(errors).toEqual([]);
+    } finally {
+      await app.close();
+    }
+  });
 }
 
 for (const [title, repair] of [

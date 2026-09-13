@@ -22,11 +22,13 @@ export default function CheckResult({
       ? "正在检查练习…"
       : report.phase === "error"
         ? "这次检查没有完成"
-        : snapshot.complete
-          ? "本关已完成"
-          : total - passed === 1
-            ? "还差一步"
-            : `还有 ${total - passed} 项未完成`;
+        : snapshot.freeplay
+          ? "实验状态已更新"
+          : snapshot.complete
+            ? "本关已完成"
+            : total - passed === 1
+              ? "还差一步"
+              : `还有 ${total - passed} 项未完成`;
   return (
     <dialog
       ref={ref}
@@ -44,7 +46,9 @@ export default function CheckResult({
       >
         <X size={20} />
       </button>
-      <p className="check-caption">练习检查结果</p>
+      <p className="check-caption">
+        {snapshot?.freeplay ? "自由实验区" : "练习检查结果"}
+      </p>
       <div aria-live="polite" aria-busy={report.phase === "checking"}>
         <h2 id="check-result-title">{title}</h2>
         {report.phase === "checking" && (
@@ -56,29 +60,67 @@ export default function CheckResult({
         {report.phase === "error" && <p role="alert">{report.error}</p>}
         {report.phase === "ready" && (
           <>
-            <p>
-              {passed} / {total} 条件通过
-            </p>
-            <ul className="check-result-list">
-              {snapshot.checks.map((check) => (
-                <li key={check.label}>
-                  {check.done ? (
-                    <CheckCircle2 size={21} className="passed" />
-                  ) : (
-                    <Circle size={21} />
-                  )}
-                  <div>
-                    <strong>{check.label}</strong>
-                    <p>
-                      {check.detail ||
-                        (check.done
-                          ? "当前仓库已满足此条件。"
-                          : "请根据任务目标调整仓库，再次检查。")}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {snapshot.freeplay ? (
+              <>
+                <p>
+                  自由实验没有固定通关条件。仓库会保留，重新开始前需要确认。
+                </p>
+                <p>
+                  工作区变化：
+                  {
+                    snapshot.changes.filter((c) => c.worktree !== " ").length
+                  }{" "}
+                  个文件 · 暂存区：
+                  {
+                    snapshot.changes.filter(
+                      (c) => c.index !== " " && c.index !== "?",
+                    ).length
+                  }{" "}
+                  个文件
+                </p>
+                <p>
+                  进行中的操作：{snapshot.operation || "无"} · 冲突文件：
+                  {snapshot.conflicts.length}
+                </p>
+                <ul className="check-result-list">
+                  {snapshot.changes.map((change) => (
+                    <li key={change.path}>
+                      <code>{change.path}</code>
+                      <span>
+                        暂存 {change.index.trim() || "—"} · 工作区{" "}
+                        {change.worktree.trim() || "—"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <>
+                <p>
+                  {passed} / {total} 条件通过
+                </p>
+                <ul className="check-result-list">
+                  {snapshot.checks.map((check) => (
+                    <li key={check.label}>
+                      {check.done ? (
+                        <CheckCircle2 size={21} className="passed" />
+                      ) : (
+                        <Circle size={21} />
+                      )}
+                      <div>
+                        <strong>{check.label}</strong>
+                        <p>
+                          {check.detail ||
+                            (check.done
+                              ? "当前仓库已满足此条件。"
+                              : "请根据任务目标调整仓库，再次检查。")}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
             <p className="check-evidence">
               本次检查：
               {snapshot.repositoryReady === false

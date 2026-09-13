@@ -2760,5 +2760,281 @@
       "本关的团队仓库明确只读，再换同一账号的令牌也不会增加仓库授权。单独设置 push URL，将功能交付到自己的 Fork，保留团队拉取地址。",
       "python ../serve.py --start\ncat ../access-guide.txt\ngit remote -v\ngit config --show-origin --get-all credential.helper\n\ngit ls-remote origin\ngit add feature.txt\ngit commit -m feature\ngit push origin main\n\ngit remote set-url --push origin http://127.0.0.1:8765/fork.git\n\ngit remote -v\ngit ls-remote origin\ngit push origin main\ngit status"
     ]
+  },
+  {
+    "id": "capstone-onboarding",
+    "number": "58",
+    "title": "综合：接手团队的第一项任务",
+    "subtitle": "从克隆到个人身份、忽略规则与分支交付",
+    "category": "综合实战",
+    "level": "综合",
+    "minutes": 40,
+    "concepts": [
+      "状态诊断",
+      "完整交付",
+      "保留工作"
+    ],
+    "commands": [
+      "clone",
+      "rebase",
+      "revert",
+      "reflog",
+      "stash",
+      "push",
+      "bundle"
+    ],
+    "file": "feature.txt",
+    "story": "从空目录克隆 ../origin.git，接续 feature/welcome 的交接记录。用 Git Learner <learner@example.invalid> 身份提交 ready 功能。创建内容为“个人入职笔记”的 notes.local 并提交忽略规则，笔记不能进入 Git 历史；只交付功能分支，主线保持不变。",
+    "challengeStory": "从空目录克隆 ../origin.git，接续 feature/welcome 的交接记录。用 Git Learner <learner@example.invalid> 身份提交 released 功能。创建内容为“个人入职笔记”的 notes.local 并提交忽略规则，笔记不能进入 Git 历史；只交付功能分支，主线保持不变。",
+    "target": "从空目录克隆 ../origin.git，接续 feature/welcome 的交接记录。用 Git Learner <learner@example.invalid> 身份提交 ready 功能。创建内容为“个人入职笔记”的 notes.local 并提交忽略规则，笔记不能进入 Git 历史；只交付功能分支，主线保持不变。",
+    "challengeTarget": "从空目录克隆 ../origin.git，接续 feature/welcome 的交接记录。用 Git Learner <learner@example.invalid> 身份提交 released 功能。创建内容为“个人入职笔记”的 notes.local 并提交忽略规则，笔记不能进入 Git 历史；只交付功能分支，主线保持不变。",
+    "steps": [
+      {
+        "title": "接手项目与配置本地身份",
+        "body": "先观察目录，再克隆到当前目录。身份属于当前练习仓库，不修改全局配置。",
+        "command": "ls -a\ngit clone ../origin.git .\ngit config --local user.name \"Git Learner\"\ngit config --local user.email learner@example.invalid"
+      },
+      {
+        "title": "找到交接分支并保护个人笔记",
+        "body": "保留团队已有提交，跟踪相应远端分支；忽略文件与忽略规则是不同的提交对象。",
+        "command": "git branch -a\ngit switch --track origin/feature/welcome\nprintf \"个人入职笔记\\n\" > notes.local\nprintf \"notes.local\\n\" > .gitignore"
+      },
+      {
+        "title": "实现并检查提交范围",
+        "body": "按目标编辑 feature.txt。下面示例从任务文件读取当前模式的目标值。笔记应被忽略，交接记录仍应存在。",
+        "command": "cat ../target-value.txt > feature.txt\ngit status --short --ignored\ngit add feature.txt .gitignore\ngit diff --cached\ngit commit -m \"完成入职任务\""
+      },
+      {
+        "title": "交付功能分支",
+        "body": "检查身份、跟踪关系及远端分支，主线不应混入此次任务。",
+        "command": "git log -1 --format=fuller\ngit push -u origin feature/welcome\ngit branch -vv\ngit status"
+      }
+    ],
+    "hints": [
+      "先观察目录，再克隆到当前目录。身份属于当前练习仓库，不修改全局配置。",
+      "保留团队已有提交，跟踪相应远端分支；忽略文件与忽略规则是不同的提交对象。",
+      "ls -a\ngit clone ../origin.git .\ngit config --local user.name \"Git Learner\"\ngit config --local user.email learner@example.invalid\n\ngit branch -a\ngit switch --track origin/feature/welcome\nprintf \"个人入职笔记\\n\" > notes.local\nprintf \"notes.local\\n\" > .gitignore\n\ncat ../target-value.txt > feature.txt\ngit status --short --ignored\ngit add feature.txt .gitignore\ngit diff --cached\ngit commit -m \"完成入职任务\"\n\ngit log -1 --format=fuller\ngit push -u origin feature/welcome\ngit branch -vv\ngit status"
+    ]
+  },
+  {
+    "id": "capstone-release",
+    "number": "59",
+    "title": "综合：恢复错误发布并交付补丁",
+    "subtitle": "回滚共享历史，保留发布标签与未完成草稿",
+    "category": "综合实战",
+    "level": "综合",
+    "minutes": 40,
+    "concepts": [
+      "状态诊断",
+      "完整交付",
+      "保留工作"
+    ],
+    "commands": [
+      "clone",
+      "rebase",
+      "revert",
+      "reflog",
+      "stash",
+      "push",
+      "bundle"
+    ],
+    "file": "feature.txt",
+    "story": "v2.0.0 已发布但错误地关闭安全模式。保留该发布提交与原标签，使用新提交恢复 safe_mode=on，保留 ready 功能，将版本设为 2.0.1 并发布带说明的 v2.0.1 标签。draft.txt 的个人草稿要恢复到工作区，不能进入补丁提交，暂存区与 stash 最后为空。",
+    "challengeStory": "v2.0.0 已发布但错误地关闭安全模式。保留该发布提交与原标签，使用新提交恢复 safe_mode=on，保留 released 功能，将版本设为 2.0.1 并发布带说明的 v2.0.1 标签。draft.txt 的个人草稿要恢复到工作区，不能进入补丁提交，暂存区与 stash 最后为空。",
+    "target": "v2.0.0 已发布但错误地关闭安全模式。保留该发布提交与原标签，使用新提交恢复 safe_mode=on，保留 ready 功能，将版本设为 2.0.1 并发布带说明的 v2.0.1 标签。draft.txt 的个人草稿要恢复到工作区，不能进入补丁提交，暂存区与 stash 最后为空。",
+    "challengeTarget": "v2.0.0 已发布但错误地关闭安全模式。保留该发布提交与原标签，使用新提交恢复 safe_mode=on，保留 released 功能，将版本设为 2.0.1 并发布带说明的 v2.0.1 标签。draft.txt 的个人草稿要恢复到工作区，不能进入补丁提交，暂存区与 stash 最后为空。",
+    "steps": [
+      {
+        "title": "确认线上版本并暂存个人草稿",
+        "body": "先检查差异，确认未完成草稿不属于发布。保存草稿后再执行共享历史恢复。",
+        "command": "git status\ngit diff\ngit log --oneline --decorate\ngit stash push -m \"发布前保留个人草稿\""
+      },
+      {
+        "title": "用新提交撤销错误发布",
+        "body": "revert 保留共享历史；不要移动或删除已经发布的 v2.0.0。确认功能仍保留。",
+        "command": "git revert --no-edit v2.0.0\ncat config.ini feature.txt\nprintf \"2.0.1\\n\" > version.txt\ngit add version.txt\ngit commit -m \"准备修复版本 2.0.1\""
+      },
+      {
+        "title": "创建补丁标签并交付",
+        "body": "标签需要说明且指向最终修复，远端主线与标签都要更新。",
+        "command": "git tag -a v2.0.1 -m \"恢复安全模式的补丁版本\"\ngit push origin main refs/tags/v2.0.1\ngit show v2.0.1 --stat"
+      },
+      {
+        "title": "恢复未完成工作",
+        "body": "补丁发布后恢复草稿，检查没有将其提交或遗留在 stash。",
+        "command": "git stash pop\ngit diff\ngit diff --cached\ngit stash list\ngit status"
+      }
+    ],
+    "hints": [
+      "先检查差异，确认未完成草稿不属于发布。保存草稿后再执行共享历史恢复。",
+      "revert 保留共享历史；不要移动或删除已经发布的 v2.0.0。确认功能仍保留。",
+      "git status\ngit diff\ngit log --oneline --decorate\ngit stash push -m \"发布前保留个人草稿\"\n\ngit revert --no-edit v2.0.0\ncat config.ini feature.txt\nprintf \"2.0.1\\n\" > version.txt\ngit add version.txt\ngit commit -m \"准备修复版本 2.0.1\"\n\ngit tag -a v2.0.1 -m \"恢复安全模式的补丁版本\"\ngit push origin main refs/tags/v2.0.1\ngit show v2.0.1 --stat\n\ngit stash pop\ngit diff\ngit diff --cached\ngit stash list\ngit status"
+    ]
+  },
+  {
+    "id": "capstone-concurrent",
+    "number": "60",
+    "title": "综合：在队友更新后交付功能",
+    "subtitle": "保护草稿、整合真实冲突、带租约更新分支",
+    "category": "综合实战",
+    "level": "综合",
+    "minutes": 40,
+    "concepts": [
+      "状态诊断",
+      "完整交付",
+      "保留工作"
+    ],
+    "commands": [
+      "clone",
+      "rebase",
+      "revert",
+      "reflog",
+      "stash",
+      "push",
+      "bundle"
+    ],
+    "file": "feature.txt",
+    "story": "队友修改了主线中的同一功能。保留其 team.txt 与主线，在线性 feature/topic 历史中交付 ready 功能并推送。draft.txt 和未跟踪的 notes.local 必须恢复且不能进入提交；暂存区和 stash 最后为空。",
+    "challengeStory": "队友修改了主线中的同一功能。保留其 team.txt 与主线，在线性 feature/topic 历史中交付 released 功能并推送。draft.txt 和未跟踪的 notes.local 必须恢复且不能进入提交；暂存区和 stash 最后为空。",
+    "target": "队友修改了主线中的同一功能。保留其 team.txt 与主线，在线性 feature/topic 历史中交付 ready 功能并推送。draft.txt 和未跟踪的 notes.local 必须恢复且不能进入提交；暂存区和 stash 最后为空。",
+    "challengeTarget": "队友修改了主线中的同一功能。保留其 team.txt 与主线，在线性 feature/topic 历史中交付 released 功能并推送。draft.txt 和未跟踪的 notes.local 必须恢复且不能进入提交；暂存区和 stash 最后为空。",
+    "steps": [
+      {
+        "title": "保护正在写的内容",
+        "body": "检查已跟踪草稿和未跟踪笔记，用 -u 一并保存；不要把它们混入功能提交。",
+        "command": "git status\ngit stash push -u -m \"整合前保留草稿和笔记\"\ngit fetch origin\ngit log --all --graph --oneline"
+      },
+      {
+        "title": "在队友主线上重放功能",
+        "body": "rebase 应产生 feature.txt 的真实冲突。依据任务选择最终功能内容，保留队友新增的文件。 continue 若打开 nano，按 Ctrl+O、Enter 保存提交说明，再按 Ctrl+X 退出；若保留原说明，也可用 GIT_EDITOR=true git rebase --continue。",
+        "command": "git rebase origin/main\ngit status\ncat ../target-value.txt > feature.txt\ngit add feature.txt\ngit rebase --continue"
+      },
+      {
+        "title": "交付整合后的个人分支",
+        "body": "普通 push 会拒绝改写后的提交。确认远端个人分支没有意外新提交，再使用租约更新；不要覆盖 main。",
+        "command": "git push origin feature/topic\ngit push --force-with-lease origin feature/topic\ngit log --all --graph --oneline"
+      },
+      {
+        "title": "回到未完成工作",
+        "body": "恢复草稿和笔记，查看实际状态，确认它们没有出现在此次提交范围。",
+        "command": "git stash pop\ngit status\ngit diff\ngit diff --cached\ngit stash list"
+      }
+    ],
+    "hints": [
+      "检查已跟踪草稿和未跟踪笔记，用 -u 一并保存；不要把它们混入功能提交。",
+      "rebase 应产生 feature.txt 的真实冲突。依据任务选择最终功能内容，保留队友新增的文件。 continue 若打开 nano，按 Ctrl+O、Enter 保存提交说明，再按 Ctrl+X 退出；若保留原说明，也可用 GIT_EDITOR=true git rebase --continue。",
+      "git status\ngit stash push -u -m \"整合前保留草稿和笔记\"\ngit fetch origin\ngit log --all --graph --oneline\n\ngit rebase origin/main\ngit status\ncat ../target-value.txt > feature.txt\ngit add feature.txt\ngit rebase --continue\n\ngit push origin feature/topic\ngit push --force-with-lease origin feature/topic\ngit log --all --graph --oneline\n\ngit stash pop\ngit status\ngit diff\ngit diff --cached\ngit stash list"
+    ]
+  },
+  {
+    "id": "capstone-legacy",
+    "number": "61",
+    "title": "综合：修复遗留仓库而不丢草稿",
+    "subtitle": "从分离 HEAD、丢失提交和坏远端中恢复",
+    "category": "综合实战",
+    "level": "综合",
+    "minutes": 40,
+    "concepts": [
+      "状态诊断",
+      "完整交付",
+      "保留工作"
+    ],
+    "commands": [
+      "clone",
+      "rebase",
+      "revert",
+      "reflog",
+      "stash",
+      "push",
+      "bundle"
+    ],
+    "file": "feature.txt",
+    "story": "仓库处于分离 HEAD，origin 指向不存在的位置，已完成的 ready 功能提交只剩 reflog 线索。恢复“遗失的完整功能提交”这一原始提交到 main，并推送到 ../origin.git。只丢弃 config.ini 的错误工作区修改；draft.txt 的暂存版本和工作版本必须原样保留。",
+    "challengeStory": "仓库处于分离 HEAD，origin 指向不存在的位置，已完成的 released 功能提交只剩 reflog 线索。恢复“遗失的完整功能提交”这一原始提交到 main，并推送到 ../origin.git。只丢弃 config.ini 的错误工作区修改；draft.txt 的暂存版本和工作版本必须原样保留。",
+    "target": "仓库处于分离 HEAD，origin 指向不存在的位置，已完成的 ready 功能提交只剩 reflog 线索。恢复“遗失的完整功能提交”这一原始提交到 main，并推送到 ../origin.git。只丢弃 config.ini 的错误工作区修改；draft.txt 的暂存版本和工作版本必须原样保留。",
+    "challengeTarget": "仓库处于分离 HEAD，origin 指向不存在的位置，已完成的 released 功能提交只剩 reflog 线索。恢复“遗失的完整功能提交”这一原始提交到 main，并推送到 ../origin.git。只丢弃 config.ini 的错误工作区修改；draft.txt 的暂存版本和工作版本必须原样保留。",
+    "steps": [
+      {
+        "title": "先区分三种状态",
+        "body": "查看分支、远端、暂存区与工作区，避免用 reset --hard 把草稿一起抹掉。",
+        "command": "git status\ngit remote -v\ngit diff\ngit diff --cached\ngit reflog --all"
+      },
+      {
+        "title": "恢复原提交和命名分支",
+        "body": "查找遗失提交的实际哈希，建立 main 引用。下方命令按 reflog 中的提交说明定位本关原提交。",
+        "command": "git log -g --all --oneline --grep=\"遗失的完整功能提交\"\ngit switch -C main $(git log -g --all --format=%H --grep=\"遗失的完整功能提交\" -1)"
+      },
+      {
+        "title": "仅修复目标文件与远端",
+        "body": "只丢弃 config.ini 的错误工作区修改。修复本关 origin 路径，再正常推送原提交。",
+        "command": "git restore --worktree config.ini\ngit remote set-url origin ../origin.git\ngit push -u origin main"
+      },
+      {
+        "title": "核对草稿的两层内容",
+        "body": "暂存区与工作区应该仍保留不同的草稿版本；本任务不要求工作区干净。",
+        "command": "git show :draft.txt\ncat draft.txt\ngit diff --cached\ngit diff\ngit status"
+      }
+    ],
+    "hints": [
+      "查看分支、远端、暂存区与工作区，避免用 reset --hard 把草稿一起抹掉。",
+      "查找遗失提交的实际哈希，建立 main 引用。下方命令按 reflog 中的提交说明定位本关原提交。",
+      "git status\ngit remote -v\ngit diff\ngit diff --cached\ngit reflog --all\n\ngit log -g --all --oneline --grep=\"遗失的完整功能提交\"\ngit switch -C main $(git log -g --all --format=%H --grep=\"遗失的完整功能提交\" -1)\n\ngit restore --worktree config.ini\ngit remote set-url origin ../origin.git\ngit push -u origin main\n\ngit show :draft.txt\ncat draft.txt\ngit diff --cached\ngit diff\ngit status"
+    ]
+  },
+  {
+    "id": "freeplay",
+    "number": "62",
+    "title": "自由实验区",
+    "subtitle": "完整终端、双远端、队友仓库，没有通关限制",
+    "category": "综合实战",
+    "level": "自由",
+    "minutes": 40,
+    "concepts": [
+      "状态诊断",
+      "完整交付",
+      "保留工作"
+    ],
+    "commands": [
+      "clone",
+      "rebase",
+      "revert",
+      "reflog",
+      "stash",
+      "push",
+      "bundle"
+    ],
+    "file": "feature.txt",
+    "story": "这里没有固定答案。你拥有 workspace、个人 origin、团队 upstream 和 ../teammate 仓库，可组合尝试任何已安装的 Git 操作。查看实验状态不会把工作区改动判为失败。关闭后会保留仓库；重新开始需确认，且会重建本实验区。",
+    "challengeStory": "这里没有固定答案。你拥有 workspace、个人 origin、团队 upstream 和 ../teammate 仓库，可组合尝试任何已安装的 Git 操作。查看实验状态不会把工作区改动判为失败。关闭后会保留仓库；重新开始需确认，且会重建本实验区。",
+    "target": "这里没有固定答案。你拥有 workspace、个人 origin、团队 upstream 和 ../teammate 仓库，可组合尝试任何已安装的 Git 操作。查看实验状态不会把工作区改动判为失败。关闭后会保留仓库；重新开始需确认，且会重建本实验区。",
+    "challengeTarget": "这里没有固定答案。你拥有 workspace、个人 origin、团队 upstream 和 ../teammate 仓库，可组合尝试任何已安装的 Git 操作。查看实验状态不会把工作区改动判为失败。关闭后会保留仓库；重新开始需确认，且会重建本实验区。",
+    "steps": [
+      {
+        "title": "认识实验材料",
+        "body": "origin 是个人远端，upstream 是团队远端。../teammate 可以用来制造队友更新；所有目录都位于隔离环境。",
+        "command": "git remote -v\ngit branch -a\ngit log --all --graph --oneline\ngit -C ../teammate status"
+      },
+      {
+        "title": "试着整合上游",
+        "body": "先在实验分支尝试整合，再观察提交图与差异。可以自行修改文件、提交、撤销并比较不同路径。",
+        "command": "git switch feature/experiment\ngit fetch upstream\ngit rebase upstream/main\ngit log --graph --oneline --all"
+      },
+      {
+        "title": "保存一个实验备份",
+        "body": "可以用 bundle 保存有引用的历史。它不会包含未提交文件；需要时另行保存草稿。",
+        "command": "git bundle create ../experiment.bundle --all\ngit bundle verify ../experiment.bundle\ngit status"
+      },
+      {
+        "title": "自由组合与重新开始",
+        "body": "仓库状态、提交图、编辑器和终端照常可用。没有完成勾选；不满意时可在确认后重新开始这一实验区。",
+        "command": "git reflog\ngit status"
+      }
+    ],
+    "hints": [
+      "origin 是个人远端，upstream 是团队远端。../teammate 可以用来制造队友更新；所有目录都位于隔离环境。",
+      "先在实验分支尝试整合，再观察提交图与差异。可以自行修改文件、提交、撤销并比较不同路径。",
+      "git remote -v\ngit branch -a\ngit log --all --graph --oneline\ngit -C ../teammate status\n\ngit switch feature/experiment\ngit fetch upstream\ngit rebase upstream/main\ngit log --graph --oneline --all\n\ngit bundle create ../experiment.bundle --all\ngit bundle verify ../experiment.bundle\ngit status\n\ngit reflog\ngit status"
+    ],
+    "freeplay": true
   }
 ]

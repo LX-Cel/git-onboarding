@@ -27,7 +27,7 @@ def g(repo, *args, check=True):
 
 with tempfile.TemporaryDirectory(prefix='foundations-') as directory:
     e.ROOT = Path(directory) / 'labs'
-    expect(e.IDS == {'basics', 'collab', 'recovery'} | e.advanced.IDS | e.maintenance.IDS | e.teamwork.IDS | e.foundations.IDS | e.extensions.IDS | e.access.IDS, 'all catalog courses implemented')
+    expect(e.IDS == {'basics', 'collab', 'recovery'} | e.advanced.IDS | e.maintenance.IDS | e.teamwork.IDS | e.foundations.IDS | e.extensions.IDS | e.access.IDS | e.capstone.IDS, 'all catalog courses implemented')
     for mode in ['guided', 'challenge']:
         for lesson in sorted(e.foundations.IDS):
             state = e.initialize(lesson, mode, True)
