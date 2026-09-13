@@ -313,7 +313,7 @@ function App() {
     const prev = stateRef.current;
     if (next.conflicts.length)
       setFeedback(
-        `发现 ${next.operation || "合并"} 冲突：${next.conflicts.join("、")}。解决文件并暂存后，${next.operation === "rebase" ? "运行 git rebase --continue" : next.operation === "cherry-pick" ? "运行 git cherry-pick --continue" : "按 git status 提示完成当前操作"}。`,
+        `发现 ${next.operation || "合并"} 冲突：${next.conflicts.join("、")}。解决文件并暂存后，${next.operation === "rebase" ? "运行 git rebase --continue" : next.operation === "cherry-pick" ? "运行 git cherry-pick --continue" : next.operation === "am" ? "运行 git am --continue" : "按 git status 提示完成当前操作"}。`,
       );
     else if (lastExit.current !== 0)
       setFeedback(
@@ -322,6 +322,10 @@ function App() {
     else if (next.complete)
       setFeedback(
         "目标已达成！判题依据是实际仓库状态，你可以使用不同的正确操作路径。",
+      );
+    else if (prev?.repositoryReady === false && next.repositoryReady)
+      setFeedback(
+        "当前目录已建立 Git 仓库。可以继续检查身份、分支、提交和远端配置。",
       );
     else if (prev && prev.branch !== next.branch)
       setFeedback(
@@ -346,14 +350,18 @@ function App() {
   }, []);
 
   const syncEditor = useCallback(async (next, epoch) => {
-    const name = fileRef.current;
-    if (!name || dirtyRef.current || !next.files.includes(name)) return;
-    const result = await api.read(name);
+    const previousName = fileRef.current;
+    if (dirtyRef.current || epoch !== selectionEpoch.current) return;
+    const name = next.files.includes(previousName)
+      ? previousName
+      : next.files[0] || "";
+    const result = name ? await api.read(name) : { content: "" };
     if (
       epoch === selectionEpoch.current &&
       !dirtyRef.current &&
-      fileRef.current === name
+      fileRef.current === previousName
     ) {
+      setFile(name);
       setContent(result.content);
       setSaved(result.content);
     }
@@ -1272,7 +1280,10 @@ function App() {
                         <p>
                           <GitBranch size={15} />
                           <code>
-                            {state.branch || "分离 HEAD"} · {state.head}
+                            {state.repositoryReady === false
+                              ? "未初始化"
+                              : state.branch || "分离 HEAD"}{" "}
+                            · {state.head}
                           </code>
                         </p>
                         <p>
@@ -1325,9 +1336,19 @@ function App() {
                         <>
                           <div className="branch-summary">
                             <GitBranch size={15} />
-                            <b>{state?.branch || "分离 HEAD"}</b>
+                            <b>
+                              {state?.repositoryReady === false
+                                ? "未初始化"
+                                : state?.branch || "分离 HEAD"}
+                            </b>
                             <code>{state?.head}</code>
                           </div>
+                          {state?.repositoryReady === false && (
+                            <p role="status">
+                              当前是普通目录。完成 git init 或 git clone
+                              后，就能查看仓库状态与历史。
+                            </p>
+                          )}
                           {state?.operation && (
                             <p role="status">
                               进行中：{state.operation}。运行 git status

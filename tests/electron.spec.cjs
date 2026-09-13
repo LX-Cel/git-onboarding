@@ -34,6 +34,108 @@ async function terminalCommand(page, command) {
   expect(status.code, status.output).toBe(0);
 }
 
+for (const [title, command, empty] of [
+  [
+    "从普通目录建立 Git 项目",
+    "git init -b main && git config --local user.name 'Git Learner' && git config --local user.email learner@example.invalid && printf '# 新项目\\nready\\n' > README.md && git add README.md && git commit -m initial",
+    true,
+  ],
+  [
+    "克隆并接手远端功能分支",
+    "git clone ../origin.git . && git config user.name 'Git Learner' && git config user.email learner@example.invalid && git switch --track origin/feature/team && printf 'ready\\n' > feature.txt && git add feature.txt && git commit -m contribution && git push",
+    true,
+  ],
+  [
+    "恢复被冲突中断的邮件补丁",
+    "printf 'ready\\n' > feature.txt && git add feature.txt && git am --continue",
+    false,
+  ],
+  [
+    "统一跨平台文件换行规则",
+    "printf '*.sh text eol=lf\\n*.cmd text eol=crlf\\n*.bin -text\\n' > .gitattributes && git add .gitattributes && git add --renormalize . && git commit -m normalize && rm run.sh run.cmd && git restore --source=HEAD --worktree run.sh run.cmd && git add run.sh run.cmd",
+    false,
+  ],
+]) {
+  test(`Repository lifecycle: ${title}`, async () => {
+    const env = {
+      ...process.env,
+      GIT_ONBOARDING_DATA_DIR: path.resolve(
+        process.env.GIT_ONBOARDING_TEST_DATA_DIR ||
+          ".local/ui-after-wsl-restart",
+      ),
+    };
+    delete env.ELECTRON_RUN_AS_NODE;
+    const app = await electron.launch({
+      executablePath: process.env.GIT_ONBOARDING_EXECUTABLE,
+      args: process.env.GIT_ONBOARDING_EXECUTABLE ? [] : ["."],
+      cwd: path.resolve("."),
+      env,
+    });
+    try {
+      const page = await app.firstWindow();
+      const errors = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+      await expect(page.locator(".local-status")).toContainText(
+        "本地练习环境已就绪",
+      );
+      await page.getByRole("combobox", { name: "显示比例" }).selectOption("1");
+      await page.getByRole("searchbox", { name: "查找练习" }).fill(title);
+      await page
+        .locator(".course-card")
+        .filter({ hasText: title })
+        .getByRole("button")
+        .first()
+        .click();
+      await expect(
+        page.getByRole("button", { name: "检查练习结果", exact: true }),
+      ).toBeEnabled();
+      await page.getByRole("button", { name: "重新开始", exact: true }).click();
+      await page
+        .getByRole("dialog")
+        .getByRole("button", { name: "重新开始", exact: true })
+        .click();
+      await page.getByRole("button", { name: "仓库状态", exact: true }).click();
+      if (empty)
+        await expect(page.locator(".branch-summary")).toContainText("未初始化");
+      if (title.includes("邮件"))
+        await expect(page.locator(".state-content")).toContainText(
+          "进行中：am",
+        );
+      await terminalCommand(page, command);
+      await page
+        .getByRole("button", { name: "检查练习结果", exact: true })
+        .click();
+      await expect(page.getByRole("dialog")).toContainText("本关已完成");
+      await page.getByRole("button", { name: "关闭检查结果" }).click();
+      if (title.includes("克隆")) {
+        await page
+          .getByRole("combobox", { name: "选择练习文件" })
+          .selectOption("feature.txt");
+        await expect(
+          page.getByRole("textbox", { name: "文件内容" }),
+        ).toHaveValue("ready\n");
+      } else if (title.includes("普通目录")) {
+        await expect(
+          page.getByRole("textbox", { name: "文件内容" }),
+        ).toHaveValue("# 新项目\nready\n");
+      } else if (title.includes("换行")) {
+        await page
+          .getByRole("combobox", { name: "选择练习文件" })
+          .selectOption(".gitattributes");
+        await expect(
+          page.getByRole("textbox", { name: "文件内容" }),
+        ).toHaveValue(/eol=crlf/);
+      }
+      await page.screenshot({
+        path: `test-results/lifecycle-${empty ? "bootstrap" : title.includes("邮件") ? "am" : "attributes"}.png`,
+      });
+      expect(errors).toEqual([]);
+    } finally {
+      await app.close();
+    }
+  });
+}
+
 for (const [title, strategy, conflict] of [
   ["通过检查后合入受保护主线", "merge", false],
   ["把整个 PR 汇总为一个提交", "squash", false],

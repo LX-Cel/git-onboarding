@@ -1787,5 +1787,571 @@
       "branch protection",
       "required checks"
     ]
+  },
+  {
+    "id": "init-config",
+    "number": "38",
+    "title": "从普通目录建立 Git 项目",
+    "subtitle": "配置练习身份，再记录第一次提交",
+    "category": "基础操作",
+    "level": "入门",
+    "minutes": 20,
+    "concepts": [
+      "init",
+      "config --local",
+      "add"
+    ],
+    "commands": [
+      "init",
+      "config --local",
+      "add",
+      "commit"
+    ],
+    "file": "README.md",
+    "story": "当前目录还没有 Git 仓库。初始化 main，设置本仓库的姓名和邮箱 learner@example.invalid，把 README.md 写为标题「# 新项目」和下一行 ready，完成一次提交。",
+    "challengeStory": "独立完成此任务，自行选择步骤。当前目录还没有 Git 仓库。初始化 main，设置本仓库的姓名和邮箱 learner@example.invalid，把 README.md 写为标题「# 新项目」和下一行 released，完成一次提交。",
+    "target": "当前目录还没有 Git 仓库。初始化 main，设置本仓库的姓名和邮箱 learner@example.invalid，把 README.md 写为标题「# 新项目」和下一行 ready，完成一次提交。",
+    "challengeTarget": "当前目录还没有 Git 仓库。初始化 main，设置本仓库的姓名和邮箱 learner@example.invalid，把 README.md 写为标题「# 新项目」和下一行 released，完成一次提交。",
+    "steps": [
+      {
+        "title": "建立当前目录的仓库",
+        "body": "这里是普通文件夹；git status 会提示不是仓库。用 init -b main 明确初始分支名。",
+        "command": "git status\ngit init -b main"
+      },
+      {
+        "title": "配置本仓库身份",
+        "body": "使用 --local 只配置当前练习。邮箱是虚构练习地址，不需要输入个人凭据。",
+        "command": "git config --local user.name \"Git Learner\"\ngit config --local user.email learner@example.invalid\ngit config --local --list"
+      },
+      {
+        "title": "提交项目起点",
+        "body": "把 README 的标题和目标内容保存到首个提交，检查作者与分支。",
+        "command": "printf '# 新项目\\nready\\n' > README.md\ngit add README.md\ngit commit -m '建立项目'\ngit log -1 --format=fuller\ngit status"
+      }
+    ],
+    "hints": [
+      "这里是普通文件夹；git status 会提示不是仓库。用 init -b main 明确初始分支名。",
+      "使用 --local 只配置当前练习。邮箱是虚构练习地址，不需要输入个人凭据。",
+      "git status\ngit init -b main\n\ngit config --local user.name \"Git Learner\"\ngit config --local user.email learner@example.invalid\ngit config --local --list\n\nprintf '# 新项目\\nready\\n' > README.md\ngit add README.md\ngit commit -m '建立项目'\ngit log -1 --format=fuller\ngit status\n独立挑战中 ready 改为 released；重试定位关使用 retries=5。其他身份与保留要求不变。"
+    ]
+  },
+  {
+    "id": "clone-tracking",
+    "number": "39",
+    "title": "克隆并接手远端功能分支",
+    "subtitle": "区分远端跟踪引用与可工作的本地分支",
+    "category": "基础操作",
+    "level": "入门",
+    "minutes": 20,
+    "concepts": [
+      "clone",
+      "branch -r",
+      "switch --track"
+    ],
+    "commands": [
+      "clone",
+      "branch -r",
+      "switch --track",
+      "branch -vv",
+      "push"
+    ],
+    "file": "feature.txt",
+    "story": "把 ../origin.git 克隆到当前空目录，创建跟踪 origin/feature/team 的本地 feature/team。将 feature.txt 改为 ready，提交并推送对应分支，保留 main。",
+    "challengeStory": "独立完成此任务，自行选择步骤。把 ../origin.git 克隆到当前空目录，创建跟踪 origin/feature/team 的本地 feature/team。将 feature.txt 改为 released，提交并推送对应分支，保留 main。",
+    "target": "把 ../origin.git 克隆到当前空目录，创建跟踪 origin/feature/team 的本地 feature/team。将 feature.txt 改为 ready，提交并推送对应分支，保留 main。",
+    "challengeTarget": "把 ../origin.git 克隆到当前空目录，创建跟踪 origin/feature/team 的本地 feature/team。将 feature.txt 改为 released，提交并推送对应分支，保留 main。",
+    "steps": [
+      {
+        "title": "克隆团队仓库",
+        "body": "当前练习目录为空。末尾的点表示克隆到这里。remote 和 branch -r 展示来源与远端跟踪引用。",
+        "command": "git clone ../origin.git .\ngit remote -v\ngit branch -r"
+      },
+      {
+        "title": "建立本地跟踪分支",
+        "body": "远端分支不是直接编辑的位置。switch --track 创建有 upstream 配置的本地分支。新 clone 需要配置提交身份。",
+        "command": "git switch --track origin/feature/team\ngit branch -vv\ngit config user.name \"Git Learner\"\ngit config user.email learner@example.invalid"
+      },
+      {
+        "title": "提交并推送团队功能",
+        "body": "普通 push 根据跟踪关系推送当前分支。main 不需要合并这次工作。",
+        "command": "printf 'ready\\n' > feature.txt\ngit add feature.txt\ngit commit -m '接手功能'\ngit push\ngit status"
+      }
+    ],
+    "hints": [
+      "当前练习目录为空。末尾的点表示克隆到这里。remote 和 branch -r 展示来源与远端跟踪引用。",
+      "远端分支不是直接编辑的位置。switch --track 创建有 upstream 配置的本地分支。新 clone 需要配置提交身份。",
+      "git clone ../origin.git .\ngit remote -v\ngit branch -r\n\ngit switch --track origin/feature/team\ngit branch -vv\ngit config user.name \"Git Learner\"\ngit config user.email learner@example.invalid\n\nprintf 'ready\\n' > feature.txt\ngit add feature.txt\ngit commit -m '接手功能'\ngit push\ngit status\n独立挑战中 ready 改为 released；重试定位关使用 retries=5。其他身份与保留要求不变。"
+    ]
+  },
+  {
+    "id": "merge-abort",
+    "number": "40",
+    "title": "撤销进行中的冲突合并",
+    "subtitle": "返回合并前，保留旁边的草稿",
+    "category": "恢复排错",
+    "level": "进阶",
+    "minutes": 20,
+    "concepts": [
+      "merge --abort",
+      "status",
+      "diff"
+    ],
+    "commands": [
+      "merge --abort",
+      "status",
+      "diff",
+      "log"
+    ],
+    "file": "feature.txt",
+    "story": "一次 main 与 feature/topic 的合并已经停在冲突处。本次不合并，退出操作，恢复 main 原提交，保留 feature/topic 与未跟踪的 notes.txt 草稿。",
+    "challengeStory": "独立完成此任务，自行选择步骤。一次 main 与 feature/topic 的合并已经停在冲突处。本次不合并，退出操作，恢复 main 原提交，保留 feature/topic 与未跟踪的 notes.txt 草稿。",
+    "target": "一次 main 与 feature/topic 的合并已经停在冲突处。本次不合并，退出操作，恢复 main 原提交，保留 feature/topic 与未跟踪的 notes.txt 草稿。",
+    "challengeTarget": "一次 main 与 feature/topic 的合并已经停在冲突处。本次不合并，退出操作，恢复 main 原提交，保留 feature/topic 与未跟踪的 notes.txt 草稿。",
+    "steps": [
+      {
+        "title": "确认正在发生什么",
+        "body": "状态里有未合并路径，日志显示两个分支各自的工作。notes.txt 是合并前就存在的未跟踪草稿。",
+        "command": "git status\ngit diff\ngit log --oneline --graph --all"
+      },
+      {
+        "title": "撤销本次合并",
+        "body": "merge --abort 撤销进行中的合并。对复杂未提交改动不能盲目假定总能恢复，应先查看并备份；本关的独立草稿可以保留。",
+        "command": "git merge --abort\ngit status\ncat notes.txt"
+      },
+      {
+        "title": "确认没有丢失分支",
+        "body": "不要用提交冲突解决或删除功能分支代替撤销。主线必须回到合并前。草稿保持未跟踪是正确结果。",
+        "command": "git branch -v\ngit log --oneline --graph --all"
+      }
+    ],
+    "hints": [
+      "状态里有未合并路径，日志显示两个分支各自的工作。notes.txt 是合并前就存在的未跟踪草稿。",
+      "merge --abort 撤销进行中的合并。对复杂未提交改动不能盲目假定总能恢复，应先查看并备份；本关的独立草稿可以保留。",
+      "git status\ngit diff\ngit log --oneline --graph --all\n\ngit merge --abort\ngit status\ncat notes.txt\n\ngit branch -v\ngit log --oneline --graph --all\n独立挑战中 ready 改为 released；重试定位关使用 retries=5。其他身份与保留要求不变。"
+    ]
+  },
+  {
+    "id": "pull-ff-only",
+    "number": "41",
+    "title": "只允许快进的 pull",
+    "subtitle": "为同一处分叉选择明确的整合策略",
+    "category": "团队协作",
+    "level": "进阶",
+    "minutes": 20,
+    "concepts": [
+      "config pull.ff",
+      "pull --ff-only",
+      "fetch"
+    ],
+    "commands": [
+      "config pull.ff",
+      "pull --ff-only",
+      "fetch",
+      "rebase",
+      "push"
+    ],
+    "file": "feature.txt",
+    "story": "本地和 origin/main 已分叉。保留 feature.txt 的 ready 功能和队友 team.txt，设置本仓库对应的 pull 策略，按本关方式整合并推送 main。",
+    "challengeStory": "独立完成此任务，自行选择步骤。本地和 origin/main 已分叉。保留 feature.txt 的 released 功能和队友 team.txt，设置本仓库对应的 pull 策略，按本关方式整合并推送 main。",
+    "target": "本地和 origin/main 已分叉。保留 feature.txt 的 ready 功能和队友 team.txt，设置本仓库对应的 pull 策略，按本关方式整合并推送 main。",
+    "challengeTarget": "本地和 origin/main 已分叉。保留 feature.txt 的 released 功能和队友 team.txt，设置本仓库对应的 pull 策略，按本关方式整合并推送 main。",
+    "steps": [
+      {
+        "title": "观察尚未同步的两侧工作",
+        "body": "先查看状态和跟踪关系。fetch 只更新远端跟踪引用，不会自动改写本地 main。",
+        "command": "git status\ngit branch -vv\ngit fetch origin\ngit log --oneline --graph --all"
+      },
+      {
+        "title": "配置并执行本关策略",
+        "body": "先配置只允许快进，再 pull，观察分叉时会拒绝自动整合。fetch 已获取远端引用；查看两侧历史后显式 rebase origin/main，随后再 pull 和 push。",
+        "command": "git config --local pull.ff only\ngit pull\ngit log --oneline --graph --all\ngit rebase origin/main\ngit pull"
+      },
+      {
+        "title": "推送并核对结果",
+        "body": "检查本地与队友内容都在，再推送。ff-only/rebase 两关需要线性历史；merge 关需要保留原提交和双亲节点。",
+        "command": "cat feature.txt team.txt\ngit push\ngit status"
+      }
+    ],
+    "hints": [
+      "先查看状态和跟踪关系。fetch 只更新远端跟踪引用，不会自动改写本地 main。",
+      "先配置只允许快进，再 pull，观察分叉时会拒绝自动整合。fetch 已获取远端引用；查看两侧历史后显式 rebase origin/main，随后再 pull 和 push。",
+      "git status\ngit branch -vv\ngit fetch origin\ngit log --oneline --graph --all\n\ngit config --local pull.ff only\ngit pull\ngit log --oneline --graph --all\ngit rebase origin/main\ngit pull\n\ncat feature.txt team.txt\ngit push\ngit status\n独立挑战中 ready 改为 released；重试定位关使用 retries=5。其他身份与保留要求不变。"
+    ]
+  },
+  {
+    "id": "pull-rebase",
+    "number": "42",
+    "title": "用 pull 重放本地工作",
+    "subtitle": "为同一处分叉选择明确的整合策略",
+    "category": "团队协作",
+    "level": "进阶",
+    "minutes": 20,
+    "concepts": [
+      "config pull.rebase",
+      "pull --rebase",
+      "log"
+    ],
+    "commands": [
+      "config pull.rebase",
+      "pull --rebase",
+      "log",
+      "push"
+    ],
+    "file": "feature.txt",
+    "story": "本地和 origin/main 已分叉。保留 feature.txt 的 ready 功能和队友 team.txt，设置本仓库对应的 pull 策略，按本关方式整合并推送 main。",
+    "challengeStory": "独立完成此任务，自行选择步骤。本地和 origin/main 已分叉。保留 feature.txt 的 released 功能和队友 team.txt，设置本仓库对应的 pull 策略，按本关方式整合并推送 main。",
+    "target": "本地和 origin/main 已分叉。保留 feature.txt 的 ready 功能和队友 team.txt，设置本仓库对应的 pull 策略，按本关方式整合并推送 main。",
+    "challengeTarget": "本地和 origin/main 已分叉。保留 feature.txt 的 released 功能和队友 team.txt，设置本仓库对应的 pull 策略，按本关方式整合并推送 main。",
+    "steps": [
+      {
+        "title": "观察尚未同步的两侧工作",
+        "body": "先查看状态和跟踪关系。fetch 只更新远端跟踪引用，不会自动改写本地 main。",
+        "command": "git status\ngit branch -vv\ngit fetch origin\ngit log --oneline --graph --all"
+      },
+      {
+        "title": "配置并执行本关策略",
+        "body": "配置本仓库 pull 使用 rebase。pull 会先获取远端，再把尚未推送的本地提交重放到其后。用图形历史比较原提交与新提交，最后 push。",
+        "command": "git config --local pull.rebase true\ngit pull\ngit log --oneline --graph --all"
+      },
+      {
+        "title": "推送并核对结果",
+        "body": "检查本地与队友内容都在，再推送。ff-only/rebase 两关需要线性历史；merge 关需要保留原提交和双亲节点。",
+        "command": "cat feature.txt team.txt\ngit push\ngit status"
+      }
+    ],
+    "hints": [
+      "先查看状态和跟踪关系。fetch 只更新远端跟踪引用，不会自动改写本地 main。",
+      "配置本仓库 pull 使用 rebase。pull 会先获取远端，再把尚未推送的本地提交重放到其后。用图形历史比较原提交与新提交，最后 push。",
+      "git status\ngit branch -vv\ngit fetch origin\ngit log --oneline --graph --all\n\ngit config --local pull.rebase true\ngit pull\ngit log --oneline --graph --all\n\ncat feature.txt team.txt\ngit push\ngit status\n独立挑战中 ready 改为 released；重试定位关使用 retries=5。其他身份与保留要求不变。"
+    ]
+  },
+  {
+    "id": "pull-merge",
+    "number": "43",
+    "title": "用 pull 保留分叉历史",
+    "subtitle": "为同一处分叉选择明确的整合策略",
+    "category": "团队协作",
+    "level": "进阶",
+    "minutes": 20,
+    "concepts": [
+      "config pull.rebase",
+      "pull --no-rebase",
+      "log"
+    ],
+    "commands": [
+      "config pull.rebase",
+      "pull --no-rebase",
+      "log",
+      "push"
+    ],
+    "file": "feature.txt",
+    "story": "本地和 origin/main 已分叉。保留 feature.txt 的 ready 功能和队友 team.txt，设置本仓库对应的 pull 策略，按本关方式整合并推送 main。",
+    "challengeStory": "独立完成此任务，自行选择步骤。本地和 origin/main 已分叉。保留 feature.txt 的 released 功能和队友 team.txt，设置本仓库对应的 pull 策略，按本关方式整合并推送 main。",
+    "target": "本地和 origin/main 已分叉。保留 feature.txt 的 ready 功能和队友 team.txt，设置本仓库对应的 pull 策略，按本关方式整合并推送 main。",
+    "challengeTarget": "本地和 origin/main 已分叉。保留 feature.txt 的 released 功能和队友 team.txt，设置本仓库对应的 pull 策略，按本关方式整合并推送 main。",
+    "steps": [
+      {
+        "title": "观察尚未同步的两侧工作",
+        "body": "先查看状态和跟踪关系。fetch 只更新远端跟踪引用，不会自动改写本地 main。",
+        "command": "git status\ngit branch -vv\ngit fetch origin\ngit log --oneline --graph --all"
+      },
+      {
+        "title": "配置并执行本关策略",
+        "body": "配置本仓库 pull 使用 merge。pull 会保留两侧原提交，并生成一个双亲合并提交。最后推送整合结果。",
+        "command": "git config --local pull.rebase false\ngit pull\ngit log --oneline --graph --all"
+      },
+      {
+        "title": "推送并核对结果",
+        "body": "检查本地与队友内容都在，再推送。ff-only/rebase 两关需要线性历史；merge 关需要保留原提交和双亲节点。",
+        "command": "cat feature.txt team.txt\ngit push\ngit status"
+      }
+    ],
+    "hints": [
+      "先查看状态和跟踪关系。fetch 只更新远端跟踪引用，不会自动改写本地 main。",
+      "配置本仓库 pull 使用 merge。pull 会保留两侧原提交，并生成一个双亲合并提交。最后推送整合结果。",
+      "git status\ngit branch -vv\ngit fetch origin\ngit log --oneline --graph --all\n\ngit config --local pull.rebase false\ngit pull\ngit log --oneline --graph --all\n\ncat feature.txt team.txt\ngit push\ngit status\n独立挑战中 ready 改为 released；重试定位关使用 retries=5。其他身份与保留要求不变。"
+    ]
+  },
+  {
+    "id": "detached-head",
+    "number": "44",
+    "title": "给分离 HEAD 中的工作命名",
+    "subtitle": "先保住提交，再恢复正常开发",
+    "category": "恢复排错",
+    "level": "进阶",
+    "minutes": 20,
+    "concepts": [
+      "reflog",
+      "switch",
+      "branch"
+    ],
+    "commands": [
+      "reflog",
+      "switch",
+      "branch",
+      "show"
+    ],
+    "file": "feature.txt",
+    "story": "当前 HEAD 分离，但功能提交还在当前位置。先建立 recovered 分支再继续工作。 recovered 必须指向原功能提交，feature.txt 为 ready；main 保持不变。",
+    "challengeStory": "独立完成此任务，自行选择步骤。当前 HEAD 分离，但功能提交还在当前位置。先建立 recovered 分支再继续工作。 recovered 必须指向原功能提交，feature.txt 为 released；main 保持不变。",
+    "target": "当前 HEAD 分离，但功能提交还在当前位置。先建立 recovered 分支再继续工作。 recovered 必须指向原功能提交，feature.txt 为 ready；main 保持不变。",
+    "challengeTarget": "当前 HEAD 分离，但功能提交还在当前位置。先建立 recovered 分支再继续工作。 recovered 必须指向原功能提交，feature.txt 为 released；main 保持不变。",
+    "steps": [
+      {
+        "title": "查看可恢复的证据",
+        "body": "当前 HEAD 分离，但功能提交还在当前位置。先建立 recovered 分支再继续工作。",
+        "command": "git status\ngit log -1 --oneline\ngit branch -v"
+      },
+      {
+        "title": "为原提交建立分支",
+        "body": "不要照抄尖括号占位符。检查候选提交，确认是要恢复的工作；重新提交相同文本不能代替保留原提交。",
+        "command": "git switch -c recovered"
+      },
+      {
+        "title": "验证恢复结果",
+        "body": "切换到 recovered，确认原工作、主线和仓库状态。",
+        "command": "git log --oneline --graph --all\ngit status"
+      }
+    ],
+    "hints": [
+      "当前 HEAD 分离，但功能提交还在当前位置。先建立 recovered 分支再继续工作。",
+      "不要照抄尖括号占位符。检查候选提交，确认是要恢复的工作；重新提交相同文本不能代替保留原提交。",
+      "git status\ngit log -1 --oneline\ngit branch -v\n\ngit switch -c recovered\n\ngit log --oneline --graph --all\ngit status\n独立挑战中 ready 改为 released；重试定位关使用 retries=5。其他身份与保留要求不变。"
+    ]
+  },
+  {
+    "id": "deleted-branch",
+    "number": "45",
+    "title": "找回误删的未合并分支",
+    "subtitle": "先保住提交，再恢复正常开发",
+    "category": "恢复排错",
+    "level": "进阶",
+    "minutes": 20,
+    "concepts": [
+      "reflog",
+      "switch",
+      "branch"
+    ],
+    "commands": [
+      "reflog",
+      "switch",
+      "branch",
+      "show"
+    ],
+    "file": "feature.txt",
+    "story": "feature/lost 被误删，未合并提交还在 reflog 中。找到对应提交，用 show 核对，然后重建为 recovered 分支。 recovered 必须指向原功能提交，feature.txt 为 ready；main 保持不变。",
+    "challengeStory": "独立完成此任务，自行选择步骤。feature/lost 被误删，未合并提交还在 reflog 中。找到对应提交，用 show 核对，然后重建为 recovered 分支。 recovered 必须指向原功能提交，feature.txt 为 released；main 保持不变。",
+    "target": "feature/lost 被误删，未合并提交还在 reflog 中。找到对应提交，用 show 核对，然后重建为 recovered 分支。 recovered 必须指向原功能提交，feature.txt 为 ready；main 保持不变。",
+    "challengeTarget": "feature/lost 被误删，未合并提交还在 reflog 中。找到对应提交，用 show 核对，然后重建为 recovered 分支。 recovered 必须指向原功能提交，feature.txt 为 released；main 保持不变。",
+    "steps": [
+      {
+        "title": "查看可恢复的证据",
+        "body": "feature/lost 被误删，未合并提交还在 reflog 中。找到对应提交，用 show 核对，然后重建为 recovered 分支。",
+        "command": "git reflog --all\ngit log --oneline --all"
+      },
+      {
+        "title": "为原提交建立分支",
+        "body": "不要照抄尖括号占位符。检查候选提交，确认是要恢复的工作；重新提交相同文本不能代替保留原提交。",
+        "command": "git show <找到的提交ID>\ngit switch -c recovered <找到的提交ID>"
+      },
+      {
+        "title": "验证恢复结果",
+        "body": "切换到 recovered，确认原工作、主线和仓库状态。",
+        "command": "git log --oneline --graph --all\ngit status"
+      }
+    ],
+    "hints": [
+      "feature/lost 被误删，未合并提交还在 reflog 中。找到对应提交，用 show 核对，然后重建为 recovered 分支。",
+      "不要照抄尖括号占位符。检查候选提交，确认是要恢复的工作；重新提交相同文本不能代替保留原提交。",
+      "git reflog --all\ngit log --oneline --all\n\ngit show <找到的提交ID>\ngit switch -c recovered <找到的提交ID>\n\ngit log --oneline --graph --all\ngit status\n独立挑战中 ready 改为 released；重试定位关使用 retries=5。其他身份与保留要求不变。"
+    ]
+  },
+  {
+    "id": "fsck-recovery",
+    "number": "46",
+    "title": "从悬空对象恢复并整理仓库",
+    "subtitle": "先保住提交，再恢复正常开发",
+    "category": "恢复排错",
+    "level": "进阶",
+    "minutes": 20,
+    "concepts": [
+      "fsck",
+      "gc",
+      "count-objects"
+    ],
+    "commands": [
+      "fsck",
+      "gc",
+      "count-objects",
+      "switch"
+    ],
+    "file": "feature.txt",
+    "story": "分支和 reflog 记录都已清除，但提交对象尚未回收。使用 fsck 查找 dangling commit，检查内容后建立 recovered 引用，再运行 gc。不要先 prune 未引用对象。 recovered 必须指向原功能提交，feature.txt 为 ready；main 保持不变。恢复引用后整理对象并确认完整性。",
+    "challengeStory": "独立完成此任务，自行选择步骤。分支和 reflog 记录都已清除，但提交对象尚未回收。使用 fsck 查找 dangling commit，检查内容后建立 recovered 引用，再运行 gc。不要先 prune 未引用对象。 recovered 必须指向原功能提交，feature.txt 为 released；main 保持不变。恢复引用后整理对象并确认完整性。",
+    "target": "分支和 reflog 记录都已清除，但提交对象尚未回收。使用 fsck 查找 dangling commit，检查内容后建立 recovered 引用，再运行 gc。不要先 prune 未引用对象。 recovered 必须指向原功能提交，feature.txt 为 ready；main 保持不变。恢复引用后整理对象并确认完整性。",
+    "challengeTarget": "分支和 reflog 记录都已清除，但提交对象尚未回收。使用 fsck 查找 dangling commit，检查内容后建立 recovered 引用，再运行 gc。不要先 prune 未引用对象。 recovered 必须指向原功能提交，feature.txt 为 released；main 保持不变。恢复引用后整理对象并确认完整性。",
+    "steps": [
+      {
+        "title": "查看可恢复的证据",
+        "body": "分支和 reflog 记录都已清除，但提交对象尚未回收。使用 fsck 查找 dangling commit，检查内容后建立 recovered 引用，再运行 gc。不要先 prune 未引用对象。",
+        "command": "git reflog --all\ngit fsck --full --no-reflogs"
+      },
+      {
+        "title": "为原提交建立分支",
+        "body": "不要照抄尖括号占位符。检查候选提交，确认是要恢复的工作；重新提交相同文本不能代替保留原提交。",
+        "command": "git show <找到的提交ID>\ngit switch -c recovered <找到的提交ID>"
+      },
+      {
+        "title": "验证恢复结果",
+        "body": "切换到 recovered，确认原工作、主线和仓库状态。",
+        "command": "git gc\ngit fsck --full\ngit count-objects -v"
+      }
+    ],
+    "hints": [
+      "分支和 reflog 记录都已清除，但提交对象尚未回收。使用 fsck 查找 dangling commit，检查内容后建立 recovered 引用，再运行 gc。不要先 prune 未引用对象。",
+      "不要照抄尖括号占位符。检查候选提交，确认是要恢复的工作；重新提交相同文本不能代替保留原提交。",
+      "git reflog --all\ngit fsck --full --no-reflogs\n\ngit show <找到的提交ID>\ngit switch -c recovered <找到的提交ID>\n\ngit gc\ngit fsck --full\ngit count-objects -v\n独立挑战中 ready 改为 released；重试定位关使用 retries=5。其他身份与保留要求不变。"
+    ]
+  },
+  {
+    "id": "blame-log",
+    "number": "47",
+    "title": "定位哪次提交引入了故障",
+    "subtitle": "用行归属与内容搜索交叉检查",
+    "category": "恢复排错",
+    "level": "进阶",
+    "minutes": 20,
+    "concepts": [
+      "blame",
+      "log -S",
+      "show"
+    ],
+    "commands": [
+      "blame",
+      "log -S",
+      "show",
+      "commit"
+    ],
+    "file": "config.ini",
+    "story": "重试被意外设置为 0。用 blame 和 log 搜索定位引入故障的提交，提交 investigation.txt，内容为 suspect=完整提交ID。修复 retries=3，保留其他参数、后续文档与历史。",
+    "challengeStory": "独立完成此任务，自行选择步骤。重试被意外设置为 0。用 blame 和 log 搜索定位引入故障的提交，提交 investigation.txt，内容为 suspect=完整提交ID。修复 retries=5，保留其他参数、后续文档与历史。",
+    "target": "重试被意外设置为 0。用 blame 和 log 搜索定位引入故障的提交，提交 investigation.txt，内容为 suspect=完整提交ID。修复 retries=3，保留其他参数、后续文档与历史。",
+    "challengeTarget": "重试被意外设置为 0。用 blame 和 log 搜索定位引入故障的提交，提交 investigation.txt，内容为 suspect=完整提交ID。修复 retries=5，保留其他参数、后续文档与历史。",
+    "steps": [
+      {
+        "title": "定位具体行",
+        "body": "blame 显示当前行最后由哪次提交改动；它是定位线索，不代表该作者应该承担责任。结合 show 和内容搜索核实。",
+        "command": "git blame -L 2,2 config.ini\ngit log --oneline -S \"retries=0\" -- config.ini"
+      },
+      {
+        "title": "核对提交并记录证据",
+        "body": "查看候选提交的完整 diff，把确认后的完整 SHA 写入报告。",
+        "command": "git show <候选提交ID>\nprintf \"suspect=<完整提交ID>\\n\" > investigation.txt"
+      },
+      {
+        "title": "提交范围明确的修复",
+        "body": "只把 retries 改回目标数值，保留 timeout=30、mode=safe 与最新 README。",
+        "command": "git diff\ngit add config.ini investigation.txt\ngit commit -m \"修复重试并记录定位证据\""
+      }
+    ],
+    "hints": [
+      "blame 显示当前行最后由哪次提交改动；它是定位线索，不代表该作者应该承担责任。结合 show 和内容搜索核实。",
+      "查看候选提交的完整 diff，把确认后的完整 SHA 写入报告。",
+      "git blame -L 2,2 config.ini\ngit log --oneline -S \"retries=0\" -- config.ini\n\ngit show <候选提交ID>\nprintf \"suspect=<完整提交ID>\\n\" > investigation.txt\n\ngit diff\ngit add config.ini investigation.txt\ngit commit -m \"修复重试并记录定位证据\"\n独立挑战中 ready 改为 released；重试定位关使用 retries=5。其他身份与保留要求不变。"
+    ]
+  },
+  {
+    "id": "am-conflict",
+    "number": "48",
+    "title": "恢复被冲突中断的邮件补丁",
+    "subtitle": "继续补丁流程，保留邮件作者",
+    "category": "恢复排错",
+    "level": "进阶",
+    "minutes": 20,
+    "concepts": [
+      "am --show-current-patch",
+      "am --abort",
+      "am --continue"
+    ],
+    "commands": [
+      "am --show-current-patch",
+      "am --abort",
+      "am --continue",
+      "add"
+    ],
+    "file": "feature.txt",
+    "story": "git am 已因冲突暂停。保留队友 team.txt，将 feature.txt 解决为 ready，用 am --continue 完成原补丁提交，并保留邮件作者。也可先 am --abort，再从 ../incoming.patch 重试。",
+    "challengeStory": "独立完成此任务，自行选择步骤。git am 已因冲突暂停。保留队友 team.txt，将 feature.txt 解决为 released，用 am --continue 完成原补丁提交，并保留邮件作者。也可先 am --abort，再从 ../incoming.patch 重试。",
+    "target": "git am 已因冲突暂停。保留队友 team.txt，将 feature.txt 解决为 ready，用 am --continue 完成原补丁提交，并保留邮件作者。也可先 am --abort，再从 ../incoming.patch 重试。",
+    "challengeTarget": "git am 已因冲突暂停。保留队友 team.txt，将 feature.txt 解决为 released，用 am --continue 完成原补丁提交，并保留邮件作者。也可先 am --abort，再从 ../incoming.patch 重试。",
+    "steps": [
+      {
+        "title": "识别 am 操作和补丁",
+        "body": "这里正在应用邮件补丁，不是普通 merge。查看当前补丁与状态。",
+        "command": "git status\ngit am --show-current-patch"
+      },
+      {
+        "title": "解决冲突并继续",
+        "body": "去掉冲突标记，保留本关要求的功能内容，暂存后使用 am --continue。不要自己额外 commit，邮件作者会由 am 保留。",
+        "command": "printf 'ready\\n' > feature.txt\ngit add feature.txt\ngit am --continue"
+      },
+      {
+        "title": "核对作者和保留的工作",
+        "body": "如果需要退出重试，先 am --abort，再 git am -3 ../incoming.patch。完成后核对作者、队友文件和主线历史。",
+        "command": "git log -1 --format=fuller\ncat team.txt\ngit status"
+      }
+    ],
+    "hints": [
+      "这里正在应用邮件补丁，不是普通 merge。查看当前补丁与状态。",
+      "去掉冲突标记，保留本关要求的功能内容，暂存后使用 am --continue。不要自己额外 commit，邮件作者会由 am 保留。",
+      "git status\ngit am --show-current-patch\n\nprintf 'ready\\n' > feature.txt\ngit add feature.txt\ngit am --continue\n\ngit log -1 --format=fuller\ncat team.txt\ngit status\n独立挑战中 ready 改为 released；重试定位关使用 retries=5。其他身份与保留要求不变。"
+    ]
+  },
+  {
+    "id": "attributes",
+    "number": "49",
+    "title": "统一跨平台文件换行规则",
+    "subtitle": "仓库存 LF，检出时按文件类型转换",
+    "category": "仓库维护",
+    "level": "进阶",
+    "minutes": 20,
+    "concepts": [
+      "check-attr",
+      "add --renormalize",
+      "ls-files --eol"
+    ],
+    "commands": [
+      "check-attr",
+      "add --renormalize",
+      "ls-files --eol",
+      "restore"
+    ],
+    "file": "run.sh",
+    "story": "提交 .gitattributes：Shell 文件使用 LF，CMD 文件检出为 CRLF，二进制保持字节不变。重新规范化已跟踪文本并提交，随后重新检出验证实际换行。",
+    "challengeStory": "独立完成此任务，自行选择步骤。提交 .gitattributes：Shell 文件使用 LF，CMD 文件检出为 CRLF，二进制保持字节不变。重新规范化已跟踪文本并提交，随后重新检出验证实际换行。",
+    "target": "提交 .gitattributes：Shell 文件使用 LF，CMD 文件检出为 CRLF，二进制保持字节不变。重新规范化已跟踪文本并提交，随后重新检出验证实际换行。",
+    "challengeTarget": "提交 .gitattributes：Shell 文件使用 LF，CMD 文件检出为 CRLF，二进制保持字节不变。重新规范化已跟踪文本并提交，随后重新检出验证实际换行。",
+    "steps": [
+      {
+        "title": "观察工作区和索引换行",
+        "body": "初始文本含混合换行；仅修改配置不会自动重写已跟踪对象。",
+        "command": "git ls-files --eol\ngit check-attr text eol -- run.sh run.cmd asset.bin"
+      },
+      {
+        "title": "写入团队规则并重新暂存",
+        "body": "添加 .gitattributes；文本在 Git 对象中规范为 LF，工作区则遵从 eol。二进制使用 -text。",
+        "command": "printf '*.sh text eol=lf\\n*.cmd text eol=crlf\\n*.bin -text\\n' > .gitattributes\ngit add .gitattributes\ngit add --renormalize .\ngit diff --cached\ngit commit -m '统一文件换行规则'"
+      },
+      {
+        "title": "重新检出验证字节",
+        "body": "确认已提交且无待保存修改后，仅移除这两个练习文本再从 HEAD 恢复，触发检出转换。二进制文件不动。重新 git add 这两个文本以刷新索引信息，再用 diff --cached 确认没有新增内容差异。",
+        "command": "rm run.sh run.cmd\ngit restore --source=HEAD --worktree run.sh run.cmd\ngit add run.sh run.cmd\ngit diff --cached\ngit ls-files --eol\ngit status"
+      }
+    ],
+    "hints": [
+      "初始文本含混合换行；仅修改配置不会自动重写已跟踪对象。",
+      "添加 .gitattributes；文本在 Git 对象中规范为 LF，工作区则遵从 eol。二进制使用 -text。",
+      "git ls-files --eol\ngit check-attr text eol -- run.sh run.cmd asset.bin\n\nprintf '*.sh text eol=lf\\n*.cmd text eol=crlf\\n*.bin -text\\n' > .gitattributes\ngit add .gitattributes\ngit add --renormalize .\ngit diff --cached\ngit commit -m '统一文件换行规则'\n\nrm run.sh run.cmd\ngit restore --source=HEAD --worktree run.sh run.cmd\ngit add run.sh run.cmd\ngit diff --cached\ngit ls-files --eol\ngit status"
+    ]
   }
 ]

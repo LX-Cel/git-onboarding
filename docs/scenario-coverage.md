@@ -16,12 +16,12 @@
 
 | 领域         | 必须覆盖的场景                                                                                                                                                 | 当前证据                                                                                                       |
 | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| 基本工作流   | init/clone、status/diff/log/show、add/commit、文件删除与重命名、部分暂存、amend                                                                                | 提交、查看差异、部分暂存、amend、重命名/删除、真实 clone 已验证；init 专题待补                                 |
-| 分支与整合   | switch/checkout、tracking、fast-forward/no-ff/squash、merge 冲突/abort、rebase 冲突/continue/abort、交互整理/fixup/autosquash、cherry-pick 冲突/continue/abort | 普通 merge、PR squash/rebase、rebase/冲突/onto/autosquash、cherry-pick/冲突已验证；本地 merge abort 专题待补   |
-| 远程协作     | fetch/pull/push、拒绝推送、分叉历史、origin/upstream、fork、PR 创建/评审/修改/合并/同步清理、force-with-lease、远端重命名/删除/prune                           | 双远端 PR/上游冲突/重新评审检查、推送拒绝/分叉整合、明确租约、远端地址修复/重命名/prune 已验证；pull 策略待补  |
-| 保存与恢复   | restore、revert、reset soft/mixed/hard 对比、stash 未跟踪文件/冲突、reflog/分离 HEAD/误删分支、合并撤销、进行中操作恢复                                        | restore/revert、三种 reset、stash 含未跟踪文件/冲突、reflog、撤销 merge 已验证；分离 HEAD/误删分支专题待补     |
-| 定位与发布   | log 搜索、blame、bisect/run、注释标签/推送标签、hotfix/backport、patch/format-patch/am、bundle                                                                 | bisect/run、注释标签发布、hotfix/backport、format-patch/am、bundle 已验证；blame/log 搜索与 am 冲突待补        |
-| 仓库维护     | .gitignore/已跟踪文件、attributes/换行符、worktree、submodule、sparse checkout/shallow clone、对象与引用/fsck/gc                                               | ignore、worktree、submodule 初始化/升级、sparse/shallow 已验证；换行符、fsck/gc 待补                           |
+| 基本工作流   | init/clone、status/diff/log/show、add/commit、文件删除与重命名、部分暂存、amend                                                                                | 普通目录 init/本地身份配置、clone/跟踪分支、提交、差异、部分暂存、amend、重命名/删除已验证                     |
+| 分支与整合   | switch/checkout、tracking、fast-forward/no-ff/squash、merge 冲突/abort、rebase 冲突/continue/abort、交互整理/fixup/autosquash、cherry-pick 冲突/continue/abort | 普通 merge/冲突/abort、PR squash/rebase、rebase/冲突/onto/autosquash、cherry-pick/冲突已验证                   |
+| 远程协作     | fetch/pull/push、拒绝推送、分叉历史、origin/upstream、fork、PR 创建/评审/修改/合并/同步清理、force-with-lease、远端重命名/删除/prune                           | 双远端 PR/冲突/检查、推送拒绝、pull ff-only/rebase/merge、明确租约、远端修复/重命名/prune 已验证               |
+| 保存与恢复   | restore、revert、reset soft/mixed/hard 对比、stash 未跟踪文件/冲突、reflog/分离 HEAD/误删分支、合并撤销、进行中操作恢复                                        | restore/revert、三种 reset、stash/冲突、reflog、分离 HEAD、误删分支、撤销 merge、am 恢复已验证                 |
+| 定位与发布   | log 搜索、blame、bisect/run、注释标签/推送标签、hotfix/backport、patch/format-patch/am、bundle                                                                 | blame/log -S 定位、bisect/run、注释标签、hotfix/backport、format-patch/am/冲突/abort/continue、bundle 已验证   |
+| 仓库维护     | .gitignore/已跟踪文件、attributes/换行符、worktree、submodule、sparse checkout/shallow clone、对象与引用/fsck/gc                                               | ignore、attributes/LF/CRLF/二进制、worktree、submodule、sparse/shallow、fsck 悬空恢复与 gc 已验证              |
 | 托管与大文件 | 分支保护/检查失败/合并策略、认证/权限失败诊断、Git LFS、签名及验证、历史敏感内容清理                                                                           | 离线 PR 请求修改/冲突/过期检查、真实保护钩子与 merge/squash/rebase 已验证；认证诊断、LFS、签名、历史清理待实现 |
 | 综合任务     | 新人入职、fork 贡献、发布与回滚、多人并发、遗留仓库故障、自由实验区                                                                                            | fork 贡献完整流程已验证；入职、发布回滚、多人并发、遗留仓库排查、自由实验区待补                                |
 
@@ -84,6 +84,19 @@
 
 分支保护是本地教学钩子，必需检查是集成树的确定性课程检查；不声称实现了线上 GitHub 权限或 CI 服务。认证、签名/LFS、历史清理、pull 策略、仓库诊断和综合任务等仍需继续完善。
 
+## 2026-09-13 第五批实现与验证
+
+新增 12 门课程、24 个场景：普通目录初始化与本地身份、clone/远端跟踪分支、merge abort、pull ff-only/rebase/merge、分离 HEAD、误删分支、blame/log 内容定位、am 冲突恢复、跨平台换行、fsck 悬空对象恢复与 gc。开发分支现有 49 门课程、98 个场景；本批尚未进入发布安装包。
+
+- `test:foundations`：207 项真实 Git 断言通过。包括配置邮箱不能修改旧提交作者、clone 不等于完成跟踪和推送、解决合并不能代替撤销、相同文本的新提交不能冒充原提交恢复、错误 blame 归因不能通过、普通自署名提交不能替代保留邮件作者。
+- 三种 pull 使用同一类分叉初始状态，验证 ff-only 的真实拒绝和原 tip 保留、merge 双亲关系与原提交保留、rebase 的新提交和线性关系，并要求本地策略配置和远端同步。
+- 换行课程同时检查 Git 对象内容、工作区 LF/CRLF 字节、二进制不变与已提交属性；添加规则不能替代 renormalize。重新检出后重新 add 刷新索引信息，断言暂存区没有新增内容差异。
+- fsck 课程清除该练习的 reflog 后保留悬空提交，验证通过 fsck 找回对象、建立引用，再 gc，恢复引用和内容均保留。只恢复相同文件而丢失原提交不能通过。
+- 桌面支持尚未 init/clone 的普通目录，并与分离 HEAD 分开显示。clone 后的新增文件可自动载入编辑器；保留未保存编辑。am 与 rebase 操作现在分别识别，冲突提示对应的 continue 命令。
+- 原有 702 项真实 Git 断言和隔离/PTY 检查继续通过，合计 909 项。6 项 Node 测试、12 项桌面测试、保留 0.1.0 练习数据的升级测试通过。新增桌面测试覆盖从无仓库到提交、clone/跟踪/推送、am 冲突与属性换行，均由真实终端驱动并手动检查结果。
+
+仍需完成认证/权限诊断、真实签名与 LFS、敏感历史清理、入职/发布回滚/并发协作/遗留排错综合任务和自由实验区，随后进行完整安装包与发布验收。
+
 ## 一手参考
 
 - [Git 命令参考](https://git-scm.com/docs)
@@ -98,5 +111,8 @@
 - [Git 合并树](https://git-scm.com/docs/git-merge-tree)
 - [GitHub 分支保护](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches)
 - [GitHub 必需检查](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks)
+- [pull 策略](https://git-scm.com/docs/git-pull)
+- [attributes 与换行](https://git-scm.com/docs/gitattributes)
+- [merge 与中断恢复](https://git-scm.com/docs/git-merge)
 
 2026-09-13 核查上述官方资料，用于建立覆盖范围；具体场景以隔离环境中的实际 Git 行为验收。

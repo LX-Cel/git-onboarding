@@ -28,7 +28,7 @@ def complete(lesson, mode):
 
 with tempfile.TemporaryDirectory(prefix='maintenance-scenarios-') as directory:
     e.ROOT = Path(directory) / 'labs'
-    expect(e.IDS == {'basics', 'collab', 'recovery'} | e.advanced.IDS | m.IDS | e.teamwork.IDS, 'every catalog lesson has an implementation')
+    expect(e.IDS == {'basics', 'collab', 'recovery'} | e.advanced.IDS | m.IDS | e.teamwork.IDS | e.foundations.IDS, 'every catalog lesson has an implementation')
     expect(len(e.IDS) == len(e.LESSONS), 'catalog IDs are unique')
     for mode in ['guided', 'challenge']:
         for lesson in sorted(m.IDS):

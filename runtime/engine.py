@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import advanced
 import maintenance
 import teamwork
+import foundations
 
 ROOT = Path('/home/student/labs')
 COURSE_VERSION = '0.2.0'
@@ -88,6 +89,8 @@ def initialize(lesson, mode, reset=False):
         maintenance.setup(advanced_api(), repo, base, lesson, mode, record)
     elif lesson in teamwork.IDS:
         teamwork.setup(advanced_api(), repo, base, lesson, mode, record)
+    elif lesson in foundations.IDS:
+        foundations.setup(advanced_api(), repo, base, lesson, mode, record)
     elif lesson == 'recovery':
         (repo / 'notes.txt').write_text('这段笔记需要保留。\n')
         (repo / 'draft.txt').write_text('初始草稿\n')
@@ -160,6 +163,8 @@ def ancestor(repo, first, second):
 def assess(repo, base, lesson, mode):
     record = json.loads((base / 'scenario.json').read_text())
     spec = next(x for x in LESSONS if x['id'] == lesson)
+    if lesson in foundations.IDS:
+        return foundations.assess(advanced_api(), repo, base, lesson, mode, record)
     status = git(repo, 'status', '--porcelain')
     clean = not status
     target = spec['target' if mode == 'guided' else 'challengeTarget']
@@ -207,6 +212,9 @@ def snapshot(lesson, mode):
     base, repo = location(lesson, mode)
     if not repo.is_dir() or repo.is_symlink():
         raise ValueError('仓库不存在或路径被修改，请重新开始本练习')
+    has_repo = foundations.is_repository(advanced_api(), repo)
+    if not has_repo and lesson not in foundations.UNINITIALIZED:
+        raise ValueError('当前目录不是有效的 Git 仓库，请修复或重新开始本练习')
     files = []
     for folder, dirs, names in os.walk(repo, followlinks=False):
         dirs[:] = [d for d in dirs if not d.startswith('.') and not (Path(folder) / d).is_symlink()]
@@ -219,7 +227,7 @@ def snapshot(lesson, mode):
         if len(files) >= 150:
             break
     # -z avoids quoting and handles whitespace/newlines in ordinary names.
-    entries = git(repo, 'status', '--porcelain=v1', '-z').split('\x00')
+    entries = git(repo, 'status', '--porcelain=v1', '-z', check=has_repo).split('\x00')
     changes = []
     skip = False
     for entry in entries:
@@ -241,11 +249,11 @@ def snapshot(lesson, mode):
     except (ValueError, OSError, subprocess.SubprocessError) as exc:
         checks = []
         error = str(exc)[:1000]
-    conflicts = git(repo, 'diff', '--name-only', '--diff-filter=U').splitlines()
+    conflicts = git(repo, 'diff', '--name-only', '--diff-filter=U', check=has_repo).splitlines()
     record = json.loads((base / 'scenario.json').read_text())
     remotes = [{'name': name, 'url': git(repo, 'remote', 'get-url', name, check=False)}
-               for name in git(repo, 'remote').splitlines()]
-    return {'path': str(repo), 'branch': git(repo, 'branch', '--show-current'),
+               for name in git(repo, 'remote', check=has_repo).splitlines()]
+    return {'path': str(repo), 'repositoryReady': has_repo, 'branch': git(repo, 'branch', '--show-current', check=has_repo),
             'operation': advanced.operation(advanced_api(), repo), 'remotes': remotes,
             'hosting': advanced.hosting_view(advanced_api(), repo, base, record),
             'head': git(repo, 'rev-parse', '--short', 'HEAD', check=False),
@@ -261,7 +269,7 @@ def dispatch(request):
     lesson, mode = request.get('lesson'), request.get('mode', 'guided')
     if action == 'probe':
         hashes = {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
-                  for name in ['engine.py', 'advanced.py', 'maintenance.py', 'teamwork.py', 'hosting.py', 'relay.py', 'lessons.json']}
+                  for name in ['engine.py', 'advanced.py', 'maintenance.py', 'teamwork.py', 'foundations.py', 'hosting.py', 'relay.py', 'lessons.json']}
         return {'courseVersion': COURSE_VERSION, 'courseHashes': hashes, 'uid': os.getuid(), 'git': subprocess.check_output(['git', '--version'], text=True).strip(),
                 'windowsMount': Path('/mnt/c').exists(), 'interop': bool(os.environ.get('WSL_INTEROP')),
                 'initVisible': Path('/init').exists()}

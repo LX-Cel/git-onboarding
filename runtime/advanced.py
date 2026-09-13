@@ -105,6 +105,8 @@ def operation(e, repo):
         from pathlib import Path
         location = e.git(repo, 'rev-parse', '--git-path', marker, check=False)
         if location and (repo / Path(location)).exists():
+            if marker == 'rebase-apply':
+                return 'am' if (repo / Path(location) / 'applying').exists() else 'rebase'
             return name
     return None
 

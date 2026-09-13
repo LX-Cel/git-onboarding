@@ -80,8 +80,11 @@ export default function CheckResult({
               ))}
             </ul>
             <p className="check-evidence">
-              本次检查：{snapshot.branch || "分离 HEAD"} · 提交{" "}
-              <code>{snapshot.head}</code> · {report.checkedAt}
+              本次检查：
+              {snapshot.repositoryReady === false
+                ? "未初始化"
+                : snapshot.branch || "分离 HEAD"}{" "}
+              · 提交 <code>{snapshot.head}</code> · {report.checkedAt}
             </p>
             {report.unsaved && (
               <p className="check-unsaved">
