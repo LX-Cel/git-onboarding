@@ -2,9 +2,9 @@
 
 一个面向 Git 新手的中文桌面练习应用。从第一次提交，到分支协作、冲突处理和误操作恢复，在真实 Git 仓库里练习。
 
-**开发中：0.2.0 系统课程扩展。** 当前源码包含 33 个课程、66 个引导/挑战场景。涵盖基础提交与部分暂存、历史整理与恢复、双远端 Fork/PR、推送异常与租约保护、worktree、bisect、子模块、稀疏检出、浅克隆、标签、补丁与离线交付等。课程可以按分类和命令搜索。完整覆盖工作仍在进行，见 [覆盖矩阵与验收记录](docs/scenario-coverage.md)；0.2.0 尚未发布安装包，下面的下载仍是 0.1.2。
+**0.2.0-preview.1：系统课程扩展预览版。** 包含 33 个课程、66 个引导/挑战场景。涵盖基础提交与部分暂存、历史整理与恢复、双远端 Fork/PR、推送异常与租约保护、worktree、bisect、子模块、稀疏检出、浅克隆、标签、补丁与离线交付等。课程可以按分类和命令搜索。完整覆盖工作仍在进行，见 [覆盖矩阵与验收记录](docs/scenario-coverage.md)；此预览版提供已完成的课程，不代表全部规划已经完成。
 
-当前发布为 **Windows x64 私有试用版 0.1.2**，采用选定的 J 版 Fluent 2 视觉方向。在 [GitHub Release 下载](https://github.com/LX-Cel/git-onboarding/releases/tag/v0.1.2)安装包 `Git-Onboarding-0.1.2-Setup.exe` 和 SHA256 校验文件；本地构建产物位于 `release/`。项目尚未授予开源许可证；成熟后再决定公开与许可证。
+当前发布为 **Windows x64 私有预览版 0.2.0-preview.1**，延续选定的 J 版 Fluent 2 视觉方向。在 [GitHub Release 下载](https://github.com/LX-Cel/git-onboarding/releases/tag/v0.2.0-preview.1)安装包 `Git-Onboarding-0.2.0-preview.1-Setup.exe` 和 SHA256 校验文件；本地构建产物位于 `release/`。项目尚未授予开源许可证；成熟后再决定公开与许可证。
 
 ![学习路径](docs/screenshots/home.png)
 
@@ -12,7 +12,7 @@
 
 ## 使用
 
-1. 安装 `Git-Onboarding-0.1.2-Setup.exe`，打开 Git Onboarding。
+1. 安装 `Git-Onboarding-0.2.0-preview.1-Setup.exe`，打开 Git Onboarding。已有版本先关闭应用，安装到原目录；无需先卸载。打开后按提示「保留练习并更新」，保留现有练习仓库与学习进度。
 2. 点击「准备练习环境」。应用验证并导入内置的专用 Linux 镜像；不要求预装 Git 或 Docker。
 3. 若尚未安装 WSL，应用请求管理员授权安装系统组件，提示重启后继续。需要支持 WSL 2 的 Windows x64 和已启用的硬件虚拟化。
 4. 选择引导练习或直接挑战。文件保存、Git 暂存与 Git 提交是三个不同操作。
@@ -58,7 +58,7 @@ npm start
 npm run package
 ```
 
-生成 `release/Git-Onboarding-0.1.2-Setup.exe`。打包前会验证镜像 SHA256、课程版本及课程更新包与源文件的一致性，镜像不写入 Git。安装包内含镜像，不要求用户安装构建工具。
+在 `release/` 生成与 `package.json.version` 对应的安装包；已发布预览版的源码以 `v0.2.0-preview.1` 标签为准，开发分支会继续变化。打包前会验证镜像 SHA256、课程版本及课程更新包与源文件的一致性，镜像不写入 Git。安装包内含镜像，不要求用户安装构建工具。
 
 仅修改课程代码时，可用 `npm run runtime:refresh` 更新已校验的本地镜像及课程更新包，无需重新下载 Linux 软件包。跨版本保留数据测试为 `npm run test:upgrade`，需要先将 v0.1.0 发布附件的 `runtime.tar` 放在 `.local/runtime-v0.1.0.tar`。
 
@@ -96,4 +96,4 @@ Windows 用户数据默认位于 Electron 的应用用户数据目录（通常 `
 
 ## 后续范围
 
-云端运行、真实 GitHub 认证与 PR、rebase/cherry-pick/reflog、AI 反馈、多平台安装包、自动更新和学习账号均不属于此首版。
+rebase、cherry-pick、reflog 和离线双远端 PR 已包含在当前预览版。尚待实现的 Git 场景以覆盖矩阵为准。云端运行、真实 GitHub 认证与在线 PR、AI 反馈、多平台安装包、自动更新和学习账号不包含在此预览版中。推送源码不会自动生成 Release，发布时需构建、验证并上传安装包。

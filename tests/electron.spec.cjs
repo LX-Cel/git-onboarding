@@ -43,7 +43,8 @@ test("submodule initialization and parent gitlink update through desktop", async
   };
   delete env.ELECTRON_RUN_AS_NODE;
   const app = await electron.launch({
-    args: ["."],
+    executablePath: process.env.GIT_ONBOARDING_EXECUTABLE,
+    args: process.env.GIT_ONBOARDING_EXECUTABLE ? [] : ["."],
     cwd: path.resolve("."),
     env,
   });
@@ -120,7 +121,8 @@ test("maintenance catalog, partial staging and editable ignore rules", async () 
   };
   delete env.ELECTRON_RUN_AS_NODE;
   const app = await electron.launch({
-    args: ["."],
+    executablePath: process.env.GIT_ONBOARDING_EXECUTABLE,
+    args: process.env.GIT_ONBOARDING_EXECUTABLE ? [] : ["."],
     cwd: path.resolve("."),
     env,
   });
@@ -226,7 +228,8 @@ test("advanced catalog and offline fork PR lifecycle through desktop", async () 
   };
   delete env.ELECTRON_RUN_AS_NODE;
   const app = await electron.launch({
-    args: ["."],
+    executablePath: process.env.GIT_ONBOARDING_EXECUTABLE,
+    args: process.env.GIT_ONBOARDING_EXECUTABLE ? [] : ["."],
     cwd: path.resolve("."),
     env,
   });
