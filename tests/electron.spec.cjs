@@ -3,6 +3,9 @@ const path = require("node:path");
 const fs = require("node:fs/promises");
 
 async function terminalCommand(page, command) {
+  await expect(
+    page.getByRole("button", { name: "检查练习结果", exact: true }),
+  ).toBeEnabled();
   await expect(page.locator(".terminal-panel")).toHaveAttribute(
     "aria-busy",
     "false",
@@ -32,6 +35,88 @@ async function terminalCommand(page, command) {
     command,
   );
   expect(status.code, status.output).toBe(0);
+}
+
+for (const [title, command, inspect] of [
+  [
+    "签署提交与发布标签",
+    "git config gpg.format ssh && git config user.signingkey ../keys/learner && { printf 'learner@example.invalid '; cat ../keys/learner.pub; } > ../allowed_signers && git config gpg.ssh.allowedSignersFile ../allowed_signers && git add feature.txt && git commit -S -m signed && git tag -s v1 -m release && git verify-commit HEAD && git verify-tag v1",
+    "feature.txt",
+  ],
+  [
+    "使用 LFS 提交并交付二进制",
+    "git lfs install --local && git lfs track '*.bin' && git add .gitattributes model.bin && git commit -m lfs && git push origin main && git lfs fsck",
+    ".gitattributes",
+  ],
+  [
+    "把既有二进制历史迁移到 LFS",
+    "git lfs install --local && git lfs migrate import --yes --include='*.bin' --everything && git lfs checkout && git lfs push --all origin && git push --force-with-lease origin main && git lfs fsck",
+    ".gitattributes",
+  ],
+  [
+    "清理误入历史的假凭据",
+    "git filter-repo --force --path credentials.txt --invert-paths && git remote add origin ../origin.git && git push --force-with-lease=refs/heads/main:$(cat ../remote-before.txt) --force-with-lease=refs/tags/v0:$(cat ../tag-before.txt) origin main refs/tags/v0 && git reflog expire --expire=now --all && git gc --prune=now && git -C ../origin.git reflog expire --expire=now --all && git -C ../origin.git gc --prune=now",
+    "feature.txt",
+  ],
+]) {
+  test(`Git extension: ${title}`, async () => {
+    const env = {
+      ...process.env,
+      GIT_ONBOARDING_DATA_DIR: path.resolve(
+        process.env.GIT_ONBOARDING_TEST_DATA_DIR ||
+          ".local/ui-after-wsl-restart",
+      ),
+    };
+    delete env.ELECTRON_RUN_AS_NODE;
+    const app = await electron.launch({
+      executablePath: process.env.GIT_ONBOARDING_EXECUTABLE,
+      args: process.env.GIT_ONBOARDING_EXECUTABLE ? [] : ["."],
+      cwd: path.resolve("."),
+      env,
+    });
+    try {
+      const page = await app.firstWindow();
+      const errors = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+      await expect(page.locator(".local-status")).toContainText(
+        "本地练习环境已就绪",
+      );
+      await page.getByRole("combobox", { name: "显示比例" }).selectOption("1");
+      await page.getByRole("searchbox", { name: "查找练习" }).fill(title);
+      await page
+        .locator(".course-card")
+        .filter({ hasText: title })
+        .getByRole("button")
+        .first()
+        .click();
+      await expect(
+        page.getByRole("textbox", { name: "文件内容" }),
+      ).toBeEditable();
+      await page.getByRole("button", { name: "重新开始", exact: true }).click();
+      await page
+        .getByRole("dialog")
+        .getByRole("button", { name: "重新开始", exact: true })
+        .click();
+      await terminalCommand(page, command);
+      await page
+        .getByRole("button", { name: "检查练习结果", exact: true })
+        .click();
+      await expect(page.getByRole("dialog")).toContainText("本关已完成");
+      await page.getByRole("button", { name: "关闭检查结果" }).click();
+      await page
+        .getByRole("combobox", { name: "选择练习文件" })
+        .selectOption(inspect);
+      await expect(page.getByRole("textbox", { name: "文件内容" })).toHaveValue(
+        inspect === ".gitattributes" ? /filter=lfs/ : "ready\n",
+      );
+      await page.screenshot({
+        path: `test-results/extension-${title.includes("LFS") ? (title.includes("历史") ? "migrate" : "lfs") : title.includes("签署") ? "signing" : "cleanup"}.png`,
+      });
+      expect(errors).toEqual([]);
+    } finally {
+      await app.close();
+    }
+  });
 }
 
 for (const [title, command, empty] of [

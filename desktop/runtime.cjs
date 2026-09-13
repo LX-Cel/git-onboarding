@@ -4,6 +4,7 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 const os = require("node:os");
 const { APPLY_COURSES } = require("./course-update.cjs");
+const { APPLY_TOOLS } = require("./tool-update.cjs");
 const COURSE_VERSION = require("../package.json").courseVersion;
 
 const VALID_LESSONS = new Set(
@@ -144,6 +145,51 @@ class Runtime {
       )
     );
   }
+  async toolsManifest() {
+    return JSON.parse(
+      await fs.readFile(
+        path.join(this.resources, "runtime-tools.json"),
+        "utf8",
+      ),
+    );
+  }
+  async toolsCurrent(probe) {
+    const manifest = await this.toolsManifest();
+    return (
+      probe.toolsHash === manifest.sha256 &&
+      probe.tools?.lfs &&
+      probe.tools?.filterRepo &&
+      probe.tools?.sshKeygen
+    );
+  }
+  async updateTools(onOutput) {
+    const manifest = await this.toolsManifest();
+    const data = await fs.readFile(
+      path.join(this.resources, "runtime-tools.tar"),
+    );
+    if (
+      data.length !== manifest.size ||
+      crypto.createHash("sha256").update(data).digest("hex") !== manifest.sha256
+    )
+      throw new Error("离线工具包校验失败，请重新下载安装包");
+    onOutput("正在离线更新 Git LFS、签名和历史整理工具，练习数据会保留…");
+    await run(
+      this.wsl,
+      [
+        "-d",
+        this.owner.distro,
+        "-u",
+        "root",
+        "--exec",
+        "/usr/bin/python3",
+        "-I",
+        "-c",
+        APPLY_TOOLS,
+        JSON.stringify(manifest),
+      ],
+      { input: data, timeout: 180000, onOutput },
+    );
+  }
   async status() {
     if (process.platform !== "win32" || process.arch !== "x64")
       return {
@@ -164,14 +210,17 @@ class Runtime {
         ) {
           throw new Error("练习环境隔离检查未通过，已禁止启动终端");
         }
-        if (!(await this.coursesCurrent(probe))) {
+        if (
+          !(await this.coursesCurrent(probe)) ||
+          !(await this.toolsCurrent(probe))
+        ) {
           return {
             ready: false,
             supported: true,
             wsl: true,
             updateRequired: true,
             message:
-              "课程判定有更新。更新只替换课程程序，保留现有提交、文件和学习进度。",
+              "课程与练习工具有更新。离线更新会保留现有提交、文件和学习进度。",
           };
         }
         return {
@@ -271,6 +320,10 @@ class Runtime {
         );
       }
       const beforeUpdate = await this.call({ action: "probe" });
+      if (!(await this.toolsCurrent(beforeUpdate))) {
+        this.stopTerminal();
+        await this.updateTools(onOutput);
+      }
       if (!(await this.coursesCurrent(beforeUpdate))) {
         this.stopTerminal();
         onOutput("正在更新课程判定；现有练习仓库和学习进度会保留…");

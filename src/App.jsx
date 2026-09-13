@@ -94,7 +94,7 @@ function CommitGraph({ history = [] }) {
   );
 }
 
-function TerminalPane({ sessionKey, onChange, onResult }) {
+function TerminalPane({ sessionKey, busy, onChange, onResult }) {
   const host = useRef(null),
     term = useRef(null);
   const [ended, setEnded] = useState(false);
@@ -166,7 +166,6 @@ function TerminalPane({ sessionKey, onChange, onResult }) {
       .connect()
       .then(() => {
         if (!active) return;
-        terminal.options.disableStdin = false;
         setConnecting(false);
         resize();
         // Startup may finish after the learner has already focused the editor.
@@ -192,8 +191,15 @@ function TerminalPane({ sessionKey, onChange, onResult }) {
       term.current = null;
     };
   }, [sessionKey, reconnect]);
+  useEffect(() => {
+    if (term.current)
+      term.current.options.disableStdin = busy || connecting || ended;
+  }, [busy, connecting, ended]);
   return (
-    <section className="terminal-panel" aria-busy={connecting && !ended}>
+    <section
+      className="terminal-panel"
+      aria-busy={busy || (connecting && !ended)}
+    >
       <div className="terminal-bar">
         <span>
           <Terminal size={16} /> 终端 <i />{" "}
@@ -1096,6 +1102,8 @@ function App() {
                 </div>
                 {state ? (
                   <TerminalPane
+                    key={sessionKey}
+                    busy={busy}
                     sessionKey={sessionKey}
                     onChange={scheduleRefresh}
                     onResult={(code) => {

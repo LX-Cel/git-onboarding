@@ -6,7 +6,7 @@
 
 当前发布为 **Windows x64 私有预览版 0.2.0-preview.1**，延续选定的 J 版 Fluent 2 视觉方向。在 [GitHub Release 下载](https://github.com/LX-Cel/git-onboarding/releases/tag/v0.2.0-preview.1)安装包 `Git-Onboarding-0.2.0-preview.1-Setup.exe` 和 SHA256 校验文件；本地构建产物位于 `release/`。项目尚未授予开源许可证；成熟后再决定公开与许可证。
 
-开发分支现有 49 门课程、98 个场景，比已发布预览版新增 PR 合并策略与保护检查，以及初始化/克隆、pull 策略、merge/am 恢复、分离 HEAD/误删分支、blame/log 定位、跨平台换行、fsck/gc 恢复等课程。新增课程尚未包含在上述安装包中。
+开发分支现有 53 门课程、106 个场景，比 preview.1 新增 PR 合并策略与保护检查，初始化/克隆、pull 策略、merge/am 恢复、分离 HEAD/误删分支、blame/log 定位、跨平台换行、fsck/gc 恢复，以及 SSH 签名、LFS 提交与历史迁移、假凭据历史清理。发布记录会注明每个安装包实际包含的课程。
 
 ![学习路径](docs/screenshots/home.png)
 
@@ -45,6 +45,7 @@
 ```powershell
 npm ci
 npm run runtime:build
+npm run runtime:tools
 npm test
 npm run test:runtime
 npm run build
@@ -54,13 +55,15 @@ npm start
 
 `runtime:build` 从 Alpine 官方 HTTPS 地址获取稳定版元数据并验证 rootfs 的 SHA256，在本次创建的 UUID 发行版中安装 Bash、Git、Python、bubblewrap 等包，导出内置镜像，之后注销本次创建的构建发行版。**不修改现有 Ubuntu 或其他发行版**。构建失败时保留 `.local/runtime-build/owner.json`，方便识别本次构建资源；不要对其他发行版执行清理。
 
+`runtime:tools` 在另一个专用构建发行版中解析 Alpine 官方软件包依赖，下载并验证带签名的 Git LFS、OpenSSH keygen、git-filter-repo 及其依赖，生成离线工具包。成功后注销本次构建发行版，失败时保留 `.local/tools-build/owner.json`。确认先前 apk 进程已退出后，可用 `python scripts/prepare-tools.py --resume` 续建。应用初始化或升级时从安装包离线安装这些工具，保留学生 home；练习环境不向外部网络下载工具。
+
 `npm run dev` 仅提供网页界面预览，明确提示真实终端需要桌面应用；不模拟命令成功。
 
 ```powershell
 npm run package
 ```
 
-在 `release/` 生成与 `package.json.version` 对应的安装包；已发布预览版的源码以 `v0.2.0-preview.1` 标签为准，开发分支会继续变化。打包前会验证镜像 SHA256、课程版本及课程更新包与源文件的一致性，镜像不写入 Git。安装包内含镜像，不要求用户安装构建工具。
+在 `release/` 生成与 `package.json.version` 对应的安装包；已发布预览版的源码以对应发布标签为准，开发分支会继续变化。打包前会验证镜像和离线工具包 SHA256、课程版本及课程更新包与源文件的一致性，二进制镜像和工具包不写入 Git。安装包内含镜像与工具，不要求用户安装构建工具。
 
 仅修改课程代码时，可用 `npm run runtime:refresh` 更新已校验的本地镜像及课程更新包，无需重新下载 Linux 软件包。跨版本保留数据测试为 `npm run test:upgrade`，需要先将 v0.1.0 发布附件的 `runtime.tar` 放在 `.local/runtime-v0.1.0.tar`。
 

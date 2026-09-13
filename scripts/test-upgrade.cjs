@@ -89,6 +89,13 @@ const { Runtime, run } = require("../desktop/runtime.cjs");
     lesson: "basics",
     mode: "guided",
   });
+  assert.equal(
+    Boolean(
+      await runtime.toolsCurrent(await runtime.call({ action: "probe" })),
+    ),
+    true,
+    "old runtime receives runnable offline tools",
+  );
   assert.equal(after.head, before.head);
   assert.deepEqual(after.history, before.history);
   assert.equal(

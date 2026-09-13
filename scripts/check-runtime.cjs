@@ -2,6 +2,16 @@ const { createHash } = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 const base = path.resolve(__dirname, "../resources");
+const toolsManifest = JSON.parse(
+  fs.readFileSync(path.join(base, "runtime-tools.json")),
+);
+const toolsArchive = fs.readFileSync(path.join(base, "runtime-tools.tar"));
+if (
+  toolsArchive.length !== toolsManifest.size ||
+  createHash("sha256").update(toolsArchive).digest("hex") !==
+    toolsManifest.sha256
+)
+  throw new Error("Offline tools hash mismatch. Run npm run runtime:tools.");
 const manifest = JSON.parse(
   fs.readFileSync(path.join(base, "runtime-manifest.json")),
 );
@@ -29,6 +39,7 @@ for (const name of [
   "maintenance.py",
   "teamwork.py",
   "foundations.py",
+  "extensions.py",
   "hosting.py",
   "relay.py",
   "lessons.json",

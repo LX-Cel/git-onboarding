@@ -18,14 +18,17 @@
     "test:maintenance": "node scripts/test-advanced.cjs --maintenance",
     "test:teamwork": "node scripts/test-advanced.cjs --teamwork",
     "test:upgrade": "node scripts/test-upgrade.cjs",
+    "test:tools": "node scripts/test-tools.cjs",
     "test:ui": "playwright test",
     "runtime:build": "python scripts/prepare-runtime.py",
     "runtime:refresh": "python scripts/refresh-courses.py",
+    "runtime:tools": "python scripts/prepare-tools.py",
     "package": "npm run build && node scripts/check-runtime.cjs && electron-builder --win nsis --x64",
     "format": "prettier --write src desktop tests/*.cjs scripts/*.cjs *.cjs *.js *.json index.html docs/*.md README.md .github/workflows/*.yml",
     "format:check": "prettier --check src desktop tests/*.cjs scripts/*.cjs *.cjs *.js *.json index.html docs/*.md README.md .github/workflows/*.yml",
     "test:hosting": "node scripts/test-advanced.cjs --hosting",
-    "test:foundations": "node scripts/test-advanced.cjs --foundations"
+    "test:foundations": "node scripts/test-advanced.cjs --foundations",
+    "test:extensions": "node scripts/test-advanced.cjs --extensions"
   },
   "dependencies": {
     "@xterm/addon-fit": "0.11.0",
@@ -67,6 +70,14 @@
       {
         "from": "resources/course-update.json",
         "to": "course-update.json"
+      },
+      {
+        "from": "resources/runtime-tools.tar",
+        "to": "runtime-tools.tar"
+      },
+      {
+        "from": "resources/runtime-tools.json",
+        "to": "runtime-tools.json"
       }
     ],
     "win": {

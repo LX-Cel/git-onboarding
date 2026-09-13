@@ -17,8 +17,11 @@ test(
     runtime.owner = { distro: "test-owned-distro" };
     runtime.loadOwner = async () => runtime.owner;
     runtime.registered = async () => [runtime.owner.distro];
+    runtime.toolsManifest = async () => ({ sha256: "expected-tools" });
     let courseVersion = require("../package.json").courseVersion;
     let courseHashes = { "engine.py": "expected-hash" };
+    let toolsHash = "expected-tools";
+    const tools = { lfs: "git-lfs/test", filterRepo: "test", sshKeygen: true };
     runtime.coursePayload = async () => ({
       version: require("../package.json").courseVersion,
       files: { "engine.py": { sha256: "expected-hash" } },
@@ -31,7 +34,16 @@ test(
       windowsMount: false,
       interop: false,
       initVisible: false,
+      toolsHash,
+      tools,
     });
+    assert.equal((await runtime.status()).ready, true);
+    toolsHash = "stale-tools";
+    assert.equal((await runtime.status()).updateRequired, true);
+    toolsHash = "expected-tools";
+    tools.lfs = null;
+    assert.equal((await runtime.status()).updateRequired, true);
+    tools.lfs = "git-lfs/test";
     assert.equal((await runtime.status()).ready, true);
     courseHashes = { "engine.py": "stale-hash" };
     assert.equal(

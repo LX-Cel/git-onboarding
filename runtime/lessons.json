@@ -2353,5 +2353,200 @@
       "添加 .gitattributes；文本在 Git 对象中规范为 LF，工作区则遵从 eol。二进制使用 -text。",
       "git ls-files --eol\ngit check-attr text eol -- run.sh run.cmd asset.bin\n\nprintf '*.sh text eol=lf\\n*.cmd text eol=crlf\\n*.bin -text\\n' > .gitattributes\ngit add .gitattributes\ngit add --renormalize .\ngit diff --cached\ngit commit -m '统一文件换行规则'\n\nrm run.sh run.cmd\ngit restore --source=HEAD --worktree run.sh run.cmd\ngit add run.sh run.cmd\ngit diff --cached\ngit ls-files --eol\ngit status"
     ]
+  },
+  {
+    "id": "ssh-signing",
+    "number": "50",
+    "title": "签署提交与发布标签",
+    "subtitle": "验证内容和身份，不只看一个签名标记",
+    "category": "仓库维护",
+    "level": "进阶",
+    "minutes": 25,
+    "concepts": [
+      "commit -S",
+      "tag -s",
+      "verify-commit"
+    ],
+    "commands": [
+      "commit -S",
+      "tag -s",
+      "verify-commit",
+      "verify-tag",
+      "gpg.format"
+    ],
+    "file": "feature.txt",
+    "story": "使用本关自动生成的离线练习密钥，签署包含 feature.txt=ready 的提交，并创建指向它的签名标签 v1。配置本仓库的 SSH 信任文件，使 verify-commit 和 verify-tag 均通过。私钥保持在仓库外。",
+    "challengeStory": "独立完成任务。使用本关自动生成的离线练习密钥，签署包含 feature.txt=released 的提交，并创建指向它的签名标签 v1。配置本仓库的 SSH 信任文件，使 verify-commit 和 verify-tag 均通过。私钥保持在仓库外。",
+    "target": "使用本关自动生成的离线练习密钥，签署包含 feature.txt=ready 的提交，并创建指向它的签名标签 v1。配置本仓库的 SSH 信任文件，使 verify-commit 和 verify-tag 均通过。私钥保持在仓库外。",
+    "challengeTarget": "使用本关自动生成的离线练习密钥，签署包含 feature.txt=released 的提交，并创建指向它的签名标签 v1。配置本仓库的 SSH 信任文件，使 verify-commit 和 verify-tag 均通过。私钥保持在仓库外。",
+    "steps": [
+      {
+        "title": "配置一次性练习身份",
+        "body": "密钥位于 ../keys/learner，仅供本关离线练习，不需要个人 SSH 密钥。签名用于证明 Git 对象的内容；它不同于连接远端时的 SSH 登录。",
+        "command": "git config --local gpg.format ssh\ngit config --local user.signingkey ../keys/learner\ngit config --local commit.gpgsign true"
+      },
+      {
+        "title": "建立本地信任文件",
+        "body": "信任条目由主体名称和公钥组成。仅写入本关公钥，绝不把私钥复制进仓库。真实协作中应独立核实对方公钥。",
+        "command": "{ printf 'learner@example.invalid '; cat ../keys/learner.pub; } > ../allowed_signers\ngit config --local gpg.ssh.allowedSignersFile ../allowed_signers"
+      },
+      {
+        "title": "签署并验证",
+        "body": "feature.txt 已准备好目标内容。签名标签与轻量/普通注释标签不同，验证时还会校验所签署的对象。",
+        "command": "git add feature.txt\ngit commit -S -m \"签署功能\"\ngit tag -s v1 -m \"签署发布\"\ngit verify-commit HEAD\ngit verify-tag v1\ngit log -1 --show-signature"
+      }
+    ],
+    "hints": [
+      "密钥位于 ../keys/learner，仅供本关离线练习，不需要个人 SSH 密钥。签名用于证明 Git 对象的内容；它不同于连接远端时的 SSH 登录。",
+      "信任条目由主体名称和公钥组成。仅写入本关公钥，绝不把私钥复制进仓库。真实协作中应独立核实对方公钥。",
+      "git config --local gpg.format ssh\ngit config --local user.signingkey ../keys/learner\ngit config --local commit.gpgsign true\n\n{ printf 'learner@example.invalid '; cat ../keys/learner.pub; } > ../allowed_signers\ngit config --local gpg.ssh.allowedSignersFile ../allowed_signers\n\ngit add feature.txt\ngit commit -S -m \"签署功能\"\ngit tag -s v1 -m \"签署发布\"\ngit verify-commit HEAD\ngit verify-tag v1\ngit log -1 --show-signature"
+    ]
+  },
+  {
+    "id": "lfs-track",
+    "number": "51",
+    "title": "使用 LFS 提交并交付二进制",
+    "subtitle": "Git 指针与二进制对象需要一起交付",
+    "category": "仓库维护",
+    "level": "进阶",
+    "minutes": 25,
+    "concepts": [
+      "lfs install",
+      "lfs track",
+      "lfs ls-files"
+    ],
+    "commands": [
+      "lfs install",
+      "lfs track",
+      "lfs ls-files",
+      "lfs fsck",
+      "push"
+    ],
+    "file": "README.md",
+    "story": "把准备好的 model.bin 纳入 Git LFS，提交 .gitattributes 和 LFS 指针，推送 origin/main，并确保二进制对象真正上传到离线远端。工作区保留原文件。",
+    "challengeStory": "独立完成任务。把准备好的 model.bin 纳入 Git LFS，提交 .gitattributes 和 LFS 指针，推送 origin/main，并确保二进制对象真正上传到离线远端。工作区保留原文件。",
+    "target": "把准备好的 model.bin 纳入 Git LFS，提交 .gitattributes 和 LFS 指针，推送 origin/main，并确保二进制对象真正上传到离线远端。工作区保留原文件。",
+    "challengeTarget": "把准备好的 model.bin 纳入 Git LFS，提交 .gitattributes 和 LFS 指针，推送 origin/main，并确保二进制对象真正上传到离线远端。工作区保留原文件。",
+    "steps": [
+      {
+        "title": "启用本仓库 LFS",
+        "body": "工具已随应用提供。--local 仅修改本练习的配置和钩子。model.bin 是小型二进制练习样本。",
+        "command": "git lfs install --local\ngit lfs track \"*.bin\"\ncat .gitattributes"
+      },
+      {
+        "title": "提交指针并检查",
+        "body": "add 会调用真实 LFS clean filter。Git 提交保存指针，工作区仍保留完整二进制。",
+        "command": "git add .gitattributes model.bin\ngit commit -m \"通过 LFS 管理模型\"\ngit show HEAD:model.bin\ngit lfs ls-files\ngit lfs fsck"
+      },
+      {
+        "title": "交付 Git 和 LFS 对象",
+        "body": "本关远端使用 file:// 的原生 LFS 传输，不访问网络。不应通过跳过 pre-push 钩子来伪造交付成功。",
+        "command": "git push origin main\ngit lfs fsck\ngit status"
+      }
+    ],
+    "hints": [
+      "工具已随应用提供。--local 仅修改本练习的配置和钩子。model.bin 是小型二进制练习样本。",
+      "add 会调用真实 LFS clean filter。Git 提交保存指针，工作区仍保留完整二进制。",
+      "git lfs install --local\ngit lfs track \"*.bin\"\ncat .gitattributes\n\ngit add .gitattributes model.bin\ngit commit -m \"通过 LFS 管理模型\"\ngit show HEAD:model.bin\ngit lfs ls-files\ngit lfs fsck\n\ngit push origin main\ngit lfs fsck\ngit status"
+    ]
+  },
+  {
+    "id": "lfs-migrate",
+    "number": "52",
+    "title": "把既有二进制历史迁移到 LFS",
+    "subtitle": "新增跟踪规则不会转换过去的版本",
+    "category": "仓库维护",
+    "level": "进阶",
+    "minutes": 25,
+    "concepts": [
+      "lfs migrate import",
+      "lfs migrate info",
+      "push --force-with-lease"
+    ],
+    "commands": [
+      "lfs migrate import",
+      "lfs migrate info",
+      "push --force-with-lease",
+      "lfs push --all"
+    ],
+    "file": "README.md",
+    "story": "model.bin 的两个版本曾直接提交进 Git。将历史里的版本迁移为 LFS 指针，保留当前二进制内容，并把改写后的主线与全部 LFS 对象同步到本关离线 origin。",
+    "challengeStory": "独立完成任务。model.bin 的两个版本曾直接提交进 Git。将历史里的版本迁移为 LFS 指针，保留当前二进制内容，并把改写后的主线与全部 LFS 对象同步到本关离线 origin。",
+    "target": "model.bin 的两个版本曾直接提交进 Git。将历史里的版本迁移为 LFS 指针，保留当前二进制内容，并把改写后的主线与全部 LFS 对象同步到本关离线 origin。",
+    "challengeTarget": "model.bin 的两个版本曾直接提交进 Git。将历史里的版本迁移为 LFS 指针，保留当前二进制内容，并把改写后的主线与全部 LFS 对象同步到本关离线 origin。",
+    "steps": [
+      {
+        "title": "检查现有历史",
+        "body": "查看二进制在历史中的占用，再启用本仓库 LFS。本关是隔离的教学仓库；真实团队迁移需先协调历史重写。",
+        "command": "git lfs install --local\ngit lfs migrate info --everything\ngit log --oneline --all"
+      },
+      {
+        "title": "迁移旧版本",
+        "body": "仅 lfs track 后提交最新文件不能完成历史迁移。先确认工作区干净，再将本关所有分支和标签涉及的 bin 文件转换。迁移后运行 lfs checkout，让工作区指针重新展开为二进制。",
+        "command": "git status\ngit lfs migrate import --yes --include=\"*.bin\" --everything\ngit lfs checkout\ngit lfs ls-files --all\ngit lfs fsck"
+      },
+      {
+        "title": "上传对象与改写后的引用",
+        "body": "先上传所有 LFS 对象，再使用租约推送本关 main。观察普通 push 会拒绝历史改写。这里不涉及真实团队仓库。",
+        "command": "git lfs push --all origin\ngit push --force-with-lease origin main\ngit log --oneline --graph --all\ngit status"
+      }
+    ],
+    "hints": [
+      "查看二进制在历史中的占用，再启用本仓库 LFS。本关是隔离的教学仓库；真实团队迁移需先协调历史重写。",
+      "仅 lfs track 后提交最新文件不能完成历史迁移。先确认工作区干净，再将本关所有分支和标签涉及的 bin 文件转换。",
+      "git lfs install --local\ngit lfs migrate info --everything\ngit log --oneline --all\n\ngit status\ngit lfs migrate import --yes --include=\"*.bin\" --everything\ngit lfs checkout\ngit lfs ls-files --all\ngit lfs fsck\n\ngit lfs push --all origin\ngit push --force-with-lease origin main\ngit log --oneline --graph --all\ngit status"
+    ]
+  },
+  {
+    "id": "history-cleanup",
+    "number": "53",
+    "title": "清理误入历史的假凭据",
+    "subtitle": "删除当前文件之后，历史与其他副本仍需处理",
+    "category": "仓库维护",
+    "level": "进阶",
+    "minutes": 30,
+    "concepts": [
+      "历史重写",
+      "引用与对象",
+      "凭据撤销"
+    ],
+    "commands": [
+      "filter-repo",
+      "push --force-with-lease",
+      "reflog expire",
+      "gc --prune"
+    ],
+    "file": "feature.txt",
+    "story": "credentials.txt 已从当前目录删除，但假凭据仍在历史、v0 标签与远端对象中。清理本关两份仓库中的假凭据对象，保留初始提交、feature.txt 的 ready 功能与更新后的 v0 标签。",
+    "challengeStory": "credentials.txt 已从当前目录删除，但假凭据仍在历史、v0 标签与远端对象中。清理本关两份仓库中的假凭据对象，保留初始提交、feature.txt 的 released 功能与更新后的 v0 标签。",
+    "target": "credentials.txt 已从当前目录删除，但假凭据仍在历史、v0 标签与远端对象中。清理本关两份仓库中的假凭据对象，保留初始提交、feature.txt 的 ready 功能与更新后的 v0 标签。",
+    "challengeTarget": "credentials.txt 已从当前目录删除，但假凭据仍在历史、v0 标签与远端对象中。清理本关两份仓库中的假凭据对象，保留初始提交、feature.txt 的 released 功能与更新后的 v0 标签。",
+    "steps": [
+      {
+        "title": "先确认事件范围",
+        "body": "本关使用明确的假凭据，设定它已被吊销。真实事件要先撤销暴露的凭据，再协调所有仓库副本与服务端清理；改写历史不能使旧凭据失效。检查 main 与 v0 标签都能到达哪段历史。",
+        "command": "git log --all --oneline -- credentials.txt\ngit show v0:credentials.txt\ngit remote -v"
+      },
+      {
+        "title": "在本关重写指定路径",
+        "body": "只在这个可重置的离线练习内使用 --force。filter-repo 会重写所有相关分支/标签并移除 origin，避免误推。保留有用功能与初始历史。",
+        "command": "git filter-repo --force --path credentials.txt --invert-paths\ngit log --all --oneline -- credentials.txt\ngit remote -v"
+      },
+      {
+        "title": "带明确租约更新主线与标签",
+        "body": "重新添加本关离线 origin；使用初始化时记录的旧引用作为租约，拒绝覆盖意外的新提交。只推送本关 main 与 v0，不使用 mirror 覆盖全部远端引用。",
+        "command": "git remote add origin ../origin.git\ngit push --force-with-lease=refs/heads/main:$(cat ../remote-before.txt) --force-with-lease=refs/tags/v0:$(cat ../tag-before.txt) origin main refs/tags/v0"
+      },
+      {
+        "title": "清理已失去引用的练习对象",
+        "body": "本关没有其他并发写入，可对本地与本关裸仓库清理 reflog 和悬空对象。真实服务器应按托管平台流程处理缓存、其他副本与备份，不能仅凭本地扫描声称已彻底清除。",
+        "command": "git reflog expire --expire=now --all\ngit gc --prune=now\ngit -C ../origin.git reflog expire --expire=now --all\ngit -C ../origin.git gc --prune=now\ngit log --all --oneline --graph"
+      }
+    ],
+    "hints": [
+      "本关使用明确的假凭据，设定它已被吊销。真实事件要先撤销暴露的凭据，再协调所有仓库副本与服务端清理；改写历史不能使旧凭据失效。检查 main 与 v0 标签都能到达哪段历史。",
+      "只在这个可重置的离线练习内使用 --force。filter-repo 会重写所有相关分支/标签并移除 origin，避免误推。保留有用功能与初始历史。",
+      "git log --all --oneline -- credentials.txt\ngit show v0:credentials.txt\ngit remote -v\n\ngit filter-repo --force --path credentials.txt --invert-paths\ngit log --all --oneline -- credentials.txt\ngit remote -v\n\ngit remote add origin ../origin.git\ngit push --force-with-lease=refs/heads/main:$(cat ../remote-before.txt) --force-with-lease=refs/tags/v0:$(cat ../tag-before.txt) origin main refs/tags/v0\n\ngit reflog expire --expire=now --all\ngit gc --prune=now\ngit -C ../origin.git reflog expire --expire=now --all\ngit -C ../origin.git gc --prune=now\ngit log --all --oneline --graph"
+    ]
   }
 ]
