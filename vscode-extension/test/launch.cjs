@@ -16,8 +16,8 @@ async function main() {
     [path.join(extensionPath, "scripts", "prepare.cjs")],
     { stdio: "inherit", windowsHide: true },
   );
-  const temporary = fs.mkdtempSync(
-    path.join(os.tmpdir(), "git-onboarding-vscode-test-"),
+  const temporary = fs.realpathSync.native(
+    fs.mkdtempSync(path.join(os.tmpdir(), "git-onboarding-vscode-test-")),
   );
   const root = path.join(temporary, "labs");
   const userData = path.join(temporary, "user-data");
