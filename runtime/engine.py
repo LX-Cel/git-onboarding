@@ -65,7 +65,11 @@ def initialize(lesson, mode, reset=False):
     if base.exists():
         # Fixed, validated direct child only; rmtree does not follow interior symlinks.
         shutil.rmtree(base)
-    repo.mkdir(parents=True)
+    return seed(lesson, mode, base, repo)
+
+def seed(lesson, mode, base, repo):
+    """Populate an empty scenario; native callers can preserve an open workspace directory."""
+    repo.mkdir(parents=True, exist_ok=True)
     git(repo, 'init', '-b', 'main')
     config(repo)
     record = {'lesson': lesson, 'mode': mode}

@@ -10,3 +10,6 @@ playwright-report/
 *.log
 __pycache__/
 *.pyc
+vscode-extension/runtime/
+*.vsix
+.vscode-test/
