@@ -2,9 +2,11 @@
 
 一个面向 Git 新手的中文桌面练习应用。从第一次提交，到分支协作、冲突处理和误操作恢复，在真实 Git 仓库里练习。
 
+**VS Code 插件预览版**：现在也可以直接在 Windows 本地文件夹里，使用原生 Source Control 练习提交、协作冲突与误操作恢复。三个单元各含引导与挑战，复用同一套真实 Git 判题规则；需要 Git for Windows 和 Python 3.11+，无需桌面应用或 WSL。见 [插件安装与开发说明](vscode-extension/README.md)。桌面版的其余课程尚未全部迁移到插件。
+
 **0.2.0-preview.3：系统 Git 练习版。** 包含 62 个单元：61 门判题课程（122 个引导/挑战场景），加上两个独立自由实验工作区。覆盖基础提交、分支整合、双远端 Fork/PR、冲突与误操作恢复、认证权限、大文件与签名、仓库维护及综合交付。课程可按分类和命令搜索，见 [覆盖矩阵与验收记录](docs/scenario-coverage.md)。有限课程不能穷尽所有 Git 扩展与平台差异。
 
-当前发布为 **Windows x64 私有预览版 0.2.0-preview.3**，延续选定的 J 版 Fluent 2 视觉方向。在 [GitHub Release 下载](https://github.com/LX-Cel/git-onboarding/releases/tag/v0.2.0-preview.3)安装包 `Git-Onboarding-0.2.0-preview.3-Setup.exe` 和 SHA256 校验文件；本地构建产物位于 `release/`。项目尚未授予开源许可证；成熟后再决定公开与许可证。
+当前桌面发布为 **Windows x64 预览版 0.2.0-preview.3**，延续选定的 J 版 Fluent 2 视觉方向。在 [GitHub Release 下载](https://github.com/LX-Cel/git-onboarding/releases/tag/v0.2.0-preview.3)安装包 `Git-Onboarding-0.2.0-preview.3-Setup.exe` 和 SHA256 校验文件；本地构建产物位于 `release/`。仓库现已公开，项目尚未授予开源许可证。
 
 相较 preview.2，本版新增认证与权限诊断、入职交接、发布回滚、并发协作、遗留仓库排错和自由实验区。认证练习通过隔离网络内的真实 HTTP Git 传输产生并修复错误；自由实验区显示实际状态，不设通关限制，不计入完成进度。
 
@@ -87,6 +89,7 @@ Remove-Item Env:\GIT_ONBOARDING_EXECUTABLE
 src/                 React 界面、xterm.js、提交图布局
 desktop/             Electron 主进程、最小 IPC、WSL 生命周期与 PTY 通道
 runtime/             课程规格、真实 Git 场景与判题、sandbox、PTY relay
+vscode-extension/    Windows 原生 Source Control 练习扩展及独立打包/集成测试
 scripts/             镜像构建、镜像验证、真实环境测试
 tests/               逻辑测试、Linux 实测、Electron 端到端测试
 docs/                产品边界、技术选型、隔离边界、验收记录

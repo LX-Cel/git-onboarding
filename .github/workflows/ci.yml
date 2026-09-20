@@ -22,3 +22,24 @@ jobs:
       - run: python -m compileall -q runtime scripts tests/runtime_checks.py
       - run: npm run build
       - run: npm audit --audit-level=moderate
+  vscode-extension:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: vscode-extension/package-lock.json
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: "3.11"
+      - run: python -X utf8 tests/native_checks.py
+      - run: npm ci --ignore-scripts
+        working-directory: vscode-extension
+      - run: npm test
+        working-directory: vscode-extension
+      - run: npm run test:integration
+        working-directory: vscode-extension
+      - run: npm run package
+        working-directory: vscode-extension

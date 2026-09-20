@@ -1,0 +1,152 @@
+{
+  "name": "git-onboarding",
+  "displayName": "Git Onboarding · Git 练习",
+  "description": "在 VS Code 原生 Source Control 中练习真实 Git：提交、协作冲突和误操作恢复。",
+  "version": "0.1.1",
+  "publisher": "LX-Cel",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LX-Cel/git-onboarding.git",
+    "directory": "vscode-extension"
+  },
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Education",
+    "Other"
+  ],
+  "keywords": [
+    "git",
+    "learning",
+    "source control",
+    "中文"
+  ],
+  "main": "./src/extension.cjs",
+  "extensionKind": [
+    "workspace"
+  ],
+  "extensionDependencies": [
+    "vscode.git"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "创建练习和检查 Git 状态需要运行本机 Git 与 Python。"
+    },
+    "virtualWorkspaces": false
+  },
+  "scripts": {
+    "prepare:runtime": "node scripts/prepare.cjs",
+    "vscode:prepublish": "node scripts/prepare.cjs",
+    "test": "node --test test/*.test.cjs",
+    "test:integration": "node test/launch.cjs",
+    "package": "vsce package --no-dependencies --allow-missing-repository --skip-license --out ../release/git-onboarding-vscode-0.1.1.vsix"
+  },
+  "devDependencies": {
+    "@vscode/test-electron": "3.1.0",
+    "@vscode/vsce": "4.0.0"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "gitOnboarding.start",
+        "title": "开始 / 继续练习",
+        "category": "Git Onboarding",
+        "icon": "$(play)"
+      },
+      {
+        "command": "gitOnboarding.check",
+        "title": "检查练习结果",
+        "category": "Git Onboarding",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "gitOnboarding.guide",
+        "title": "查看任务与操作指引",
+        "category": "Git Onboarding",
+        "icon": "$(book)"
+      },
+      {
+        "command": "gitOnboarding.hint",
+        "title": "展开下一条提示",
+        "category": "Git Onboarding",
+        "icon": "$(lightbulb)"
+      },
+      {
+        "command": "gitOnboarding.reset",
+        "title": "归档并重新开始本次练习",
+        "category": "Git Onboarding",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "gitOnboarding.terminal",
+        "title": "打开练习终端",
+        "category": "Git Onboarding",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "gitOnboarding.openFile",
+        "title": "打开本课文件",
+        "category": "Git Onboarding",
+        "icon": "$(go-to-file)"
+      }
+    ],
+    "views": {
+      "scm": [
+        {
+          "id": "gitOnboarding.lesson",
+          "name": "Git 练习",
+          "icon": "$(mortar-board)",
+          "visibility": "visible"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "gitOnboarding.lesson",
+        "contents": "用熟悉的 Source Control 练习 Git。\n[开始 / 继续练习](command:gitOnboarding.start)\n练习会在独立窗口打开。需要 Git for Windows 和 Python 3.11+。",
+        "when": "!gitOnboarding.active"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "gitOnboarding.start",
+          "when": "view == gitOnboarding.lesson",
+          "group": "navigation@1"
+        },
+        {
+          "command": "gitOnboarding.check",
+          "when": "view == gitOnboarding.lesson && gitOnboarding.active",
+          "group": "navigation@2"
+        },
+        {
+          "command": "gitOnboarding.guide",
+          "when": "view == gitOnboarding.lesson && gitOnboarding.active",
+          "group": "navigation@3"
+        },
+        {
+          "command": "gitOnboarding.reset",
+          "when": "view == gitOnboarding.lesson && gitOnboarding.active",
+          "group": "lesson@1"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Git Onboarding",
+      "properties": {
+        "gitOnboarding.pythonPath": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "description": "Python 3.11+ 可执行文件的完整路径。留空时依次检测 py -3、python、python3，不接受命令参数。"
+        }
+      }
+    }
+  }
+}
