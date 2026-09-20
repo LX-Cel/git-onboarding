@@ -120,6 +120,38 @@ exports.run = async function run() {
     const readme = path.join(baseline.path, "README.md");
 
     await scenario(
+      "guided coach opens beside the editor and step navigation never changes Git",
+      async () => {
+        assert.ok(
+          lessons.guidePanel,
+          "The coach must appear without a separate command",
+        );
+        assert.equal(lessons.guidePanel.viewColumn, vscode.ViewColumn.Two);
+        assert.match(lessons.guidePanel.webview.html, /git-coach/);
+        await lessons.handleGuideMessage({ action: "next" });
+        assert.equal(lessons.context.workspaceState.get("guideStep"), 1);
+        assert.equal((await state("basics", "guided")).head, baseline.head);
+        assert.equal(
+          lessons.context.globalState.get("passed.basics.guided"),
+          undefined,
+        );
+        await lessons.openFile();
+        assert.equal(
+          vscode.window.activeTextEditor.viewColumn,
+          vscode.ViewColumn.One,
+        );
+        assert.equal(lessons.guidePanel.visible, true);
+        lessons.documents.clear();
+        const guide = await vscode.workspace.openTextDocument(
+          vscode.Uri.parse("git-onboarding:/任务与指引.md"),
+        );
+        assert.match(guide.getText(), /Source Control/);
+        assert.match(guide.getText(), /暂存/);
+        await lessons.goToStep(0);
+      },
+    );
+
+    await scenario(
       "basics-guided: editor, native Source Control add and commit",
       async () => {
         assert.equal(baseline.complete, false);

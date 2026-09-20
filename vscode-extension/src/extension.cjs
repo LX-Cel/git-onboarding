@@ -1,7 +1,9 @@
 const vscode = require("vscode");
 const path = require("node:path");
+const { randomBytes } = require("node:crypto");
 const { Runtime, findPython } = require("./runtime.cjs");
 const { getLesson, guideMarkdown, reportMarkdown } = require("./content.cjs");
+const { coachModel, coachHtml } = require("./coach.cjs");
 
 const IDS = ["basics", "collab", "recovery"];
 const MODES = ["guided", "challenge"];
@@ -33,6 +35,7 @@ class Lessons {
     this.snapshot = null;
     this.error = null;
     this.hints = 0;
+    this.step = 0;
     this.busy = false;
     this.disposed = false;
     this.status = vscode.window.createStatusBarItem(
@@ -40,10 +43,17 @@ class Lessons {
       10,
     );
     this.status.command = "gitOnboarding.check";
+    this.guideStatus = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Left,
+      11,
+    );
+    this.guideStatus.command = "gitOnboarding.guide";
+    this.guideStatus.tooltip = "打开常驻练习指引：操作位置、预期结果与下一步";
     context.subscriptions.push(
       this.change,
       this.documentChange,
       this.status,
+      this.guideStatus,
       this,
     );
   }
@@ -188,6 +198,13 @@ class Lessons {
           continue;
         this.session = { lesson, mode, path: folder };
         this.hints = this.context.workspaceState.get("hintLevel", 0);
+        const savedStep = this.context.workspaceState.get("guideStep", 0);
+        this.step = Number.isInteger(savedStep)
+          ? Math.max(0, Math.min(getLesson(lesson).steps.length - 1, savedStep))
+          : 0;
+        this.documentChange.fire(
+          vscode.Uri.parse("git-onboarding:/任务与指引.md"),
+        );
         await vscode.commands.executeCommand(
           "setContext",
           "gitOnboarding.active",
@@ -220,6 +237,7 @@ class Lessons {
             inside(folder, document.uri.fsPath)
           ) {
             this.change.fire();
+            this.renderGuide();
             this.scheduleRefresh();
           }
         };
@@ -233,8 +251,11 @@ class Lessons {
           await this.context.workspaceState.update("opened", true);
           await vscode.commands.executeCommand("workbench.view.scm");
           await vscode.commands.executeCommand("gitOnboarding.lesson.focus");
-          await this.showGuide();
+          await this.openFile();
         }
+        // Each extension host reconstructs the coach from persisted lesson state.
+        // The old one-time Markdown preview lost its in-memory content on reload.
+        await this.showGuide(true);
         return runtime;
       }
   }
@@ -297,6 +318,7 @@ class Lessons {
           this.busy = false;
           this.updateStatus();
           this.change.fire();
+          this.renderGuide();
         }
       } while (this.refreshAgain && !this.disposed && !this.resetting);
       return this.snapshot;
@@ -319,6 +341,11 @@ class Lessons {
       : `$(mortar-board) Git 练习 ${done}/${total}${complete ? " ✓" : ""}`;
     this.status.tooltip = "点击查看本次练习检查报告";
     this.status.show();
+    this.guideStatus.text =
+      this.session.mode === "guided"
+        ? `$(book) 练习指引 · 第 ${this.step + 1}/${getLesson(this.session.lesson).steps.length} 步`
+        : "$(book) 挑战目标与提示";
+    this.guideStatus.show();
   }
   async check() {
     if (this.resetting) throw new Error("正在归档并重建练习，请完成后再检查。");
@@ -352,12 +379,116 @@ class Lessons {
       error: this.error,
     };
   }
-  async showGuide() {
-    const { lesson, mode } = this.requireSession();
-    await this.showDocument(
-      "guide",
-      guideMarkdown(getLesson(lesson), mode, this.hints),
+  async showGuide(preserveFocus = false) {
+    this.requireSession();
+    if (this.guidePanel) {
+      this.guidePanel.reveal(
+        this.guidePanel.viewColumn || vscode.ViewColumn.Two,
+        preserveFocus,
+      );
+      this.renderGuide();
+      return;
+    }
+    const panel = vscode.window.createWebviewPanel(
+      "gitOnboarding.coach",
+      "Git 练习 · 分步指引",
+      { viewColumn: vscode.ViewColumn.Two, preserveFocus },
+      {
+        enableScripts: true,
+        localResourceRoots: [],
+        retainContextWhenHidden: true,
+      },
     );
+    this.guidePanel = panel;
+    this.guideNonce = randomBytes(24).toString("base64");
+    this.guideContentKey = null;
+    const messages = panel.webview.onDidReceiveMessage(async (message) => {
+      try {
+        await this.handleGuideMessage(message);
+      } catch (error) {
+        await vscode.window.showErrorMessage(`Git 练习：${error.message}`);
+      }
+    });
+    panel.onDidDispose(() => {
+      messages.dispose();
+      if (this.guidePanel === panel) this.guidePanel = null;
+    });
+    this.renderGuide();
+  }
+  renderGuide() {
+    if (!this.guidePanel || !this.session || this.disposed) return;
+    const model = coachModel({
+      lesson: getLesson(this.session.lesson),
+      mode: this.session.mode,
+      step: this.step,
+      hintLevel: this.hints,
+      snapshot: this.snapshot,
+      dirtyFiles: this.dirtyFiles(),
+      error: this.error,
+    });
+    const key = JSON.stringify(model);
+    // Polling identical Git state must not reload the page or steal keyboard focus.
+    if (key === this.guideContentKey) return;
+    this.guideContentKey = key;
+    this.guidePanel.webview.html = coachHtml(model, this.guideNonce);
+  }
+  async goToStep(step) {
+    const { lesson, mode } = this.requireSession();
+    if (
+      mode !== "guided" ||
+      !Number.isInteger(step) ||
+      step < 0 ||
+      step >= getLesson(lesson).steps.length
+    )
+      return;
+    this.step = step;
+    await this.context.workspaceState.update("guideStep", step);
+    this.updateStatus();
+    this.change.fire();
+    this.renderGuide();
+  }
+  async handleGuideMessage(message) {
+    this.requireSession();
+    if (!message || typeof message !== "object" || this.resetting) return;
+    // Only navigation and explicit read/check actions are exposed to the webview.
+    switch (message.action) {
+      case "previous":
+        return this.goToStep(this.step - 1);
+      case "next":
+        return this.goToStep(this.step + 1);
+      case "step":
+        return this.goToStep(message.step);
+      case "openFile":
+        return this.openFile();
+      case "sourceControl":
+        await vscode.commands.executeCommand(
+          "workbench.action.focusFirstEditorGroup",
+        );
+        return vscode.commands.executeCommand("workbench.view.scm");
+      case "terminal":
+        return this.terminal();
+      case "check":
+        return this.check();
+      case "hint":
+        return this.hint();
+      case "start":
+        return this.start();
+    }
+  }
+  provideDocument(uri) {
+    const key = uri.toString();
+    const resourcePath =
+      uri.path || decodeURIComponent(key.replace(/^git-onboarding:/, ""));
+    if (resourcePath === "/任务与指引.md" && this.session)
+      return guideMarkdown(
+        getLesson(this.session.lesson),
+        this.session.mode,
+        this.hints,
+      );
+    if (this.documents.has(key)) return this.documents.get(key);
+    if (resourcePath === "/练习检查报告.md")
+      return "# 请重新检查练习结果\n\n窗口已重新打开或练习已重建。请点击状态栏的「Git 练习」重新检查当前仓库；之前的报告不能代替本次结果。\n";
+    return "# Git 练习指引\n\n正在恢复练习。若当前不是专用练习窗口，请按 Ctrl+Shift+P，运行「Git Onboarding: 开始 / 继续练习」。\n";
   }
   async hint() {
     this.requireSession();
@@ -375,7 +506,7 @@ class Lessons {
     await vscode.commands.executeCommand(
       "markdown.showPreview",
       uri,
-      undefined,
+      vscode.ViewColumn.One,
       { locked: true },
     );
   }
@@ -383,7 +514,7 @@ class Lessons {
     const { lesson, path: folder } = this.requireSession();
     await vscode.window.showTextDocument(
       vscode.Uri.file(path.join(folder, getLesson(lesson).file)),
-      { preview: false },
+      { preview: false, viewColumn: vscode.ViewColumn.One },
     );
   }
   async terminal() {
@@ -451,6 +582,7 @@ class Lessons {
       vscode.Uri.parse("git-onboarding:/练习检查报告.md"),
     );
     this.change.fire();
+    this.renderGuide();
     clearTimeout(this.debounce);
     try {
       if (this.refreshing) await this.refreshing;
@@ -463,7 +595,9 @@ class Lessons {
         () => runtime.request({ action: "init", lesson, mode, reset: true }),
       );
       this.hints = 0;
+      this.step = 0;
       await this.context.workspaceState.update("hintLevel", 0);
+      await this.context.workspaceState.update("guideStep", 0);
       return state;
     } finally {
       this.resetting = false;
@@ -490,6 +624,11 @@ class Lessons {
     if (!this.session) return [];
     const { lesson, mode } = this.session;
     const spec = getLesson(lesson);
+    const currentStep = coachModel({
+      lesson: spec,
+      mode,
+      step: this.step,
+    }).currentStep;
     const rows = [
       this.node(
         spec.title,
@@ -497,6 +636,13 @@ class Lessons {
         "gitOnboarding.guide",
         null,
         modeName(mode),
+      ),
+      this.node(
+        mode === "guided"
+          ? `第 ${this.step + 1}/${spec.steps.length} 步 · ${currentStep.title}`
+          : "查看挑战目标与提示",
+        "book",
+        "gitOnboarding.guide",
       ),
     ];
     if (this.busy) rows.push(this.node("正在检查仓库…", "loading~spin"));
@@ -533,7 +679,6 @@ class Lessons {
           "gitOnboarding.openFile",
         ),
       );
-    rows.push(this.node("查看任务与操作指引", "book", "gitOnboarding.guide"));
     rows.push(
       this.node(
         `展开提示（${this.hints}/3）`,
@@ -556,6 +701,7 @@ class Lessons {
     clearTimeout(this.debounce);
     clearInterval(this.poll);
     this.repoSubscription?.dispose();
+    this.guidePanel?.dispose();
     this.runtime?.dispose();
   }
 }
@@ -569,8 +715,7 @@ async function activate(context) {
     tree,
     vscode.workspace.registerTextDocumentContentProvider("git-onboarding", {
       onDidChange: lessons.documentChange.event,
-      provideTextDocumentContent: (uri) =>
-        lessons.documents.get(uri.toString()) || "",
+      provideTextDocumentContent: (uri) => lessons.provideDocument(uri),
     }),
   );
   for (const [name, method] of Object.entries({
@@ -597,6 +742,10 @@ async function activate(context) {
   } catch (error) {
     lessons.error = error.message;
     lessons.change.fire();
+    if (lessons.session) {
+      lessons.updateStatus();
+      await lessons.showGuide(true);
+    }
     vscode.window.showErrorMessage(`Git 练习：${error.message}`);
   }
   return { lessons };

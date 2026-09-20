@@ -58,7 +58,10 @@ async function main() {
       "--extensions-dir",
       extensions,
       "--install-extension",
-      path.join(root, "release/git-onboarding-vscode-0.1.0.vsix"),
+      path.join(
+        root,
+        `release/git-onboarding-vscode-${require("../package.json").version}.vsix`,
+      ),
       "--force",
     ],
     {
@@ -95,8 +98,41 @@ async function main() {
       page.locator(".quick-input-list .monaco-list-row").first(),
     ).toContainText(value, { timeout: 30000 });
     await page.keyboard.press("Enter");
-    if (!value.endsWith("开始 / 继续练习"))
+    if (
+      !value.endsWith("开始 / 继续练习") &&
+      value !== "Developer: Reload Window"
+    )
       await expect(input).not.toBeVisible();
+  };
+  const coachFrame = async (page, step) => {
+    let found;
+    await expect
+      .poll(
+        async () => {
+          for (const frame of page.frames()) {
+            const selector =
+              step === undefined
+                ? "#git-coach"
+                : `#git-coach[data-step="${step}"]`;
+            if (
+              await frame
+                .locator(selector)
+                .isVisible()
+                .catch(() => false)
+            ) {
+              found = frame;
+              return true;
+            }
+          }
+          return false;
+        },
+        {
+          timeout: 60000,
+          message: "The visible step-by-step coach must open automatically",
+        },
+      )
+      .toBe(true);
+    return found;
   };
   try {
     const first = await app.firstWindow();
@@ -127,6 +163,50 @@ async function main() {
       "labs",
     );
     const repo = path.join(labs, "basics-guided", "workspace");
+    let coach = await coachFrame(page, 0);
+    await expect(coach.locator("#git-coach")).toHaveAttribute("data-step", "0");
+    await expect(coach.locator("#current-step-title")).toContainText("仓库");
+    await page.screenshot({
+      path: path.join(output, "guided-start.png"),
+      fullPage: true,
+    });
+    await coach.locator('[data-action="next"]').click();
+    coach = await coachFrame(page, 1);
+    await expect(coach.locator("#git-coach")).toHaveAttribute("data-step", "1");
+    await expect(coach.locator("#current-step-title")).toBeInViewport({
+      ratio: 1,
+    });
+    await coach.locator('[data-action="openFile"]').first().click();
+    await expect(
+      page.getByRole("tab", { name: /README.md/ }).first(),
+    ).toBeVisible();
+    await expect(coach.locator("#git-coach")).toBeVisible();
+    await expect(page.locator(".statusbar")).not.toContainText("Git 练习 2/2");
+    const initialHead = execFileSync(git, ["-C", repo, "rev-parse", "HEAD"], {
+      encoding: "utf8",
+      windowsHide: true,
+    });
+    const reloaded = page.waitForEvent("domcontentloaded", { timeout: 60000 });
+    await command(page, "Developer: Reload Window");
+    await reloaded;
+    await page.waitForSelector(".monaco-workbench", { timeout: 60000 });
+    coach = await coachFrame(page, 1);
+    await expect(coach.locator("#git-coach")).toHaveAttribute("data-step", "1");
+    await expect(coach.locator("#current-step-title")).toContainText("保存");
+    await expect(
+      page.getByRole("tab", { name: /Git 练习 · 分步指引/ }),
+    ).toHaveCount(1);
+    expect(
+      execFileSync(git, ["-C", repo, "rev-parse", "HEAD"], {
+        encoding: "utf8",
+        windowsHide: true,
+      }),
+    ).toBe(initialHead);
+    await page.screenshot({
+      path: path.join(output, "guided-restored.png"),
+      fullPage: true,
+    });
+    await coach.locator('[data-action="sourceControl"]').first().click();
     fs.appendFileSync(
       path.join(repo, "README.md"),
       "\nSource Control UI smoke test.\n",
@@ -165,6 +245,8 @@ async function main() {
     await expect(
       page.getByRole("tab", { name: /练习检查报告/ }).first(),
     ).toBeVisible({ timeout: 30000 });
+    coach = await coachFrame(page);
+    await expect(coach.locator("#git-coach")).toBeVisible();
     await page.screenshot({
       path: path.join(output, "native-source-control.png"),
       fullPage: true,
@@ -174,6 +256,13 @@ async function main() {
       JSON.stringify(
         {
           passed: true,
+          version: require("../package.json").version,
+          guidance: {
+            autoOpened: true,
+            manualStepsDoNotPass: true,
+            reloadRestoresStep: true,
+            visibleBesideFileAndReport: true,
+          },
           repo,
           executablePath,
           screenshot: path.join(output, "native-source-control.png"),

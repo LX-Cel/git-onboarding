@@ -2,7 +2,7 @@
   "name": "git-onboarding",
   "displayName": "Git Onboarding · Git 练习",
   "description": "在 VS Code 原生 Source Control 中练习真实 Git：提交、协作冲突和误操作恢复。",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "LX-Cel",
   "license": "UNLICENSED",
   "repository": {
@@ -45,7 +45,7 @@
     "vscode:prepublish": "node scripts/prepare.cjs",
     "test": "node --test test/*.test.cjs",
     "test:integration": "node test/launch.cjs",
-    "package": "vsce package --no-dependencies --allow-missing-repository --skip-license --out ../release/git-onboarding-vscode-0.1.0.vsix"
+    "package": "vsce package --no-dependencies --allow-missing-repository --skip-license --out ../release/git-onboarding-vscode-0.1.1.vsix"
   },
   "devDependencies": {
     "@vscode/test-electron": "3.1.0",
